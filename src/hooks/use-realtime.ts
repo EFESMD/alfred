@@ -19,6 +19,10 @@ export function useRealtime(projectId: string) {
       queryClient.invalidateQueries({ queryKey: ["task", data.id] });
     });
 
+    channel.bind("task-deleted", () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    });
+
     channel.bind("comment-added", (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["task", data.taskId] });
     });

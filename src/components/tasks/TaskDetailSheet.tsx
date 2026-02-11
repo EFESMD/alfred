@@ -51,6 +51,16 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { TaskStatus, TaskPriority } from "@/types/task";
 
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
 interface TaskDetailSheetProps {
   taskId: string | null;
   workspaceId: string;
@@ -68,6 +78,7 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const [isStartDateOpen, setIsStartDatePopoverOpen] = useState(false);
   const [isDueDateOpen, setIsDueDatePopoverOpen] = useState(false);
@@ -90,6 +101,30 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
     enabled: !!taskId,
   });
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete task");
+      return id;
+    },
+    onSuccess: (deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      setIsDeleteDialogOpen(false);
+      if (deletedId === taskId) {
+        toast.success("Task deleted");
+        onClose();
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+        toast.success("Subtask deleted");
+      }
+    },
+    onError: () => {
+      toast.error("Failed to delete task");
+    }
+  });
+
   const { data: members } = useQuery({
     queryKey: ["members", workspaceId],
     queryFn: async () => {
@@ -104,6 +139,7 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
     if (task) {
       setTitle(task.title);
       setDescription(task.description || "");
+      setIsDeleteDialogOpen(false);
     }
   }, [task]);
 
@@ -596,6 +632,17 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                             <AvatarFallback className="text-[8px]">{subtask.assignee.name?.[0]}</AvatarFallback>
                           </Avatar>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTaskMutation.mutate(subtask.id);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     ))}
 
@@ -729,6 +776,38 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <Separator />
+
+                <div className="pt-4 pb-2">
+                  <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Delete Task
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="z-[120]">
+                      <DialogHeader>
+                        <DialogTitle>Are you absolutely sure?</DialogTitle>
+                        <DialogDescription>
+                          This action cannot be undone. This will permanently delete the task
+                          "{task.title}" and remove its data from our servers.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                        <Button 
+                          variant="destructive" 
+                          onClick={() => deleteTaskMutation.mutate(task.id)}
+                          disabled={deleteTaskMutation.isPending}
+                        >
+                          {deleteTaskMutation.isPending ? "Deleting..." : "Delete Task"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </div>

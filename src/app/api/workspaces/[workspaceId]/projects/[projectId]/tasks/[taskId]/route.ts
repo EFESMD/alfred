@@ -219,3 +219,34 @@ export async function PATCH(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ workspaceId: string; projectId: string; taskId: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { taskId, projectId } = await params;
+
+    await prisma.task.delete({
+      where: {
+        id: taskId,
+      },
+    });
+
+    // Trigger real-time update
+    if (pusherServer) {
+      await pusherServer.trigger(`project-${projectId}`, "task-deleted", { id: taskId });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("[TASK_DELETE]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

@@ -16,9 +16,10 @@
     - [x] List View
     - [x] Kanban Board (Optimized Drag & Drop)
     - [x] Calendar View
-    - [x] Task Creation Modal
+    - [x] Task Creation Modal (with column-specific status)
     - [x] Task Detail Panel (Inline editing)
     - [x] Subtasks (Nested task management)
+    - [x] Task & Subtask Deletion (with confirmation)
 
 - [x] **Collaboration & Features**
     - [x] Task Comments
@@ -27,11 +28,14 @@
     - [x] Task Attachments (Local storage system)
     - [x] Real-time updates (Pusher integration)
     - [x] Interactive Timeline (Gantt Chart) with dependencies
+    - [x] Project Leader assignment and display
 
 - [x] **Maintenance & Bug Fixes**
     - [x] Fixed missing task list on project pages
     - [x] Resolved Prisma client out-of-sync issues with dependencies
     - [x] Improved API error logging
+    - [x] Timeline View: Highlighted weekends and the current day
+    - [x] Project Creation: Improved spacing and layout
 
 - [ ] **Next Steps**
     - [ ] Global Search (Quick navigation across workspace)
