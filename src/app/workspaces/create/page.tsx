@@ -60,8 +60,8 @@ export default function CreateWorkspacePage() {
               />
             </div>
           </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+          <CardFooter className="pt-2 flex justify-center">
+            <Button type="submit" className="px-8" disabled={isLoading}>
               {isLoading ? "Creating..." : "Create Workspace"}
             </Button>
           </CardFooter>

@@ -32,7 +32,7 @@ export default async function DashboardPage() {
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
       <Card className="w-[450px]">
         <CardHeader>
-          <CardTitle>Welcome to Asana Clone</CardTitle>
+          <CardTitle>Welcome to Oxana</CardTitle>
           <CardDescription>
             You are not part of any workspace yet. Create one to get started.
           </CardDescription>

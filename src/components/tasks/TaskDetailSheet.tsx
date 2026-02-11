@@ -347,6 +347,32 @@ export function TaskDetailSheet({
             <div className="flex-1 overflow-y-auto">
               <div className="p-6 space-y-6 pt-12">
                 <div className="space-y-4">
+                  <div className="relative">
+                    {isEditingTitle && !isArchived ? (
+                      <Input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        onBlur={() => {
+                          setIsEditingTitle(false);
+                          if (title !== task.title) updateTaskMutation.mutate({ title });
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                        autoFocus
+                        className="text-2xl font-bold border-none px-0 focus-visible:ring-0 h-auto bg-transparent relative z-10"
+                      />
+                    ) : (
+                      <h2 
+                        className={cn(
+                          "text-2xl font-bold p-1 -ml-1 rounded transition-colors",
+                          !isArchived && "cursor-pointer hover:bg-slate-100"
+                        )}
+                        onClick={() => !isArchived && setIsEditingTitle(true)}
+                      >
+                        {task.title}
+                      </h2>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-3">
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild disabled={isArchived}>
@@ -376,7 +402,7 @@ export function TaskDetailSheet({
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild disabled={isArchived}>
                         <Button 
-                          variant="secondary" 
+                          variant="outline" 
                           size="sm" 
                           className="h-7 rounded-full px-3 text-xs gap-1 relative z-50 pointer-events-auto"
                         >
@@ -397,32 +423,6 @@ export function TaskDetailSheet({
                         </DropdownMenuContent>
                       )}
                     </DropdownMenu>
-                  </div>
-                  
-                  <div className="relative">
-                    {isEditingTitle && !isArchived ? (
-                      <Input
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        onBlur={() => {
-                          setIsEditingTitle(false);
-                          if (title !== task.title) updateTaskMutation.mutate({ title });
-                        }}
-                        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                        autoFocus
-                        className="text-2xl font-bold border-none px-0 focus-visible:ring-0 h-auto bg-transparent relative z-10"
-                      />
-                    ) : (
-                      <h2 
-                        className={cn(
-                          "text-2xl font-bold p-1 -ml-1 rounded transition-colors",
-                          !isArchived && "cursor-pointer hover:bg-slate-100"
-                        )}
-                        onClick={() => !isArchived && setIsEditingTitle(true)}
-                      >
-                        {task.title}
-                      </h2>
-                    )}
                   </div>
                 </div>
 
@@ -535,59 +535,6 @@ export function TaskDetailSheet({
                         </PopoverContent>
                       )}
                     </Popover>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold flex items-center gap-2">
-                      <GanttChart className="h-4 w-4" />
-                      Dependencies
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {task.predecessors?.map((pred: any) => (
-                      <div key={pred.id} className="flex items-center justify-between p-2 border rounded-lg bg-slate-50 text-sm">
-                        <span className="truncate flex-1">{pred.title}</span>
-                        {!isArchived && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            onClick={() => {
-                              const newPredecessorIds = task.predecessors
-                                .filter((p: any) => p.id !== pred.id)
-                                .map((p: any) => p.id);
-                              updateTaskMutation.mutate({ predecessorIds: newPredecessorIds });
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {!isArchived && (
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-full text-xs gap-1 h-8 border-dashed">
-                            <Plus className="h-3 w-3" />
-                            Add Dependency
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-[300px] z-[110] max-h-[300px] overflow-y-auto">
-                          {queryClient.getQueryData<any[]>(["tasks", projectId])
-                            ?.filter(t => t.id !== task.id && !task.predecessors?.some((p: any) => p.id === t.id))
-                            .map((t) => (
-                              <DropdownMenuItem key={t.id} onClick={() => {
-                                const newPredecessorIds = [...(task.predecessors?.map((p: any) => p.id) || []), t.id];
-                                updateTaskMutation.mutate({ predecessorIds: newPredecessorIds });
-                              }}>
-                                {t.title}
-                              </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
                   </div>
                 </div>
 

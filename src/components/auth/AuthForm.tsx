@@ -107,17 +107,9 @@ export function AuthForm({ mode }: AuthFormProps) {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex flex-col space-y-4 pt-6">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Loading..." : mode === "login" ? "Login" : "Register"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          >
-            Continue with Google
           </Button>
           <p className="text-sm text-center text-muted-foreground">
             {mode === "login" ? (

@@ -28,7 +28,7 @@ export async function GET(
         successors: true,
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: "asc",
       },
     });
 

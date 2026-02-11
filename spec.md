@@ -1,4 +1,4 @@
-# Project Management Tool Specification (Asana Competitor)
+# Oxana - Specification
 
 ## 1. Project Overview
 A robust, real-time project management application designed for teams to organize, track, and manage their work.

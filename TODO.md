@@ -1,4 +1,4 @@
-# Asana Clone - Project Progress
+# Oxana - Project Progress
 
 - [x] **Project Foundation**
     - [x] Project Scaffolding (Next.js 15+, Tailwind, TS)
@@ -42,12 +42,21 @@
     - [x] Resolved Prisma client out-of-sync issues with dependencies
     - [x] Improved API error logging
     - [x] Timeline View: Highlighted weekends and the current day
-    - [x] Project Creation: Improved spacing and layout
+    - [x] UI Refinement: Improved spacing and layout for Project & Workspace creation
     - [x] Optimized Settings page loading speed (Single project API)
+    - [x] Task Pane Housekeeping: Moved name to top, unified selector styles, hidden dependencies
+    - [x] Task Sorting: New tasks now appear at the bottom of the list (Ascending order)
 
 - [ ] **Next Steps**
     - [ ] Global Search (Quick navigation across workspace)
     - [ ] Notifications system
+    - [ ] Manual Task Sorting (Drag & Drop reordering in List and Kanban)
+    - [ ] User Roles & Permissions (Strict enforcement of Owner, Admin, Member)
+    - [ ] Multi-Assignees (Assign multiple members to a task)
+    - [ ] Task Tags/Labels (Colored categories for tasks)
+    - [ ] Project Templates (Save and reuse project structures)
+    - [ ] Workspace Settings (Central hub for workspace management)
+    - [ ] Activity Export (Export project data to CSV/PDF)
 
 ## How to Test
 1. Access the app at [http://localhost:3000](http://localhost:3000)

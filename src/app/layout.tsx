@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Asana Clone",
-  description: "A competitive project management tool",
+  title: "Oxana",
+  description: "Modern project management for teams",
 };
 
 export default function RootLayout({
