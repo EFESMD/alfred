@@ -66,9 +66,16 @@ interface TaskDetailSheetProps {
   workspaceId: string;
   projectId: string;
   onClose: () => void;
+  isArchived?: boolean;
 }
 
-export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: TaskDetailSheetProps) {
+export function TaskDetailSheet({ 
+  taskId, 
+  workspaceId, 
+  projectId, 
+  onClose,
+  isArchived = false
+}: TaskDetailSheetProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [comment, setComment] = useState("");
@@ -342,7 +349,7 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild disabled={isArchived}>
                         <Button 
                           variant="outline" 
                           size="sm" 
@@ -352,20 +359,22 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                           <ChevronDown className="h-3 w-3 opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="z-[110]">
-                        {STATUS_OPTIONS.map((status) => (
-                          <DropdownMenuItem key={status} onClick={() => updateTaskMutation.mutate({ status })}>
-                            <span className={cn("mr-2", task.status === status ? "opacity-100" : "opacity-0")}>
-                              <Check className="h-4 w-4" />
-                            </span>
-                            {status}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
+                      {!isArchived && (
+                        <DropdownMenuContent align="start" className="z-[110]">
+                          {STATUS_OPTIONS.map((status) => (
+                            <DropdownMenuItem key={status} onClick={() => updateTaskMutation.mutate({ status })}>
+                              <span className={cn("mr-2", task.status === status ? "opacity-100" : "opacity-0")}>
+                                <Check className="h-4 w-4" />
+                              </span>
+                              {status}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      )}
                     </DropdownMenu>
 
                     <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild disabled={isArchived}>
                         <Button 
                           variant="secondary" 
                           size="sm" 
@@ -375,21 +384,23 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                           <ChevronDown className="h-3 w-3 opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="z-[110]">
-                        {PRIORITY_OPTIONS.map((priority) => (
-                          <DropdownMenuItem key={priority} onClick={() => updateTaskMutation.mutate({ priority })}>
-                            <span className={cn("mr-2", task.priority === priority ? "opacity-100" : "opacity-0")}>
-                              <Check className="h-4 w-4" />
-                            </span>
-                            {priority}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
+                      {!isArchived && (
+                        <DropdownMenuContent align="start" className="z-[110]">
+                          {PRIORITY_OPTIONS.map((priority) => (
+                            <DropdownMenuItem key={priority} onClick={() => updateTaskMutation.mutate({ priority })}>
+                              <span className={cn("mr-2", task.priority === priority ? "opacity-100" : "opacity-0")}>
+                                <Check className="h-4 w-4" />
+                              </span>
+                              {priority}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      )}
                     </DropdownMenu>
                   </div>
                   
                   <div className="relative">
-                    {isEditingTitle ? (
+                    {isEditingTitle && !isArchived ? (
                       <Input
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -403,8 +414,11 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                       />
                     ) : (
                       <h2 
-                        className="text-2xl font-bold cursor-pointer hover:bg-slate-100 p-1 -ml-1 rounded transition-colors"
-                        onClick={() => setIsEditingTitle(true)}
+                        className={cn(
+                          "text-2xl font-bold p-1 -ml-1 rounded transition-colors",
+                          !isArchived && "cursor-pointer hover:bg-slate-100"
+                        )}
+                        onClick={() => !isArchived && setIsEditingTitle(true)}
                       >
                         {task.title}
                       </h2>
@@ -419,7 +433,7 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                       <span>Assignee</span>
                     </div>
                     <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild disabled={isArchived}>
                         <Button variant="ghost" size="sm" className="h-auto p-1 hover:bg-slate-100 gap-2 relative z-50 pointer-events-auto">
                           <Avatar className="h-6 w-6">
                             <AvatarImage src={task.assignee?.image} />
@@ -428,26 +442,28 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                             </AvatarFallback>
                           </Avatar>
                           <span className="font-medium">{task.assignee?.name || "Unassigned"}</span>
-                          <ChevronDown className="h-3 w-3 opacity-50" />
+                          {!isArchived && <ChevronDown className="h-3 w-3 opacity-50" />}
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="min-w-[200px] z-[110]">
-                        <DropdownMenuItem onClick={() => updateTaskMutation.mutate({ assigneeId: null })}>
-                          Unassigned
-                        </DropdownMenuItem>
-                        <Separator className="my-1" />
-                        {members?.map((member: any) => (
-                          <DropdownMenuItem key={member.id} onClick={() => updateTaskMutation.mutate({ assigneeId: member.id })}>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-5 w-5">
-                                <AvatarImage src={member.image} />
-                                <AvatarFallback className="text-[10px]">{member.name?.[0]}</AvatarFallback>
-                              </Avatar>
-                              <span>{member.name}</span>
-                            </div>
+                      {!isArchived && (
+                        <DropdownMenuContent align="start" className="min-w-[200px] z-[110]">
+                          <DropdownMenuItem onClick={() => updateTaskMutation.mutate({ assigneeId: null })}>
+                            Unassigned
                           </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
+                          <Separator className="my-1" />
+                          {members?.map((member: any) => (
+                            <DropdownMenuItem key={member.id} onClick={() => updateTaskMutation.mutate({ assigneeId: member.id })}>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={member.image} />
+                                  <AvatarFallback className="text-[10px]">{member.name?.[0]}</AvatarFallback>
+                                </Avatar>
+                                <span>{member.name}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      )}
                     </DropdownMenu>
                   </div>
 
@@ -456,8 +472,8 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                       <CalendarLucide className="h-4 w-4" />
                       <span>Start Date</span>
                     </div>
-                    <Popover open={isStartDateOpen} onOpenChange={setIsStartDatePopoverOpen} modal={false}>
-                      <PopoverTrigger asChild>
+                    <Popover open={isStartDateOpen} onOpenChange={(open) => !isArchived && setIsStartDatePopoverOpen(open)} modal={false}>
+                      <PopoverTrigger asChild disabled={isArchived}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -467,20 +483,22 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                           )}
                         >
                           {task.startDate ? format(new Date(task.startDate), "PPP") : "No date"}
-                          <ChevronDown className="ml-2 h-3 w-3 opacity-50" />
+                          {!isArchived && <ChevronDown className="ml-2 h-3 w-3 opacity-50" />}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 z-[110]" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={task.startDate ? new Date(task.startDate) : undefined}
-                          onSelect={(date) => {
-                            updateTaskMutation.mutate({ startDate: date });
-                            setIsStartDatePopoverOpen(false);
-                          }}
-                          initialFocus
-                        />
-                      </PopoverContent>
+                      {!isArchived && (
+                        <PopoverContent className="w-auto p-0 z-[110]" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={task.startDate ? new Date(task.startDate) : undefined}
+                            onSelect={(date) => {
+                              updateTaskMutation.mutate({ startDate: date });
+                              setIsStartDatePopoverOpen(false);
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      )}
                     </Popover>
                   </div>
 
@@ -489,8 +507,8 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                       <CalendarLucide className="h-4 w-4" />
                       <span>Due Date</span>
                     </div>
-                    <Popover open={isDueDateOpen} onOpenChange={setIsDueDatePopoverOpen} modal={false}>
-                      <PopoverTrigger asChild>
+                    <Popover open={isDueDateOpen} onOpenChange={(open) => !isArchived && setIsDueDatePopoverOpen(open)} modal={false}>
+                      <PopoverTrigger asChild disabled={isArchived}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -500,20 +518,22 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                           )}
                         >
                           {task.dueDate ? format(new Date(task.dueDate), "PPP") : "No date"}
-                          <ChevronDown className="ml-2 h-3 w-3 opacity-50" />
+                          {!isArchived && <ChevronDown className="ml-2 h-3 w-3 opacity-50" />}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 z-[110]" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={task.dueDate ? new Date(task.dueDate) : undefined}
-                          onSelect={(date) => {
-                            updateTaskMutation.mutate({ dueDate: date });
-                            setIsDueDatePopoverOpen(false);
-                          }}
-                          initialFocus
-                        />
-                      </PopoverContent>
+                      {!isArchived && (
+                        <PopoverContent className="w-auto p-0 z-[110]" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={task.dueDate ? new Date(task.dueDate) : undefined}
+                            onSelect={(date) => {
+                              updateTaskMutation.mutate({ dueDate: date });
+                              setIsDueDatePopoverOpen(false);
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      )}
                     </Popover>
                   </div>
                 </div>
@@ -529,47 +549,51 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                     {task.predecessors?.map((pred: any) => (
                       <div key={pred.id} className="flex items-center justify-between p-2 border rounded-lg bg-slate-50 text-sm">
                         <span className="truncate flex-1">{pred.title}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            const newPredecessorIds = task.predecessors
-                              .filter((p: any) => p.id !== pred.id)
-                              .map((p: any) => p.id);
-                            updateTaskMutation.mutate({ predecessorIds: newPredecessorIds });
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        {!isArchived && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              const newPredecessorIds = task.predecessors
+                                .filter((p: any) => p.id !== pred.id)
+                                .map((p: any) => p.id);
+                              updateTaskMutation.mutate({ predecessorIds: newPredecessorIds });
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     ))}
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="w-full text-xs gap-1 h-8 border-dashed">
-                          <Plus className="h-3 w-3" />
-                          Add Dependency
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-[300px] z-[110] max-h-[300px] overflow-y-auto">
-                        {queryClient.getQueryData<any[]>(["tasks", projectId])
-                          ?.filter(t => t.id !== task.id && !task.predecessors?.some((p: any) => p.id === t.id))
-                          .map((t) => (
-                            <DropdownMenuItem key={t.id} onClick={() => {
-                              const newPredecessorIds = [...(task.predecessors?.map((p: any) => p.id) || []), t.id];
-                              updateTaskMutation.mutate({ predecessorIds: newPredecessorIds });
-                            }}>
-                              {t.title}
-                            </DropdownMenuItem>
-                          ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {!isArchived && (
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full text-xs gap-1 h-8 border-dashed">
+                            <Plus className="h-3 w-3" />
+                            Add Dependency
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-[300px] z-[110] max-h-[300px] overflow-y-auto">
+                          {queryClient.getQueryData<any[]>(["tasks", projectId])
+                            ?.filter(t => t.id !== task.id && !task.predecessors?.some((p: any) => p.id === t.id))
+                            .map((t) => (
+                              <DropdownMenuItem key={t.id} onClick={() => {
+                                const newPredecessorIds = [...(task.predecessors?.map((p: any) => p.id) || []), t.id];
+                                updateTaskMutation.mutate({ predecessorIds: newPredecessorIds });
+                              }}>
+                                {t.title}
+                              </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold">Description</h4>
-                  {isEditingDescription ? (
+                  {isEditingDescription && !isArchived ? (
                     <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -584,12 +608,13 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                   ) : (
                     <div 
                       className={cn(
-                        "text-sm p-2 -ml-2 rounded cursor-pointer hover:bg-slate-100 transition-colors min-h-[40px]",
+                        "text-sm p-2 -ml-2 rounded transition-colors min-h-[40px]",
+                        !isArchived && "cursor-pointer hover:bg-slate-100",
                         !task.description && "text-muted-foreground italic"
                       )}
-                      onClick={() => setIsEditingDescription(true)}
+                      onClick={() => !isArchived && setIsEditingDescription(true)}
                     >
-                      {task.description || "No description provided. Click to add one."}
+                      {task.description || (isArchived ? "No description provided." : "No description provided. Click to add one.")}
                     </div>
                   )}
                 </div>
@@ -609,13 +634,15 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                         className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-200 transition-all"
                       >
                         <button
+                          disabled={isArchived}
                           onClick={() => toggleSubtaskMutation.mutate({ 
                             id: subtask.id, 
                             status: subtask.status === "DONE" ? "TODO" : "DONE" 
                           })}
                           className={cn(
                             "h-5 w-5 rounded border flex items-center justify-center transition-colors",
-                            subtask.status === "DONE" ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-primary"
+                            subtask.status === "DONE" ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-primary",
+                            isArchived && "opacity-50 cursor-not-allowed"
                           )}
                         >
                           {subtask.status === "DONE" && <Check className="h-3 w-3 text-white" />}
@@ -632,34 +659,38 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                             <AvatarFallback className="text-[8px]">{subtask.assignee.name?.[0]}</AvatarFallback>
                           </Avatar>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteTaskMutation.mutate(subtask.id);
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {!isArchived && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteTaskMutation.mutate(subtask.id);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     ))}
 
-                    <div className="flex items-center gap-2 p-1 pl-0">
-                      <Plus className="h-4 w-4 text-muted-foreground ml-0.5" />
-                      <Input
-                        placeholder="Add a subtask..."
-                        value={subtaskTitle}
-                        onChange={(e) => setSubtaskTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && subtaskTitle.trim()) {
-                            createSubtaskMutation.mutate(subtaskTitle);
-                          }
-                        }}
-                        className="h-8 text-sm border-none shadow-none focus-visible:ring-0 px-0 bg-transparent"
-                      />
-                    </div>
+                    {!isArchived && (
+                      <div className="flex items-center gap-2 p-1 pl-0">
+                        <Plus className="h-4 w-4 text-muted-foreground ml-0.5" />
+                        <Input
+                          placeholder="Add a subtask..."
+                          value={subtaskTitle}
+                          onChange={(e) => setSubtaskTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && subtaskTitle.trim()) {
+                              createSubtaskMutation.mutate(subtaskTitle);
+                            }
+                          }}
+                          className="h-8 text-sm border-none shadow-none focus-visible:ring-0 px-0 bg-transparent"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -669,16 +700,18 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                       <Paperclip className="h-4 w-4" />
                       Attachments
                     </h4>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 text-xs gap-1"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                    >
-                      {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Paperclip className="h-3 w-3" />}
-                      Attach
-                    </Button>
+                    {!isArchived && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 text-xs gap-1"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Paperclip className="h-3 w-3" />}
+                        Attach
+                      </Button>
+                    )}
                     <input 
                       type="file" 
                       ref={fileInputRef} 
@@ -704,7 +737,10 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className={cn(
+                          "flex items-center gap-1 transition-opacity",
+                          !isArchived ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+                        )}>
                           <a 
                             href={attachment.url} 
                             download={attachment.name}
@@ -713,14 +749,16 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                           >
                             <Download className="h-4 w-4" />
                           </a>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => deleteAttachmentMutation.mutate(attachment.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {!isArchived && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => deleteAttachmentMutation.mutate(attachment.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -778,61 +816,66 @@ export function TaskDetailSheet({ taskId, workspaceId, projectId, onClose }: Tas
                   </div>
                 </div>
 
-                <Separator />
-
-                <div className="pt-4 pb-2">
-                  <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        Delete Task
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="z-[120]">
-                      <DialogHeader>
-                        <DialogTitle>Are you absolutely sure?</DialogTitle>
-                        <DialogDescription>
-                          This action cannot be undone. This will permanently delete the task
-                          "{task.title}" and remove its data from our servers.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                        <Button 
-                          variant="destructive" 
-                          onClick={() => deleteTaskMutation.mutate(task.id)}
-                          disabled={deleteTaskMutation.isPending}
-                        >
-                          {deleteTaskMutation.isPending ? "Deleting..." : "Delete Task"}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                {!isArchived && (
+                  <>
+                    <Separator />
+                    <div className="pt-4 pb-2">
+                      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 gap-2">
+                            <Trash2 className="h-4 w-4" />
+                            Delete Task
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="z-[120]">
+                          <DialogHeader>
+                            <DialogTitle>Are you absolutely sure?</DialogTitle>
+                            <DialogDescription>
+                              This action cannot be undone. This will permanently delete the task
+                              "{task.title}" and remove its data from our servers.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter className="gap-2 sm:gap-0">
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                            <Button 
+                              variant="destructive" 
+                              onClick={() => deleteTaskMutation.mutate(task.id)}
+                              disabled={deleteTaskMutation.isPending}
+                            >
+                              {deleteTaskMutation.isPending ? "Deleting..." : "Delete Task"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Sticky Footer Section */}
-            <div className="p-4 border-t bg-white shrink-0">
-              <div className="flex gap-2">
-                <Textarea 
-                  placeholder="Write a comment..." 
-                  className="min-h-[80px]"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
+            {!isArchived && (
+              <div className="p-4 border-t bg-white shrink-0">
+                <div className="flex gap-2">
+                  <Textarea 
+                    placeholder="Write a comment..." 
+                    className="min-h-[80px]"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end mt-2">
+                  <Button 
+                    size="sm" 
+                    disabled={!comment.trim() || addCommentMutation.isPending}
+                    onClick={() => addCommentMutation.mutate(comment)}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Comment
+                  </Button>
+                </div>
               </div>
-              <div className="flex justify-end mt-2">
-                <Button 
-                  size="sm" 
-                  disabled={!comment.trim() || addCommentMutation.isPending}
-                  onClick={() => addCommentMutation.mutate(comment)}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Comment
-                </Button>
-              </div>
-            </div>
+            )}
           </div>
         )}
       </SheetContent>

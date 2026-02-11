@@ -26,6 +26,7 @@ import { useRealtime } from "@/hooks/use-realtime";
 interface KanbanBoardProps {
   workspaceId: string;
   projectId: string;
+  isArchived?: boolean;
 }
 
 const COLUMNS: { id: TaskStatus; title: string }[] = [
@@ -35,7 +36,7 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: "DONE", title: "Done" },
 ];
 
-export function KanbanBoard({ workspaceId, projectId }: KanbanBoardProps) {
+export function KanbanBoard({ workspaceId, projectId, isArchived = false }: KanbanBoardProps) {
   useRealtime(projectId);
   const queryClient = useQueryClient();
   const [activeTask, setActiveTask] = useState<TaskWithAssignee | null>(null);
@@ -199,6 +200,7 @@ export function KanbanBoard({ workspaceId, projectId }: KanbanBoardProps) {
                 tasks={localTasks.filter((t) => t.status === column.id)}
                 onAddTask={handleAddTask}
                 onTaskClick={(id) => setSelectedTaskId(id)}
+                isArchived={isArchived}
               />
             ))}
           </div>
@@ -223,6 +225,7 @@ export function KanbanBoard({ workspaceId, projectId }: KanbanBoardProps) {
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
+        isArchived={isArchived}
       />
     </div>
   );

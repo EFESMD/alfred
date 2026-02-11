@@ -16,9 +16,17 @@ interface KanbanColumnProps {
   tasks: TaskWithAssignee[];
   onAddTask: (status: TaskStatus) => void;
   onTaskClick: (taskId: string) => void;
+  isArchived?: boolean;
 }
 
-export function KanbanColumn({ id, title, tasks, onAddTask, onTaskClick }: KanbanColumnProps) {
+export function KanbanColumn({ 
+  id, 
+  title, 
+  tasks, 
+  onAddTask, 
+  onTaskClick,
+  isArchived = false
+}: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id });
 
   return (
@@ -37,6 +45,7 @@ export function KanbanColumn({ id, title, tasks, onAddTask, onTaskClick }: Kanba
           size="icon" 
           className="h-8 w-8 text-slate-500 hover:text-slate-900"
           onClick={() => onAddTask(id)}
+          disabled={isArchived}
         >
           <Plus className="h-4 w-4" />
         </Button>

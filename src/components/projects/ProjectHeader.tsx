@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User } from "lucide-react";
+import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -14,23 +14,32 @@ interface ProjectHeaderProps {
     name: string | null;
     image: string | null;
   } | null;
+  isArchived?: boolean;
 }
 
 export function ProjectHeader({ 
   workspaceId, 
   projectId, 
   projectName, 
-  projectLeader 
+  projectLeader,
+  isArchived = false
 }: ProjectHeaderProps) {
   const pathname = usePathname();
 
   const isKanban = pathname.endsWith("/kanban");
   const isCalendar = pathname.endsWith("/calendar");
   const isTimeline = pathname.endsWith("/timeline");
-  const isList = !isKanban && !isCalendar && !isTimeline;
+  const isSettings = pathname.endsWith("/settings");
+  const isList = !isKanban && !isCalendar && !isTimeline && !isSettings;
 
   return (
     <div className="border-b bg-white">
+      {isArchived && (
+        <div className="bg-amber-50 border-b border-amber-100 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm font-medium">
+          <Archive className="h-4 w-4" />
+          This project is archived and is in read-only mode.
+        </div>
+      )}
       <div className="px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">{projectName}</h1>
         {projectLeader && (
@@ -95,6 +104,18 @@ export function ProjectHeader({
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
             Calendar
+          </div>
+        </Link>
+        <Link
+          href={`/workspaces/${workspaceId}/projects/${projectId}/settings`}
+          className={cn(
+            "pb-3 text-sm font-medium border-b-2 transition-colors",
+            isSettings ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Settings
           </div>
         </Link>
       </div>

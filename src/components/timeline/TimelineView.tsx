@@ -24,9 +24,10 @@ import { useRealtime } from "@/hooks/use-realtime";
 interface TimelineViewProps {
   workspaceId: string;
   projectId: string;
+  isArchived?: boolean;
 }
 
-export function TimelineView({ workspaceId, projectId }: TimelineViewProps) {
+export function TimelineView({ workspaceId, projectId, isArchived = false }: TimelineViewProps) {
   useRealtime(projectId);
   const queryClient = useQueryClient();
   const [viewDate, setViewDate] = useState(new Date());
@@ -112,7 +113,7 @@ export function TimelineView({ workspaceId, projectId }: TimelineViewProps) {
             Today
           </Button>
         </div>
-        <Button size="sm" onClick={() => setIsModalOpen(true)}>
+        <Button size="sm" onClick={() => setIsModalOpen(true)} disabled={isArchived}>
           <Plus className="h-4 w-4 mr-2" />
           Add Task
         </Button>
@@ -280,6 +281,7 @@ export function TimelineView({ workspaceId, projectId }: TimelineViewProps) {
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
+        isArchived={isArchived}
       />
     </div>
   );

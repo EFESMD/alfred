@@ -29,6 +29,13 @@
     - [x] Real-time updates (Pusher integration)
     - [x] Interactive Timeline (Gantt Chart) with dependencies
     - [x] Project Leader assignment and display
+    - [x] Project Settings & Archiving
+        - [x] Rename project & update description
+        - [x] Change Project Leader
+        - [x] Custom Project Colors & Icons
+        - [x] Archive/Restore functionality
+        - [x] Strict Read-Only mode for archived projects
+        - [x] Permanent Project Deletion (Danger Zone)
 
 - [x] **Maintenance & Bug Fixes**
     - [x] Fixed missing task list on project pages
@@ -36,11 +43,11 @@
     - [x] Improved API error logging
     - [x] Timeline View: Highlighted weekends and the current day
     - [x] Project Creation: Improved spacing and layout
+    - [x] Optimized Settings page loading speed (Single project API)
 
 - [ ] **Next Steps**
     - [ ] Global Search (Quick navigation across workspace)
     - [ ] Notifications system
-    - [ ] Project Settings & Archiving
 
 ## How to Test
 1. Access the app at [http://localhost:3000](http://localhost:3000)

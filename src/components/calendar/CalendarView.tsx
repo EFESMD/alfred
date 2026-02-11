@@ -25,9 +25,10 @@ import { useRealtime } from "@/hooks/use-realtime";
 interface CalendarViewProps {
   workspaceId: string;
   projectId: string;
+  isArchived?: boolean;
 }
 
-export function CalendarView({ workspaceId, projectId }: CalendarViewProps) {
+export function CalendarView({ workspaceId, projectId, isArchived = false }: CalendarViewProps) {
   useRealtime(projectId);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -138,6 +139,7 @@ export function CalendarView({ workspaceId, projectId }: CalendarViewProps) {
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
+        isArchived={isArchived}
       />
     </div>
   );

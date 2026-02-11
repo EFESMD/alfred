@@ -1,4 +1,6 @@
 import { TaskListView } from "@/components/tasks/TaskListView";
+import prisma from "@/lib/prisma";
+import { notFound } from "next/navigation";
 
 export default async function ProjectPage({
   params,
@@ -6,5 +8,20 @@ export default async function ProjectPage({
   params: Promise<{ workspaceId: string; projectId: string }>;
 }) {
   const { workspaceId, projectId } = await params;
-  return <TaskListView workspaceId={workspaceId} projectId={projectId} />;
+
+  const project = await prisma.project.findUnique({
+    where: {
+      id: projectId,
+      workspaceId: workspaceId,
+    },
+    select: {
+      isArchived: true,
+    },
+  });
+
+  if (!project) {
+    notFound();
+  }
+
+  return <TaskListView workspaceId={workspaceId} projectId={projectId} isArchived={project.isArchived} />;
 }

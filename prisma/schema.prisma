@@ -99,6 +99,10 @@ model Project {
   projectLeaderId String?
   projectLeader   User?   @relation("ProjectLeader", fields: [projectLeaderId], references: [id])
 
+  isArchived  Boolean   @default(false)
+  color       String?   // Hex code or tailwind color name
+  icon        String?   // Lucide icon name or emoji
+
   tasks       Task[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

@@ -19,7 +19,8 @@ import {
   Plus, 
   LogOut,
   FolderOpen,
-  Users
+  Users,
+  Archive
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,6 +33,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
   workspace: {
@@ -41,12 +43,18 @@ interface AppSidebarProps {
   projects: {
     id: string;
     name: string;
+    isArchived: boolean;
+    color: string | null;
+    icon: string | null;
   }[];
 }
 
 export function AppSidebar({ workspace, projects }: AppSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+
+  const activeProjects = projects.filter(p => !p.isArchived);
+  const archivedProjects = projects.filter(p => p.isArchived);
 
   return (
     <Sidebar>
@@ -92,24 +100,51 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {projects.map((project) => (
+              {activeProjects.map((project) => (
                 <SidebarMenuItem key={project.id}>
                   <SidebarMenuButton asChild isActive={pathname.includes(`/projects/${project.id}`)}>
                     <Link href={`/workspaces/${workspace.id}/projects/${project.id}`}>
-                      <FolderOpen className="h-4 w-4 text-blue-500" />
+                      <div 
+                        className={cn(
+                          "w-4 h-4 rounded-sm flex items-center justify-center text-[10px] shadow-xs border",
+                          project.color || "bg-blue-500 text-white"
+                        )}
+                      >
+                        {project.icon || <FolderOpen className="h-3 w-3" />}
+                      </div>
                       <span>{project.name}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {projects.length === 0 && (
+              {activeProjects.length === 0 && (
                 <div className="px-4 py-2 text-xs text-muted-foreground">
-                  No projects yet
+                  No active projects
                 </div>
               )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {archivedProjects.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Archived Projects</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {archivedProjects.map((project) => (
+                  <SidebarMenuItem key={project.id}>
+                    <SidebarMenuButton asChild isActive={pathname.includes(`/projects/${project.id}`)}>
+                      <Link href={`/workspaces/${workspace.id}/projects/${project.id}`}>
+                        <Archive className="h-4 w-4 text-slate-400" />
+                        <span className="text-muted-foreground italic">{project.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="p-4 border-t">
         <SidebarMenu>

@@ -16,7 +16,9 @@ export default async function ProjectLayout({
       id: projectId,
       workspaceId: workspaceId,
     },
-    include: {
+    select: {
+      name: true,
+      isArchived: true,
       projectLeader: {
         select: {
           name: true,
@@ -37,6 +39,7 @@ export default async function ProjectLayout({
         projectId={projectId} 
         projectName={project.name} 
         projectLeader={project.projectLeader}
+        isArchived={project.isArchived}
       />
       <div className="flex-1 overflow-auto">
         {children}

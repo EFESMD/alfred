@@ -24,9 +24,10 @@ import { useRealtime } from "@/hooks/use-realtime";
 interface TaskListViewProps {
   workspaceId: string;
   projectId: string;
+  isArchived?: boolean;
 }
 
-export function TaskListView({ workspaceId, projectId }: TaskListViewProps) {
+export function TaskListView({ workspaceId, projectId, isArchived = false }: TaskListViewProps) {
   useRealtime(projectId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -67,7 +68,7 @@ export function TaskListView({ workspaceId, projectId }: TaskListViewProps) {
   return (
     <div className="p-6">
       <div className="mb-4">
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={() => setIsModalOpen(true)} disabled={isArchived}>
           <Plus className="h-4 w-4 mr-2" />
           Add Task
         </Button>
@@ -156,6 +157,7 @@ export function TaskListView({ workspaceId, projectId }: TaskListViewProps) {
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
+        isArchived={isArchived}
       />
     </div>
   );

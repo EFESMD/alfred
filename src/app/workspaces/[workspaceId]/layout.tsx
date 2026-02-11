@@ -34,6 +34,9 @@ export default async function WorkspaceLayout({
         select: {
           id: true,
           name: true,
+          isArchived: true,
+          color: true,
+          icon: true,
         },
       },
     },
