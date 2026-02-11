@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, Archive, Trash2, RotateCcw } from "lucide-react";
+import { AlertTriangle, Archive, Trash2, RotateCcw, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -132,6 +132,25 @@ export default function ProjectSettingsPage({
     updateProjectMutation.mutate({ isArchived: !project.isArchived });
   };
 
+  const duplicateAsTemplateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `${project.name} (Template)`, isTemplate: true }),
+      });
+      if (!res.ok) throw new Error("Failed to create template");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Project saved as template!");
+      router.refresh();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
+
   if (isProjectLoading) return <div className="p-8 text-center text-muted-foreground">Loading settings...</div>;
 
   return (
@@ -244,6 +263,36 @@ export default function ProjectSettingsPage({
             Save Changes
           </Button>
         </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Templates</CardTitle>
+          <CardDescription>
+            Save this project structure to reuse it for future projects.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <Plus className="h-5 w-5 text-slate-500" />
+              <div>
+                <p className="font-medium">Save as Template</p>
+                <p className="text-xs text-muted-foreground">
+                  Creates a reusable copy of all tasks and subtasks.
+                </p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => duplicateAsTemplateMutation.mutate()}
+              disabled={duplicateAsTemplateMutation.isPending}
+            >
+              {duplicateAsTemplateMutation.isPending ? "Saving..." : "Save as Template"}
+            </Button>
+          </div>
+        </CardContent>
       </Card>
 
       <Card>

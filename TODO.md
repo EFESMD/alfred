@@ -3,7 +3,7 @@
 - [x] **Project Foundation**
     - [x] Project Scaffolding (Next.js 15+, Tailwind, TS)
     - [x] Database Schema (SQLite + Prisma)
-    - [x] Authentication (NextAuth.js with Credentials & Google)
+    - [x] Authentication (NextAuth.js with Credentials)
 
 - [x] **Workspace & Members**
     - [x] Multi-workspace support
@@ -36,6 +36,12 @@
         - [x] Archive/Restore functionality
         - [x] Strict Read-Only mode for archived projects
         - [x] Permanent Project Deletion (Danger Zone)
+    - [x] Project Templates
+        - [x] Deep cloning engine (Tasks & Subtasks)
+        - [x] Template library in creation UI
+        - [x] Save existing project as template
+        - [x] Delete templates from library
+        - [x] Sanitized templates (removes dates and assignees)
 
 - [x] **Maintenance & Bug Fixes**
     - [x] Fixed missing task list on project pages
@@ -54,7 +60,6 @@
     - [ ] User Roles & Permissions (Strict enforcement of Owner, Admin, Member)
     - [ ] Multi-Assignees (Assign multiple members to a task)
     - [ ] Task Tags/Labels (Colored categories for tasks)
-    - [ ] Project Templates (Save and reuse project structures)
     - [ ] Workspace Settings (Central hub for workspace management)
     - [ ] Activity Export (Export project data to CSV/PDF)
 

@@ -100,6 +100,7 @@ model Project {
   projectLeader   User?   @relation("ProjectLeader", fields: [projectLeaderId], references: [id])
 
   isArchived  Boolean   @default(false)
+  isTemplate  Boolean   @default(false)
   color       String?   // Hex code or tailwind color name
   icon        String?   // Lucide icon name or emoji
 

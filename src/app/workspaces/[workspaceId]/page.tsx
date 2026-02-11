@@ -13,12 +13,12 @@ export default async function WorkspacePage({
 
   const [stats, projects] = await Promise.all([
     prisma.$transaction([
-      prisma.project.count({ where: { workspaceId, isArchived: false } }),
-      prisma.task.count({ where: { project: { workspaceId } } }),
+      prisma.project.count({ where: { workspaceId, isArchived: false, isTemplate: false } }),
+      prisma.task.count({ where: { project: { workspaceId, isTemplate: false } } }),
       prisma.workspaceMember.count({ where: { workspaceId } }),
     ]),
     prisma.project.findMany({
-      where: { workspaceId },
+      where: { workspaceId, isTemplate: false },
       orderBy: { updatedAt: "desc" },
     })
   ]);

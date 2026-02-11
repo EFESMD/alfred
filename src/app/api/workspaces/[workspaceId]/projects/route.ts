@@ -3,6 +3,38 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ workspaceId: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { workspaceId } = await params;
+    const { searchParams } = new URL(req.url);
+    const isTemplate = searchParams.get("isTemplate") === "true";
+
+    const projects = await prisma.project.findMany({
+      where: {
+        workspaceId,
+        isTemplate,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(projects);
+  } catch (error) {
+    console.error("[PROJECTS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ workspaceId: string }> }

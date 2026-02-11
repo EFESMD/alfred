@@ -31,6 +31,9 @@ export default async function WorkspaceLayout({
     },
     include: {
       projects: {
+        where: {
+          isTemplate: false,
+        },
         select: {
           id: true,
           name: true,
