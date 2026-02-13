@@ -11,7 +11,9 @@ import {
   startOfDay,
   differenceInDays,
   isToday,
-  isWithinInterval
+  isWithinInterval,
+  eachWeekOfInterval,
+  endOfWeek
 } from "date-fns";
 import { TaskWithAssignee } from "@/types/task";
 import { cn } from "@/lib/utils";
@@ -33,13 +35,30 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState<'days' | 'weeks'>('days');
   
   const startDate = startOfMonth(viewDate);
-  const endDate = endOfMonth(addMonths(viewDate, 1));
+  const endDate = endOfMonth(addMonths(viewDate, zoomLevel === 'days' ? 1 : 5));
   
-  const days = useMemo(() => {
-    return eachDayOfInterval({ start: startDate, end: endDate });
-  }, [startDate, endDate]);
+  const columns = useMemo(() => {
+    if (zoomLevel === 'days') {
+      return eachDayOfInterval({ start: startDate, end: endDate }).map(date => ({
+        date,
+        label: format(date, "d"),
+        subLabel: format(date, "EEE").charAt(0),
+        isStartOfGroup: date.getDate() === 1,
+        groupLabel: format(date, "MMM")
+      }));
+    } else {
+      return eachWeekOfInterval({ start: startDate, end: endDate }).map(date => ({
+        date,
+        label: `W${format(date, "w")}`,
+        subLabel: format(date, "MMM d"),
+        isStartOfGroup: date.getDate() <= 7,
+        groupLabel: format(date, "MMM")
+      }));
+    }
+  }, [startDate, endDate, zoomLevel]);
 
   const { data: tasks, isLoading } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],
@@ -50,7 +69,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     },
   });
 
-  const dayWidth = 40; // pixels
+  const columnWidth = zoomLevel === 'days' ? 40 : 80;
 
   const getTaskStyle = (task: TaskWithAssignee) => {
     if (!task.startDate || !task.dueDate) return null;
@@ -58,27 +77,18 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     const taskStart = startOfDay(new Date(task.startDate));
     const taskEnd = startOfDay(new Date(task.dueDate));
     
-    // Only show if it overlaps with our current view
-    const viewInterval = { start: startDate, end: endDate };
+    const startOffsetDays = differenceInDays(taskStart, startDate);
+    const durationDays = differenceInDays(taskEnd, taskStart) + 1;
     
-    const isOverlapping = (
-      isWithinInterval(taskStart, viewInterval) || 
-      isWithinInterval(taskEnd, viewInterval) ||
-      (taskStart < startDate && taskEnd > endDate)
-    );
-
-    if (!isOverlapping) return { display: 'none' };
-    
-    const startOffset = differenceInDays(taskStart, startDate);
-    const duration = differenceInDays(taskEnd, taskStart) + 1;
+    const pixelRatio = zoomLevel === 'days' ? columnWidth : columnWidth / 7;
     
     return {
-      left: `${startOffset * dayWidth}px`,
-      width: `${duration * dayWidth}px`,
+      left: `${startOffsetDays * pixelRatio}px`,
+      width: `${durationDays * pixelRatio}px`,
     };
   };
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading timeline...</div>;
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading timeline...</div>;
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -88,21 +98,47 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
           <div className="flex items-center gap-2">
             <GanttChart className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-semibold">
-              {format(viewDate, "MMMM yyyy")} - {format(addMonths(viewDate, 1), "MMMM yyyy")}
+              {format(viewDate, "MMMM yyyy")} {zoomLevel === 'weeks' && `- ${format(endDate, "MMMM yyyy")}`}
             </h2>
           </div>
+          
+          <div className="flex items-center border rounded-md shadow-sm bg-slate-100 p-1">
+            <Button 
+              variant={zoomLevel === 'days' ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setZoomLevel('days')}
+              className={cn(
+                "h-7 px-3 text-xs transition-all",
+                zoomLevel === 'days' ? "bg-white text-primary shadow-sm hover:bg-white" : "text-muted-foreground hover:bg-slate-200"
+              )}
+            >
+              Days
+            </Button>
+            <Button 
+              variant={zoomLevel === 'weeks' ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setZoomLevel('weeks')}
+              className={cn(
+                "h-7 px-3 text-xs transition-all",
+                zoomLevel === 'weeks' ? "bg-white text-primary shadow-sm hover:bg-white" : "text-muted-foreground hover:bg-slate-200"
+              )}
+            >
+              Weeks
+            </Button>
+          </div>
+
           <div className="flex items-center border rounded-md shadow-sm">
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => setViewDate(prev => addMonths(prev, -1))}
+              onClick={() => setViewDate(prev => addMonths(prev, zoomLevel === 'days' ? -1 : -3))}
               className="h-8 w-8 rounded-none border-r"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button 
               variant="ghost" 
-              size="icon"
+              size="icon" 
               onClick={() => setViewDate(prev => addMonths(prev, 1))}
               className="h-8 w-8 rounded-none"
             >
@@ -121,34 +157,32 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
 
       <div className="flex-1 overflow-auto relative">
         <div className="inline-block min-w-full">
-          {/* Days Header */}
+          {/* Header */}
           <div className="flex sticky top-0 z-20 bg-white border-b">
             <div className="w-64 flex-shrink-0 border-r bg-gray-50 p-2 font-medium text-xs text-muted-foreground uppercase tracking-wider flex items-center sticky left-0 z-30">
               Task
             </div>
             <div className="flex">
-              {days.map((day) => {
-                const isStartOfMonth = day.getDate() === 1;
-                return (
-                  <div 
-                    key={day.toISOString()} 
-                    className={cn(
-                      "flex-shrink-0 border-r text-[10px] flex flex-col items-center justify-center h-12 relative",
-                      isToday(day) ? "bg-green-100/50 text-green-700 font-bold" : (day.getDay() === 0 || day.getDay() === 6) ? "bg-slate-200/50" : "bg-white",
-                      isStartOfMonth && "border-l-2 border-l-gray-300"
-                    )}
-                    style={{ width: dayWidth }}
-                  >
-                    {isStartOfMonth && (
-                      <span className="absolute -top-1 left-1 text-[9px] font-bold text-gray-400 uppercase">
-                        {format(day, "MMM")}
-                      </span>
-                    )}
-                    <span className="opacity-70">{format(day, "EEE").charAt(0)}</span>
-                    <span>{format(day, "d")}</span>
-                  </div>
-                );
-              })}
+              {columns.map((col) => (
+                <div 
+                  key={col.date.toISOString()} 
+                  className={cn(
+                    "flex-shrink-0 border-r text-[10px] flex flex-col items-center justify-center h-12 relative transition-colors",
+                    zoomLevel === 'days' && isToday(col.date) ? "bg-green-100/50 text-green-700 font-bold" : 
+                    zoomLevel === 'days' && (col.date.getDay() === 0 || col.date.getDay() === 6) ? "bg-slate-200/50" : "bg-white",
+                    col.isStartOfGroup && "border-l-2 border-l-gray-300"
+                  )}
+                  style={{ width: columnWidth }}
+                >
+                  {col.isStartOfGroup && (
+                    <span className="absolute -top-1 left-1 text-[9px] font-bold text-gray-400 uppercase">
+                      {col.groupLabel}
+                    </span>
+                  )}
+                  <span className="opacity-70">{col.subLabel}</span>
+                  <span>{col.label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -160,32 +194,24 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
               style={{ width: '100%', height: '100%' }}
             >
               <defs>
-                <marker
-                  id="arrowhead"
-                  markerWidth="10"
-                  markerHeight="7"
-                  refX="10"
-                  refY="3.5"
-                  orient="auto"
-                >
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
                   <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
                 </marker>
               </defs>
               {tasks?.map((task, taskIndex) => {
                 const taskY = taskIndex * 48 + 24;
-
                 return task.predecessors?.map((pred) => {
                   const predTask = tasks.find(t => t.id === pred.id);
                   if (!predTask || !predTask.startDate || !predTask.dueDate || !task.startDate || !task.dueDate) return null;
 
                   const predIndex = tasks.indexOf(predTask);
                   const predY = predIndex * 48 + 24;
-
                   const predEnd = startOfDay(new Date(predTask.dueDate));
                   const taskStart = startOfDay(new Date(task.startDate));
 
-                  const predEndX = 256 + differenceInDays(predEnd, startDate) * dayWidth + dayWidth;
-                  const taskStartX = 256 + differenceInDays(taskStart, startDate) * dayWidth;
+                  const pixelRatio = zoomLevel === 'days' ? columnWidth : columnWidth / 7;
+                  const predEndX = 256 + differenceInDays(predEnd, startDate) * pixelRatio + pixelRatio;
+                  const taskStartX = 256 + differenceInDays(taskStart, startDate) * pixelRatio;
 
                   return (
                     <path
@@ -219,14 +245,15 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
                   </div>
 
                   <div className="flex relative h-12">
-                    {days.map((day) => (
+                    {columns.map((col) => (
                       <div 
-                        key={day.toISOString()} 
+                        key={col.date.toISOString()} 
                         className={cn(
                           "flex-shrink-0 border-r h-full",
-                          isToday(day) ? "bg-green-50/50" : (day.getDay() === 0 || day.getDay() === 6) ? "bg-slate-200/50" : "bg-white"
+                          zoomLevel === 'days' && isToday(col.date) ? "bg-green-50/50" : 
+                          zoomLevel === 'days' && (col.date.getDay() === 0 || col.date.getDay() === 6) ? "bg-slate-200/50" : "bg-white"
                         )}
-                        style={{ width: dayWidth }}
+                        style={{ width: columnWidth }}
                       />
                     ))}
 
@@ -248,22 +275,18 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
                 </div>
               ))
             ) : (
-              <div className="p-12 text-center text-muted-foreground italic">
-                No tasks found in this project.
-              </div>
+              <div className="p-12 text-center text-muted-foreground italic">No tasks found in this project.</div>
             )}
             
             {/* Today Line */}
-            {days.some(d => isToday(d)) && (
-              <div 
-                className="absolute top-0 bottom-0 w-px bg-blue-600 z-20 pointer-events-none"
-                style={{ 
-                  left: `calc(16rem + ${differenceInDays(startOfDay(new Date()), startDate) * dayWidth + dayWidth / 2}px)` 
-                }}
-              >
-                <div className="w-2 h-2 rounded-full bg-blue-600 -ml-[3.5px]" />
-              </div>
-            )}
+            <div 
+              className="absolute top-0 bottom-0 w-px bg-blue-600 z-20 pointer-events-none"
+              style={{ 
+                left: `calc(16rem + ${differenceInDays(startOfDay(new Date()), startDate) * (zoomLevel === 'days' ? columnWidth : columnWidth / 7) + (zoomLevel === 'days' ? columnWidth / 2 : 0)}px)` 
+              }}
+            >
+              <div className="w-2 h-2 rounded-full bg-blue-600 -ml-[3.5px]" />
+            </div>
           </div>
         </div>
       </div>

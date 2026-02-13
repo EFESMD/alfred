@@ -31,6 +31,12 @@ export async function GET(
             image: true,
           },
         },
+        predecessors: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         comments: {
           include: {
             user: {
