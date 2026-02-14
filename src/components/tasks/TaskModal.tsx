@@ -42,6 +42,7 @@ interface TaskModalProps {
   projectId: string;
   onSuccess: () => void;
   initialStatus?: TaskStatus;
+  initialSectionId?: string;
 }
 
 export function TaskModal({ 
@@ -50,7 +51,8 @@ export function TaskModal({
   workspaceId, 
   projectId,
   onSuccess,
-  initialStatus = "TODO"
+  initialStatus = "TODO",
+  initialSectionId
 }: TaskModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -61,17 +63,19 @@ export function TaskModal({
     assigneeId: undefined as string | undefined,
     startDate: undefined as Date | undefined,
     dueDate: undefined as Date | undefined,
+    sectionId: initialSectionId,
   });
 
-  // Update status when initialStatus changes or modal opens
+  // Update status and section when modal opens
   useEffect(() => {
     if (isOpen) {
       setFormData(prev => ({
         ...prev,
-        status: initialStatus
+        status: initialStatus,
+        sectionId: initialSectionId
       }));
     }
-  }, [initialStatus, isOpen]);
+  }, [initialStatus, initialSectionId, isOpen]);
 
   const [isStartDateOpen, setIsStartDatePopoverOpen] = useState(false);
   const [isDueDateOpen, setIsDueDatePopoverOpen] = useState(false);
@@ -81,6 +85,16 @@ export function TaskModal({
     queryFn: async () => {
       const res = await fetch(`/api/workspaces/${workspaceId}/members`);
       if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+    enabled: isOpen,
+  });
+
+  const { data: sections } = useQuery({
+    queryKey: ["sections", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections`);
+      if (!res.ok) throw new Error("Failed to fetch sections");
       return res.json();
     },
     enabled: isOpen,

@@ -31,12 +31,15 @@ export async function POST(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    // Fetch source project with all tasks
+    // Fetch source project with all tasks and sections
     const sourceProject = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
         tasks: {
           orderBy: { createdAt: "asc" },
+        },
+        sections: {
+          orderBy: { order: "asc" },
         },
       },
     });
@@ -58,13 +61,26 @@ export async function POST(
       },
     });
 
+    // 1. Clone Sections and keep a map of { oldSectionId: newSectionId }
+    const sectionIdMap: Record<string, string> = {};
+    for (const section of sourceProject.sections) {
+      const clonedSection = await prisma.section.create({
+        data: {
+          name: section.name,
+          order: section.order,
+          projectId: newProject.id,
+        },
+      });
+      sectionIdMap[section.id] = clonedSection.id;
+    }
+
     // CLONING ENGINE: Maintain hierarchy
-    // 1. Separate top-level tasks and subtasks
+    // 2. Separate top-level tasks and subtasks
     const topLevelTasks = sourceProject.tasks.filter(t => !t.parentId);
     const subtasks = sourceProject.tasks.filter(t => t.parentId);
 
-    // 2. Clone top-level tasks and keep a map of { oldId: newId }
-    const idMap: Record<string, string> = {};
+    // 3. Clone top-level tasks and keep a map of { oldTaskId: newTaskId }
+    const taskIdMap: Record<string, string> = {};
 
     for (const task of topLevelTasks) {
       const clonedTask = await prisma.task.create({
@@ -76,15 +92,16 @@ export async function POST(
           startDate: null, // Clean dates for new projects
           dueDate: null,   // Clean dates for new projects
           projectId: newProject.id,
+          sectionId: task.sectionId ? sectionIdMap[task.sectionId] : null,
           assigneeId: null, // Keep it clean for new projects
         },
       });
-      idMap[task.id] = clonedTask.id;
+      taskIdMap[task.id] = clonedTask.id;
     }
 
-    // 3. Clone subtasks using the map to link to new parents
+    // 4. Clone subtasks using the map to link to new parents
     for (const task of subtasks) {
-      if (task.parentId && idMap[task.parentId]) {
+      if (task.parentId && taskIdMap[task.parentId]) {
         await prisma.task.create({
           data: {
             title: task.title,
@@ -94,7 +111,8 @@ export async function POST(
             startDate: null, // Clean dates
             dueDate: null,   // Clean dates
             projectId: newProject.id,
-            parentId: idMap[task.parentId],
+            sectionId: task.sectionId ? sectionIdMap[task.sectionId] : null,
+            parentId: taskIdMap[task.parentId],
             assigneeId: null,
           },
         });

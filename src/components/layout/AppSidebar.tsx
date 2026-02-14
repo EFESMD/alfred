@@ -55,7 +55,6 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
   const { data: session } = useSession();
 
   const activeProjects = projects.filter(p => !p.isArchived);
-  const archivedProjects = projects.filter(p => p.isArchived);
 
   // Fetch the current user's role from the queryClient or a new query
   // For simplicity, we can also pass the user role as a prop, but let's check membership
@@ -141,26 +140,6 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {archivedProjects.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Archived Projects</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {archivedProjects.map((project) => (
-                  <SidebarMenuItem key={project.id}>
-                    <SidebarMenuButton asChild isActive={pathname.includes(`/projects/${project.id}`)}>
-                      <Link href={`/workspaces/${workspace.id}/projects/${project.id}`}>
-                        <Archive className="h-4 w-4 text-slate-400" />
-                        <span className="text-muted-foreground italic">{project.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
       <SidebarFooter className="p-4 border-t">
         <SidebarMenu>

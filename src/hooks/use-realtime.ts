@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { pusherClient } from "@/lib/pusher-client";
 import { useQueryClient } from "@tanstack/react-query";

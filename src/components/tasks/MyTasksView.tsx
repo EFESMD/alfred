@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Plus, MoreHorizontal, Calendar, User, FolderOpen } from "lucide-react";
+import { Plus, MoreHorizontal, Calendar, User, FolderOpen, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { 
@@ -15,9 +15,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskDetailSheet } from "@/components/tasks/TaskDetailSheet";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TaskStatus, TaskPriority } from "@/types/task";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 interface MyTasksViewProps {
   workspaceId: string;
@@ -25,6 +26,7 @@ interface MyTasksViewProps {
 
 export function MyTasksView({ workspaceId }: MyTasksViewProps) {
   const [selectedTask, setSelectedTask] = useState<{ id: string; projectId: string } | null>(null);
+  const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
 
   const { data: tasks, isLoading, refetch } = useQuery<any[]>({
     queryKey: ["my-tasks", workspaceId],
@@ -34,6 +36,22 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
       return res.json();
     },
   });
+
+  const groupedTasks = useMemo(() => {
+    if (!tasks) return {};
+    return tasks.reduce((groups: Record<string, any[]>, task) => {
+      const projectId = task.projectId;
+      if (!groups[projectId]) {
+        groups[projectId] = [];
+      }
+      groups[projectId].push(task);
+      return groups;
+    }, {});
+  }, [tasks]);
+
+  const toggleProject = (projectId: string) => {
+    setCollapsedProjects(prev => ({ ...prev, [projectId]: !prev[projectId] }));
+  };
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
@@ -54,7 +72,9 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading your tasks...</div>;
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading your tasks...</div>;
+
+  const projects = Object.keys(groupedTasks);
 
   return (
     <div className="p-6">
@@ -63,12 +83,11 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
         <p className="text-sm text-muted-foreground">All tasks assigned to you in this workspace.</p>
       </div>
 
-      <div className="bg-white rounded-md border">
+      <div className="bg-white rounded-md border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[30%]">Task name</TableHead>
-              <TableHead>Project</TableHead>
+              <TableHead className="w-[40%]">Task name</TableHead>
               <TableHead>Due date</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
@@ -76,48 +95,86 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks?.map((task) => (
-              <TableRow 
-                key={task.id} 
-                className="cursor-pointer"
-                onClick={() => setSelectedTask({ id: task.id, projectId: task.projectId })}
-              >
-                <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FolderOpen className="h-4 w-4" />
-                    <span>{task.project?.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className={cn(
-                    "flex items-center gap-2 text-sm",
-                    task.dueDate ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    <Calendar className="h-4 w-4" />
-                    <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={getPriorityColor(task.priority as TaskPriority)}>
-                    {task.priority}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(task.status as TaskStatus)}>
-                    {task.status.replace("_", " ")}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {tasks?.length === 0 && (
+            {projects.length > 0 ? (
+              projects.map((projectId) => {
+                const projectTasks = groupedTasks[projectId];
+                const project = projectTasks[0]?.project;
+                const isCollapsed = collapsedProjects[projectId];
+
+                return (
+                  <React.Fragment key={projectId}>
+                    <TableRow className="bg-slate-50/50 hover:bg-slate-100 group">
+                      <TableCell colSpan={5} className="py-2 px-3">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => toggleProject(projectId)}
+                            className="hover:bg-slate-200 p-0.5 rounded transition-colors"
+                          >
+                            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </button>
+                          <div 
+                            className={cn(
+                              "w-5 h-5 rounded flex items-center justify-center text-[10px] shadow-xs border",
+                              project?.color || "bg-blue-500 text-white"
+                            )}
+                          >
+                            {project?.icon || <FolderOpen className="h-3 w-3" />}
+                          </div>
+                          <span className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                            {project?.name || "No Project"}
+                          </span>
+                          <span className="ml-2 font-normal lowercase opacity-50">({projectTasks.length})</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {!isCollapsed && projectTasks.map((task) => (
+                      <TableRow 
+                        key={task.id} 
+                        className="cursor-pointer group h-9"
+                        onClick={() => setSelectedTask({ id: task.id, projectId: task.projectId })}
+                      >
+                        <TableCell className="font-medium pl-10 py-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{task.title}</span>
+                            {task.subtasks?.length > 0 && (
+                              <Badge variant="outline" className="text-[9px] px-1 h-3.5 gap-1 opacity-50 font-normal">
+                                {task.subtasks.length} subtasks
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <div className={cn(
+                            "flex items-center gap-1.5 text-xs",
+                            task.dueDate ? "text-foreground" : "text-muted-foreground"
+                          )}>
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Badge variant="outline" className={cn("text-[10px] py-0 h-5", getPriorityColor(task.priority as TaskPriority))}>
+                            {task.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
+                            {task.status.replace("_", " ")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right py-1">
+                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-7 w-7">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
+                );
+              })
+            ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
                   You have no tasks assigned.
                 </TableCell>
               </TableRow>

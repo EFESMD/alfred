@@ -575,11 +575,11 @@ export function TaskDetailSheet({
                     </h4>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {task.subtasks?.map((subtask: any) => (
                       <div 
                         key={subtask.id} 
-                        className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-200 transition-all"
+                        className="flex items-center gap-3 p-1 px-2 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-200 transition-all min-h-[32px]"
                       >
                         <button
                           disabled={isArchived}
@@ -588,36 +588,36 @@ export function TaskDetailSheet({
                             status: subtask.status === "DONE" ? "TODO" : "DONE" 
                           })}
                           className={cn(
-                            "h-5 w-5 rounded border flex items-center justify-center transition-colors",
+                            "h-4 w-4 rounded border flex items-center justify-center transition-colors scale-90",
                             subtask.status === "DONE" ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-primary",
                             isArchived && "opacity-50 cursor-not-allowed"
                           )}
                         >
-                          {subtask.status === "DONE" && <Check className="h-3 w-3 text-white" />}
+                          {subtask.status === "DONE" && <Check className="h-2.5 w-2.5 text-white" />}
                         </button>
                         <span className={cn(
-                          "text-sm flex-1",
+                          "text-xs flex-1",
                           subtask.status === "DONE" && "line-through text-muted-foreground"
                         )}>
                           {subtask.title}
                         </span>
                         {subtask.assignee && (
-                          <Avatar className="h-5 w-5">
+                          <Avatar className="h-4 w-4">
                             <AvatarImage src={subtask.assignee.image} />
-                            <AvatarFallback className="text-[8px]">{subtask.assignee.name?.[0]}</AvatarFallback>
+                            <AvatarFallback className="text-[7px]">{subtask.assignee.name?.[0]}</AvatarFallback>
                           </Avatar>
                         )}
                         {!isArchived && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteTaskMutation.mutate(subtask.id);
                             }}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         )}
                       </div>

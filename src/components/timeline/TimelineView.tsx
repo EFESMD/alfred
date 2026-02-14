@@ -41,6 +41,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
   const endDate = endOfMonth(addMonths(viewDate, zoomLevel === 'days' ? 1 : 5));
   
   const columns = useMemo(() => {
+    // ... same logic
     if (zoomLevel === 'days') {
       return eachDayOfInterval({ start: startDate, end: endDate }).map(date => ({
         date,
@@ -60,7 +61,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     }
   }, [startDate, endDate, zoomLevel]);
 
-  const { data: tasks, isLoading } = useQuery<TaskWithAssignee[]>({
+  const { data: tasks, isLoading: tasksLoading } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`);
@@ -69,16 +70,58 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     },
   });
 
+  const { data: sections, isLoading: sectionsLoading } = useQuery<any[]>({
+    queryKey: ["sections", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections`);
+      if (!res.ok) throw new Error("Failed to fetch sections");
+      return res.json();
+    },
+  });
+
+  const groupedTasks = useMemo(() => {
+    if (!tasks) return [];
+    
+    const groups: { id: string, name: string, tasks: TaskWithAssignee[] }[] = [];
+    
+    sections?.forEach(s => {
+      groups.push({
+        id: s.id,
+        name: s.name,
+        tasks: tasks.filter(t => t.sectionId === s.id)
+      });
+    });
+    
+    const uncategorized = tasks.filter(t => !t.sectionId);
+    if (uncategorized.length > 0) {
+      groups.push({
+        id: "uncategorized",
+        name: "Uncategorized",
+        tasks: uncategorized
+      });
+    }
+    
+    return groups;
+  }, [tasks, sections]);
+
+  // Flatten for dependency calculation and rendering
+  const flattenedTasks = useMemo(() => {
+    return groupedTasks.flatMap(g => g.tasks);
+  }, [groupedTasks]);
+
   const columnWidth = zoomLevel === 'days' ? 40 : 80;
 
   const getTaskStyle = (task: TaskWithAssignee) => {
-    if (!task.startDate || !task.dueDate) return null;
+    if (!task.startDate && !task.dueDate) return null;
     
-    const taskStart = startOfDay(new Date(task.startDate));
-    const taskEnd = startOfDay(new Date(task.dueDate));
+    const effectiveStart = task.startDate ? new Date(task.startDate) : new Date(task.dueDate!);
+    const effectiveEnd = task.dueDate ? new Date(task.dueDate) : new Date(task.startDate!);
+    
+    const taskStart = startOfDay(effectiveStart);
+    const taskEnd = startOfDay(effectiveEnd);
     
     const startOffsetDays = differenceInDays(taskStart, startDate);
-    const durationDays = differenceInDays(taskEnd, taskStart) + 1;
+    const durationDays = Math.max(1, differenceInDays(taskEnd, taskStart) + 1);
     
     const pixelRatio = zoomLevel === 'days' ? columnWidth : columnWidth / 7;
     
@@ -88,7 +131,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     };
   };
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading timeline...</div>;
+  if (tasksLoading || sectionsLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading timeline...</div>;
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -198,16 +241,55 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
                   <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8" />
                 </marker>
               </defs>
-              {tasks?.map((task, taskIndex) => {
-                const taskY = taskIndex * 48 + 24;
-                return task.predecessors?.map((pred) => {
-                  const predTask = tasks.find(t => t.id === pred.id);
-                  if (!predTask || !predTask.startDate || !predTask.dueDate || !task.startDate || !task.dueDate) return null;
+              {flattenedTasks.map((task, taskIndex) => {
+                // Account for section headers in Y offset calculation
+                let headerCount = 0;
+                let currentIdx = 0;
+                for (const group of groupedTasks) {
+                  headerCount++;
+                  const taskInGroupIdx = group.tasks.findIndex(t => t.id === task.id);
+                  if (taskInGroupIdx !== -1) {
+                    currentIdx = headerCount + (flattenedTasks.findIndex(t => t.id === task.id) - (flattenedTasks.indexOf(group.tasks[0])));
+                    // Simplified: just track global row index including headers
+                    break;
+                  }
+                }
+                
+                // Let's just use a simpler way to find the row index including headers
+                let rowIndex = 0;
+                for (const group of groupedTasks) {
+                  rowIndex++; // Header row
+                  const tIdx = group.tasks.findIndex(t => t.id === task.id);
+                  if (tIdx !== -1) {
+                    rowIndex += tIdx;
+                    break;
+                  }
+                  rowIndex += group.tasks.length;
+                }
 
-                  const predIndex = tasks.indexOf(predTask);
-                  const predY = predIndex * 48 + 24;
-                  const predEnd = startOfDay(new Date(predTask.dueDate));
-                  const taskStart = startOfDay(new Date(task.startDate));
+                const taskY = rowIndex * 48 + 24;
+
+                return task.predecessors?.map((pred) => {
+                  const predTask = flattenedTasks.find(t => t.id === pred.id);
+                  if (!predTask || (!predTask.startDate && !predTask.dueDate) || (!task.startDate && !task.dueDate)) return null;
+
+                  let predRowIndex = 0;
+                  for (const group of groupedTasks) {
+                    predRowIndex++;
+                    const tIdx = group.tasks.findIndex(t => t.id === predTask.id);
+                    if (tIdx !== -1) {
+                      predRowIndex += tIdx;
+                      break;
+                    }
+                    predRowIndex += group.tasks.length;
+                  }
+
+                  const predY = predRowIndex * 48 + 24;
+                  const predEffectiveEnd = predTask.dueDate ? new Date(predTask.dueDate) : new Date(predTask.startDate!);
+                  const taskEffectiveStart = task.startDate ? new Date(task.startDate) : new Date(task.dueDate!);
+                  
+                  const predEnd = startOfDay(predEffectiveEnd);
+                  const taskStart = startOfDay(taskEffectiveStart);
 
                   const pixelRatio = zoomLevel === 'days' ? columnWidth : columnWidth / 7;
                   const predEndX = 256 + differenceInDays(predEnd, startDate) * pixelRatio + pixelRatio;
@@ -228,50 +310,71 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
               })}
             </svg>
 
-            {tasks && tasks.length > 0 ? (
-              tasks.map((task) => (
-                <div key={task.id} className="flex border-b group hover:bg-gray-50 transition-colors">
-                  <div 
-                    className="w-64 flex-shrink-0 border-r p-2 flex items-center gap-2 overflow-hidden bg-white sticky left-0 z-10 group-hover:bg-gray-50 cursor-pointer"
-                    onClick={() => setSelectedTaskId(task.id)}
-                  >
-                    <div className={cn(
-                      "w-2 h-2 rounded-full flex-shrink-0",
-                      task.status === "DONE" ? "bg-green-500" : 
-                      task.status === "IN_PROGRESS" ? "bg-blue-500" : 
-                      task.status === "TODO" ? "bg-yellow-500" : "bg-gray-400"
-                    )} />
-                    <span className="text-sm truncate font-medium">{task.title}</span>
+            {groupedTasks.length > 0 ? (
+              groupedTasks.map((group) => (
+                <div key={group.id}>
+                  {/* Section Header Row */}
+                  <div className="flex border-b bg-slate-50/80 sticky left-0 z-10">
+                    <div className="w-64 flex-shrink-0 border-r p-2 flex items-center gap-2 bg-slate-100/50 sticky left-0 z-20">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{group.name}</span>
+                    </div>
+                    <div className="flex relative h-12">
+                      {columns.map((col) => (
+                        <div 
+                          key={col.date.toISOString()} 
+                          className="flex-shrink-0 border-r h-full bg-slate-50/30"
+                          style={{ width: columnWidth }}
+                        />
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="flex relative h-12">
-                    {columns.map((col) => (
+                  {/* Tasks in Section */}
+                  {group.tasks.map((task) => (
+                    <div key={task.id} className="flex border-b group hover:bg-gray-50 transition-colors">
                       <div 
-                        key={col.date.toISOString()} 
-                        className={cn(
-                          "flex-shrink-0 border-r h-full",
-                          zoomLevel === 'days' && isToday(col.date) ? "bg-green-50/50" : 
-                          zoomLevel === 'days' && (col.date.getDay() === 0 || col.date.getDay() === 6) ? "bg-slate-200/50" : "bg-white"
-                        )}
-                        style={{ width: columnWidth }}
-                      />
-                    ))}
-
-                    {task.startDate && task.dueDate && (
-                      <div 
-                        className={cn(
-                          "absolute top-2 h-8 rounded-md flex items-center px-3 text-[11px] text-white font-medium overflow-hidden shadow-sm cursor-pointer hover:brightness-110 transition-all z-10",
-                          task.status === "DONE" ? "bg-green-500" : 
-                          task.status === "IN_PROGRESS" ? "bg-blue-600" : 
-                          task.status === "TODO" ? "bg-yellow-600" : "bg-gray-500"
-                        )}
-                        style={getTaskStyle(task) || {}}
+                        className="w-64 flex-shrink-0 border-r p-2 flex items-center gap-2 overflow-hidden bg-white sticky left-0 z-10 group-hover:bg-gray-50 cursor-pointer pl-6"
                         onClick={() => setSelectedTaskId(task.id)}
                       >
-                        <span className="truncate whitespace-nowrap">{task.title}</span>
+                        <div className={cn(
+                          "w-2 h-2 rounded-full flex-shrink-0",
+                          task.status === "DONE" ? "bg-green-500" : 
+                          task.status === "IN_PROGRESS" ? "bg-blue-500" : 
+                          task.status === "TODO" ? "bg-yellow-500" : "bg-gray-400"
+                        )} />
+                        <span className="text-sm truncate font-medium">{task.title}</span>
                       </div>
-                    )}
-                  </div>
+
+                      <div className="flex relative h-12">
+                        {columns.map((col) => (
+                          <div 
+                            key={col.date.toISOString()} 
+                            className={cn(
+                              "flex-shrink-0 border-r h-full",
+                              zoomLevel === 'days' && isToday(col.date) ? "bg-green-50/50" : 
+                              zoomLevel === 'days' && (col.date.getDay() === 0 || col.date.getDay() === 6) ? "bg-slate-200/50" : "bg-white"
+                            )}
+                            style={{ width: columnWidth }}
+                          />
+                        ))}
+
+                        {(task.startDate || task.dueDate) && (
+                          <div 
+                            className={cn(
+                              "absolute top-2 h-8 rounded-md flex items-center px-3 text-[11px] text-white font-medium overflow-hidden shadow-sm cursor-pointer hover:brightness-110 transition-all z-10",
+                              task.status === "DONE" ? "bg-green-500" : 
+                              task.status === "IN_PROGRESS" ? "bg-blue-600" : 
+                              task.status === "TODO" ? "bg-yellow-600" : "bg-gray-500"
+                            )}
+                            style={getTaskStyle(task) || {}}
+                            onClick={() => setSelectedTaskId(task.id)}
+                          >
+                            <span className="truncate whitespace-nowrap">{task.title}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))
             ) : (

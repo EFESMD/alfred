@@ -51,7 +51,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { title, description, status, priority, startDate, dueDate, assigneeId, parentId } = body;
+    const { title, description, status, priority, startDate, dueDate, assigneeId, parentId, sectionId } = body;
 
     if (!title) {
       return new NextResponse("Title is required", { status: 400 });
@@ -70,6 +70,7 @@ export async function POST(
         projectId,
         assigneeId,
         parentId: parentId || null,
+        sectionId: sectionId || null,
       },
     });
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { Plus, MoreHorizontal, Calendar, User } from "lucide-react";
+import * as React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus, MoreHorizontal, Calendar, User, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { 
@@ -16,10 +17,24 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskDetailSheet } from "@/components/tasks/TaskDetailSheet";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TaskStatus, TaskPriority, TaskWithAssignee } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { useRealtime } from "@/hooks/use-realtime";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+
+interface Section {
+  id: string;
+  name: string;
+  order: number;
+}
 
 interface TaskListViewProps {
   workspaceId: string;
@@ -29,20 +44,156 @@ interface TaskListViewProps {
 
 export function TaskListView({ workspaceId, projectId, isArchived = false }: TaskListViewProps) {
   useRealtime(projectId);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [initialSectionId, setInitialSectionId] = useState<string | undefined>(undefined);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [isAddingSection, setIsAddingSection] = useState(false);
+  const [newSectionName, setNewSectionName] = useState("");
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editingSectionName, setEditingSectionName] = useState("");
+  const [inlineSectionId, setInlineSectionId] = useState<string | null>(null);
+  const [inlineTitle, setInlineTitle] = useState("");
 
-  const { data: tasks, isLoading, error, refetch } = useQuery<TaskWithAssignee[]>({
+  const { data: tasks, isLoading: tasksLoading, refetch: refetchTasks } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],
     queryFn: async () => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`);
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Failed to fetch tasks");
-      }
+      if (!res.ok) throw new Error("Failed to fetch tasks");
       return res.json();
     },
   });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async ({ title, sectionId }: { title: string; sectionId?: string }) => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          title, 
+          sectionId: sectionId === "uncategorized" ? null : sectionId,
+          status: "TODO",
+          priority: "MEDIUM"
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to create task");
+      return res.json();
+    },
+    onSuccess: () => {
+      setInlineTitle("");
+      setInlineSectionId(null);
+      refetchTasks();
+      toast.success("Task created");
+    },
+  });
+
+  const { data: sections, isLoading: sectionsLoading, refetch: refetchSections } = useQuery<Section[]>({
+    queryKey: ["sections", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections`);
+      if (!res.ok) throw new Error("Failed to fetch sections");
+      return res.json();
+    },
+  });
+
+  const addSectionMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error("Failed to create section");
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsAddingSection(false);
+      setNewSectionName("");
+      refetchSections();
+      toast.success("Section created");
+    },
+  });
+
+  const updateSectionMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const endpoint = id === "uncategorized" 
+        ? `/api/workspaces/${workspaceId}/projects/${projectId}/sections/promote-uncategorized`
+        : `/api/workspaces/${workspaceId}/projects/${projectId}/sections/${id}`;
+      
+      const method = id === "uncategorized" ? "POST" : "PATCH";
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error("Failed to update section");
+      return res.json();
+    },
+    onSuccess: () => {
+      setEditingSectionId(null);
+      refetchSections();
+      refetchTasks();
+      toast.success("Section updated");
+    },
+  });
+
+  const deleteSectionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete section");
+    },
+    onSuccess: () => {
+      refetchSections();
+      refetchTasks();
+      toast.success("Section deleted");
+    },
+  });
+
+  const groupedTasks = useMemo(() => {
+    if (!tasks) return {};
+    const groups: Record<string, TaskWithAssignee[]> = { "uncategorized": [] };
+    
+    sections?.forEach(s => groups[s.id] = []);
+    
+    tasks.forEach(task => {
+      const key = task.sectionId || "uncategorized";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(task);
+    });
+    
+    return groups;
+  }, [tasks, sections]);
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  // Keyboard shortcut listener
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input, textarea, or if project is archived
+      if (
+        isArchived || 
+        e.target instanceof HTMLInputElement || 
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        setIsModalOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isArchived]);
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
@@ -63,21 +214,47 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading tasks...</div>;
+  if (tasksLoading || sectionsLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading project data...</div>;
 
   return (
     <div className="p-6">
-      <div className="mb-4">
-        <Button onClick={() => setIsModalOpen(true)} disabled={isArchived}>
+      <div className="flex items-center gap-3 mb-6">
+        <Button onClick={() => setIsModalOpen(true)} disabled={isArchived} size="sm">
           <Plus className="h-4 w-4 mr-2" />
           Add Task
         </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          disabled={isArchived}
+          onClick={() => setIsAddingSection(true)}
+        >
+          Add Section
+        </Button>
       </div>
 
-      <div className="bg-white rounded-md border">
+      {isAddingSection && (
+        <div className="mb-4 flex items-center gap-2 p-2 bg-slate-50 rounded-md border border-dashed">
+          <Input 
+            placeholder="Section name..." 
+            value={newSectionName}
+            onChange={(e) => setNewSectionName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newSectionName.trim()) addSectionMutation.mutate(newSectionName);
+              if (e.key === "Escape") setIsAddingSection(false);
+            }}
+            autoFocus
+            className="h-8 max-w-[300px]"
+          />
+          <Button size="sm" onClick={() => addSectionMutation.mutate(newSectionName)} disabled={!newSectionName.trim()}>Add</Button>
+          <Button size="sm" variant="ghost" onClick={() => setIsAddingSection(false)}>Cancel</Button>
+        </div>
+      )}
+
+      <div className="bg-white rounded-md border overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               <TableHead className="w-[40%]">Task name</TableHead>
               <TableHead>Assignee</TableHead>
               <TableHead>Due date</TableHead>
@@ -87,69 +264,217 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks?.map((task) => (
-              <TableRow 
-                key={task.id} 
-                className="cursor-pointer"
-                onClick={() => setSelectedTaskId(task.id)}
-              >
-                <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      {task.assignee?.image && <AvatarImage src={task.assignee.image} />}
-                      <AvatarFallback className="text-[10px]">
-                        {task.assignee?.name?.[0] || <User className="h-3 w-3" />}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm truncate max-w-[100px]">
-                      {task.assignee?.name || "Unassigned"}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className={cn(
-                    "flex items-center gap-2 text-sm",
-                    task.dueDate ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    <Calendar className="h-4 w-4" />
-                    <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={getPriorityColor(task.priority as TaskPriority)}>
-                    {task.priority}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(task.status as TaskStatus)}>
-                    {task.status.replace("_", " ")}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {tasks?.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  No tasks found.
-                </TableCell>
-              </TableRow>
-            )}
+            {(sections || []).concat([{ id: "uncategorized", name: "Uncategorized" } as any]).map((section) => {
+              const sectionTasks = groupedTasks[section.id] || [];
+              if (section.id === "uncategorized" && sectionTasks.length === 0) return null;
+              
+              const isCollapsed = collapsedSections[section.id];
+              const isEditing = editingSectionId === section.id;
+              
+              return (
+                <React.Fragment key={section.id}>
+                  <TableRow className="bg-slate-50/50 hover:bg-slate-100 group">
+                    <TableCell colSpan={6} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-1">
+                          <button 
+                            onClick={() => toggleSection(section.id)}
+                            className="hover:bg-slate-200 p-0.5 rounded transition-colors"
+                          >
+                            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </button>
+                          
+                          {isEditing ? (
+                            <Input 
+                              value={editingSectionName}
+                              onChange={(e) => setEditingSectionName(e.target.value)}
+                              className="h-7 max-w-[250px] text-xs font-semibold uppercase py-0 px-2"
+                              autoFocus
+                              onBlur={() => {
+                                if (editingSectionName.trim() && editingSectionName !== section.name) {
+                                  updateSectionMutation.mutate({ id: section.id, name: editingSectionName });
+                                } else {
+                                  setEditingSectionId(null);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  updateSectionMutation.mutate({ id: section.id, name: editingSectionName });
+                                }
+                                if (e.key === "Escape") setEditingSectionId(null);
+                              }}
+                            />
+                          ) : (
+                            <>
+                              <span>{section.name}</span>
+                              <span className="ml-2 font-normal lowercase opacity-50">({sectionTasks.length})</span>
+                            </>
+                          )}
+                        </div>
+
+                        {!isArchived && !isEditing && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                                <MoreHorizontal className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                setEditingSectionId(section.id);
+                                setEditingSectionName(section.id === "uncategorized" ? "" : section.name);
+                              }}>
+                                <Pencil className="h-3 w-3 mr-2" />
+                                Rename
+                              </DropdownMenuItem>
+                              {section.id !== "uncategorized" && (
+                                <DropdownMenuItem 
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => {
+                                    if (confirm("Are you sure? Tasks in this section will be moved to Uncategorized.")) {
+                                      deleteSectionMutation.mutate(section.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {!isCollapsed && (
+                    <>
+                      {sectionTasks.map((task) => (
+                        <TableRow 
+                          key={task.id} 
+                          className="cursor-pointer group h-9"
+                          onClick={() => setSelectedTaskId(task.id)}
+                        >
+                          <TableCell className="font-medium pl-10 py-1">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate">{task.title}</span>
+                              {task.subtasks?.length > 0 && (
+                                <Badge variant="outline" className="text-[9px] px-1 h-3.5 gap-1 opacity-50 font-normal">
+                                  {task.subtasks.length} subtasks
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-1">
+                            <div className="flex items-center gap-2 scale-90 origin-left">
+                              <Avatar className="h-5 w-5">
+                                {task.assignee?.image && <AvatarImage src={task.assignee.image} />}
+                                <AvatarFallback className="text-[9px]">
+                                  {task.assignee?.name?.[0] || <User className="h-2.5 w-2.5" />}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs truncate max-w-[100px]">
+                                {task.assignee?.name || "Unassigned"}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-1">
+                            <div className={cn(
+                              "flex items-center gap-1.5 text-xs",
+                              task.dueDate ? "text-foreground" : "text-muted-foreground"
+                            )}>
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-1">
+                            <Badge variant="outline" className={cn("text-[10px] py-0 h-5", getPriorityColor(task.priority as TaskPriority))}>
+                              {task.priority}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-1">
+                            <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
+                              {task.status.replace("_", " ")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right py-1">
+                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-7 w-7">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {!isArchived && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={6} className="py-1 pl-10">
+                            {inlineSectionId === section.id ? (
+                              <div className="flex items-center gap-2 pr-4">
+                                <Input 
+                                  placeholder="Task name..." 
+                                  value={inlineTitle}
+                                  onChange={(e) => setInlineTitle(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && inlineTitle.trim()) {
+                                      createTaskMutation.mutate({ title: inlineTitle, sectionId: section.id });
+                                    }
+                                    if (e.key === "Escape") {
+                                      setInlineSectionId(null);
+                                      setInlineTitle("");
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="h-7 text-xs border-none shadow-none focus-visible:ring-1 bg-slate-50"
+                                />
+                                <Button 
+                                  size="sm" 
+                                  className="h-6 text-[10px] px-2" 
+                                  onClick={() => createTaskMutation.mutate({ title: inlineTitle, sectionId: section.id })}
+                                  disabled={!inlineTitle.trim() || createTaskMutation.isPending}
+                                >
+                                  Add
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="h-6 text-[10px] px-2"
+                                  onClick={() => {
+                                    setInlineSectionId(null);
+                                    setInlineTitle("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <button 
+                                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1.5 transition-colors group/btn"
+                                onClick={() => setInlineSectionId(section.id)}
+                              >
+                                <Plus className="h-3 w-3 group-hover/btn:scale-110 transition-transform" />
+                                Add task to {section.name}
+                              </button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
       <TaskModal 
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setInitialSectionId(undefined);
+        }}
         workspaceId={workspaceId}
         projectId={projectId}
-        onSuccess={refetch}
+        initialSectionId={initialSectionId}
+        onSuccess={refetchTasks}
       />
 
       <TaskDetailSheet 
