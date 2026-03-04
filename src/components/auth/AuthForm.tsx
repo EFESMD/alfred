@@ -49,13 +49,18 @@ export function AuthForm({ mode }: AuthFormProps) {
       });
 
       if (result?.error) {
-        throw new Error(result.error);
+        // NextAuth returns a generic error for security, 
+        // but we can make it friendlier.
+        const errorMessage = result.error === "CredentialsSignin" 
+          ? "Invalid email or password. Make sure you have an account."
+          : result.error;
+        throw new Error(errorMessage);
       }
 
       router.push("/dashboard");
       router.refresh();
     } catch (error: any) {
-      toast.error(error.message || "Something went wrong");
+      toast.error(error.message || "Something went wrong. Please check your details.");
     } finally {
       setIsLoading(false);
     }
