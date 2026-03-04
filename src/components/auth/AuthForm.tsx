@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,9 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -57,7 +60,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         throw new Error(errorMessage);
       }
 
-      router.push("/dashboard");
+      // Use callbackUrl if provided, otherwise go to dashboard
+      router.push(callbackUrl);
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Something went wrong. Please check your details.");
@@ -123,7 +127,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 <button
                   type="button"
                   className="underline underline-offset-4 hover:text-primary"
-                  onClick={() => router.push("/register")}
+                  onClick={() => router.push(`/register${callbackUrl !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`)}
                 >
                   Sign up
                 </button>
@@ -134,7 +138,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 <button
                   type="button"
                   className="underline underline-offset-4 hover:text-primary"
-                  onClick={() => router.push("/login")}
+                  onClick={() => router.push(`/login${callbackUrl !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`)}
                 >
                   Login
                 </button>
