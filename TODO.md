@@ -67,14 +67,13 @@
 - [ ] **Next Steps**
     - [ ] Global Search (Quick navigation across workspace)
     - [ ] Notifications system
-    - [ ] Manual Task Sorting (Drag & Drop reordering in List and Kanban)
+    - [x] Manual Task Sorting (Drag & Drop reordering in List and Kanban)
     - [ ] User Roles & Permissions (Strict cross-workspace enforcement)
     - [ ] Multi-Assignees (Assign multiple members to a task)
-    - [ ] Task Tags/Labels (Colored categories for tasks)
     - [ ] Activity Export (Export project data to CSV/PDF)
 
 - [ ] **Colleague Feedback (Backlog)**
-    - [ ] **Inline Task Addition**: Add tasks directly in the list row without a modal
+    - [x] **Inline Task Addition**: Add tasks directly in the list row without a modal
     - [ ] **Status Management**: Custom statuses or faster status switching
     - [ ] **Visibility Filters**: Toggle to "Hide Done" tasks in all views
     - [ ] **Timeline Export**: Export project timeline to external formats
@@ -84,11 +83,26 @@
     - [ ] **Project Roles**: Define specific roles within a project (not just workspace)
     - [ ] **Email Verification**: Formalize account creation with email confirmation
 
-## How to Test
-1. Access the app at [http://localhost:3000](http://localhost:3000)
-2. Register a new account / Login.
-3. Create a workspace or select an existing one.
-4. Create a project and add some **Sections** via the List view.
-5. Use the **'t' shortcut** in List view to quickly add tasks.
-6. Check the **My Tasks** page to see tasks grouped by project.
-7. Verify that **Sections** are preserved when saving a project as a template.
+- [ ] **Infrastructure & Deployment (Ref: [DEPLOYMENT.md](DEPLOYMENT.md))**
+    - [ ] **Railway Setup (Faza 1)**
+        - [ ] Verify `.env` variables consistency
+        - [ ] Configure Railway project and GitHub connection
+        - [ ] Set up **Railway Volumes** for SQLite and uploads
+        - [ ] First deployment and production testing
+    - [ ] **Future Optimization (Faza 2)**
+        - [ ] Migrate to VPS (DigitalOcean/Hetzner)
+        - [ ] Evaluate migration to PostgreSQL based on load
+
+Cum putem schimba statuturile?
+Filtru pentru a ascunde cele done
+Export la timeline
+Sortare campuri in list view
+My tasks:
+ ———Filtre
+ ———Grupari
+ ———Sortari
+Tasks by others
+Roluri in proiect
+Notificari
+Dependente intre taskuri
+Email verification

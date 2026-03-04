@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,22 +7,20 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-// NextAuth Models
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -39,21 +34,20 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  accounts      Account[]
-  sessions      Session[]
-  
-  ownedWorkspaces Workspace[] @relation("WorkspaceOwner")
-  memberships     WorkspaceMember[]
-  assignedTasks   Task[]    @relation("TaskAssignee")
-  ledProjects     Project[] @relation("ProjectLeader")
-  comments        Comment[]
+  id              String            @id @default(cuid())
+  name            String?
+  email           String?           @unique
+  emailVerified   DateTime?
+  image           String?
+  password        String?
+  accounts        Account[]
   activities      Activity[]
+  comments        Comment[]
+  ledProjects     Project[]         @relation("ProjectLeader")
+  sessions        Session[]
+  assignedTasks   Task[]            @relation("TaskAssignee")
+  ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
+  memberships     WorkspaceMember[]
 }
 
 model VerificationToken {
@@ -64,50 +58,46 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Application Models
 model Workspace {
-  id          String   @id @default(cuid())
-  name        String
-  ownerId     String
-  inviteCode  String?  @unique @default(cuid())
-  owner       User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
-  members     WorkspaceMember[]
-  projects    Project[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String            @id @default(cuid())
+  name       String
+  ownerId    String
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  inviteCode String?           @unique @default(cuid())
+  projects   Project[]
+  owner      User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members    WorkspaceMember[]
 }
 
 model WorkspaceMember {
   id          String    @id @default(cuid())
   workspaceId String
   userId      String
-  role        String    @default("MEMBER") // OWNER, ADMIN, MEMBER
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String    @default("MEMBER")
   createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
 }
 
 model Project {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  workspaceId     String
   projectLeaderId String?
-  projectLeader   User?   @relation("ProjectLeader", fields: [projectLeaderId], references: [id])
-
-  isArchived  Boolean   @default(false)
-  isTemplate  Boolean   @default(false)
-  color       String?   // Hex code or tailwind color name
-  icon        String?   // Lucide icon name or emoji
-
-  tasks       Task[]
-  sections    Section[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isArchived      Boolean   @default(false)
+  isTemplate      Boolean   @default(false)
+  color           String?
+  icon            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  projectLeader   User?     @relation("ProjectLeader", fields: [projectLeaderId], references: [id])
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sections        Section[]
+  tasks           Task[]
 }
 
 model Section {
@@ -116,44 +106,35 @@ model Section {
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
   tasks     Task[]
 }
 
 model Task {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  status      String       @default("TODO") // BACKLOG, TODO, IN_PROGRESS, DONE
-  priority    String       @default("MEDIUM") // LOW, MEDIUM, HIGH
-  startDate   DateTime?
-  dueDate     DateTime?
-  projectId   String
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  sectionId   String?
-  section     Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-
-  assigneeId  String?
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  
-  // Subtasks relationship
-  parentId    String?
-  parent      Task?        @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
-  subtasks    Task[]       @relation("Subtasks")
-
-  // Dependencies relationship
-  predecessors Task[]      @relation("TaskDependencies")
-  successors   Task[]      @relation("TaskDependencies")
-
-  comments    Comment[]
-  activities  Activity[]
-  attachments Attachment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                      String       @id @default(cuid())
+  title                   String
+  description             String?
+  status                  String       @default("TODO")
+  priority                String       @default("MEDIUM")
+  startDate               DateTime?
+  dueDate                 DateTime?
+  projectId               String
+  sectionId               String?
+  assigneeId              String?
+  parentId                String?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  activities              Activity[]
+  attachments             Attachment[]
+  comments                Comment[]
+  parent                  Task?        @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks                Task[]       @relation("Subtasks")
+  assignee                User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  section                 Section?     @relation(fields: [sectionId], references: [id])
+  project                 Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  Task_TaskDependencies_A Task[]       @relation("TaskDependencies")
+  Task_TaskDependencies_B Task[]       @relation("TaskDependencies")
 }
 
 model Attachment {
@@ -163,28 +144,28 @@ model Attachment {
   size      Int
   type      String
   taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
   id        String   @id @default(cuid())
   content   String
   taskId    String
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Activity {
   id          String   @id @default(cuid())
-  type        String   // e.g., "TASK_CREATED", "TASK_UPDATED", "STATUS_CHANGED"
+  type        String
   description String
   taskId      String
-  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }

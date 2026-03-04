@@ -2,7 +2,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { writeFile, unlink } from "fs/promises";
+import { writeFile, unlink, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(
@@ -33,7 +33,11 @@ export async function POST(
 
     const fileExtension = file.name.split(".").pop();
     const fileName = `${taskId}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
-    const uploadPath = path.join(process.cwd(), "public", "uploads", "tasks", fileName);
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "tasks");
+    const uploadPath = path.join(uploadDir, fileName);
+
+    // Ensure directory exists
+    await mkdir(uploadDir, { recursive: true });
 
     await writeFile(uploadPath, buffer);
 

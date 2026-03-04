@@ -2,7 +2,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(req: Request) {
@@ -37,7 +37,11 @@ export async function POST(req: Request) {
     // Create unique filename
     const fileExtension = file.name.split(".").pop();
     const fileName = `${session.user.id}-${Date.now()}.${fileExtension}`;
-    const uploadPath = path.join(process.cwd(), "public", "uploads", fileName);
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    const uploadPath = path.join(uploadDir, fileName);
+
+    // Ensure directory exists
+    await mkdir(uploadDir, { recursive: true });
 
     // Save to filesystem
     await writeFile(uploadPath, buffer);

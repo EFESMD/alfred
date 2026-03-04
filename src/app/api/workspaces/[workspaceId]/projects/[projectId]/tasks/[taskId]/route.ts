@@ -112,12 +112,12 @@ export async function PATCH(
 
     const { taskId, projectId } = await params;
     const body = await req.json();
-    const { status, priority, title, description, assigneeId, startDate, dueDate, predecessorIds } = body;
+    const { status, priority, title, description, assigneeId, startDate, dueDate, predecessorIds, sectionId } = body;
 
     // Fetch the current task state to compare changes
     const currentTask = await prisma.task.findUnique({
       where: { id: taskId },
-      include: { assignee: true, predecessors: true }
+      include: { assignee: true, predecessors: true, section: true }
     });
 
     if (!currentTask) {
@@ -137,6 +137,7 @@ export async function PATCH(
         assigneeId,
         startDate: startDate ? new Date(startDate) : undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,
+        sectionId: sectionId === "uncategorized" ? null : sectionId,
         predecessors: predecessorIds ? {
           set: predecessorIds.map((id: string) => ({ id }))
         } : undefined,
@@ -145,6 +146,21 @@ export async function PATCH(
 
     // Generate activity logs for changes
     const activities = [];
+    
+    if (sectionId !== undefined && sectionId !== currentTask.sectionId) {
+      const newSection = sectionId && sectionId !== "uncategorized"
+        ? await prisma.section.findUnique({ where: { id: sectionId } })
+        : null;
+      
+      activities.push({
+        type: "SECTION_CHANGED",
+        description: newSection 
+          ? `moved task to section "${newSection.name}"` 
+          : "moved task to Uncategorized",
+        taskId,
+        userId: session.user.id,
+      });
+    }
     if (status && status !== currentTask.status) {
       activities.push({
         type: "STATUS_CHANGED",
