@@ -61,6 +61,7 @@ interface TaskListViewProps {
   workspaceId: string;
   projectId: string;
   isArchived?: boolean;
+  projectLeaderId?: string | null;
 }
 
 function SortableTaskRow({ 

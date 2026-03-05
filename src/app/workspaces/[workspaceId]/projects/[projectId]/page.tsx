@@ -16,6 +16,7 @@ export default async function ProjectPage({
     },
     select: {
       isArchived: true,
+      projectLeaderId: true,
     },
   });
 
@@ -23,5 +24,12 @@ export default async function ProjectPage({
     notFound();
   }
 
-  return <TaskListView workspaceId={workspaceId} projectId={projectId} isArchived={project.isArchived} />;
+  return (
+    <TaskListView 
+      workspaceId={workspaceId} 
+      projectId={projectId} 
+      isArchived={project.isArchived} 
+      projectLeaderId={project.projectLeaderId}
+    />
+  );
 }

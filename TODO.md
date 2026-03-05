@@ -53,6 +53,7 @@
     - [x] **Strict Read-Only mode for archived projects**
     - [x] **Keyboard Shortcut 't'** for instant task creation in List View
     - [x] **Grouped "My Tasks"** view by project for cross-workspace clarity
+    - [x] **Auto-Assign Project Leader**: New tasks (inline or popup) are automatically assigned to the project leader by default.
 
 - [x] **Maintenance & Bug Fixes**
     - [x] Resolved Prisma client synchronization issues with Turbopack
