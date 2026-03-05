@@ -69,6 +69,89 @@ interface TaskDetailSheetProps {
   isArchived?: boolean;
 }
 
+function SubtaskItem({ 
+  subtask, 
+  isArchived, 
+  onUpdate, 
+  onDelete 
+}: { 
+  subtask: any; 
+  isArchived: boolean; 
+  onUpdate: (id: string, data: any) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState(subtask.title);
+
+  const handleUpdate = () => {
+    setIsEditing(false);
+    if (title.trim() && title !== subtask.title) {
+      onUpdate(subtask.id, { title });
+    } else {
+      setTitle(subtask.title);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-1 px-2 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-200 transition-all min-h-[32px]">
+      <button
+        disabled={isArchived}
+        onClick={() => onUpdate(subtask.id, { 
+          status: subtask.status === "DONE" ? "TODO" : "DONE" 
+        })}
+        className={cn(
+          "h-4 w-4 rounded border flex items-center justify-center transition-colors scale-90",
+          subtask.status === "DONE" ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-primary",
+          isArchived && "opacity-50 cursor-not-allowed"
+        )}
+      >
+        {subtask.status === "DONE" && <Check className="h-2.5 w-2.5 text-white" />}
+      </button>
+      
+      {isEditing && !isArchived ? (
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={handleUpdate}
+          onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
+          autoFocus
+          className="h-7 text-xs border-none focus-visible:ring-0 p-0 bg-transparent"
+        />
+      ) : (
+        <span 
+          className={cn(
+            "text-xs flex-1 cursor-text",
+            subtask.status === "DONE" && "line-through text-muted-foreground"
+          )}
+          onClick={() => !isArchived && setIsEditing(true)}
+        >
+          {subtask.title}
+        </span>
+      )}
+
+      {subtask.assignee && (
+        <Avatar className="h-4 w-4">
+          <AvatarImage src={subtask.assignee.image} />
+          <AvatarFallback className="text-[7px]">{subtask.assignee.name?.[0]}</AvatarFallback>
+        </Avatar>
+      )}
+      {!isArchived && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(subtask.id);
+          }}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function TaskDetailSheet({ 
   taskId, 
   workspaceId, 
@@ -171,7 +254,7 @@ export function TaskDetailSheet({
 
       // Optimistically update single task cache
       if (previousTask) {
-        queryClient.setQueryData(["task", taskId], (old: any) => ({
+        queryClient.setNodeData(["task", taskId], (old: any) => ({
           ...old,
           ...newData,
         }));
@@ -225,12 +308,12 @@ export function TaskDetailSheet({
     },
   });
 
-  const toggleSubtaskMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+  const updateSubtaskMutation = useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; [key: string]: any }) => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to update subtask");
       return res.json();
@@ -577,50 +660,13 @@ export function TaskDetailSheet({
 
                   <div className="space-y-1">
                     {task.subtasks?.map((subtask: any) => (
-                      <div 
+                      <SubtaskItem 
                         key={subtask.id} 
-                        className="flex items-center gap-3 p-1 px-2 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-200 transition-all min-h-[32px]"
-                      >
-                        <button
-                          disabled={isArchived}
-                          onClick={() => toggleSubtaskMutation.mutate({ 
-                            id: subtask.id, 
-                            status: subtask.status === "DONE" ? "TODO" : "DONE" 
-                          })}
-                          className={cn(
-                            "h-4 w-4 rounded border flex items-center justify-center transition-colors scale-90",
-                            subtask.status === "DONE" ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-primary",
-                            isArchived && "opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          {subtask.status === "DONE" && <Check className="h-2.5 w-2.5 text-white" />}
-                        </button>
-                        <span className={cn(
-                          "text-xs flex-1",
-                          subtask.status === "DONE" && "line-through text-muted-foreground"
-                        )}>
-                          {subtask.title}
-                        </span>
-                        {subtask.assignee && (
-                          <Avatar className="h-4 w-4">
-                            <AvatarImage src={subtask.assignee.image} />
-                            <AvatarFallback className="text-[7px]">{subtask.assignee.name?.[0]}</AvatarFallback>
-                          </Avatar>
-                        )}
-                        {!isArchived && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteTaskMutation.mutate(subtask.id);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
+                        subtask={subtask}
+                        isArchived={isArchived}
+                        onUpdate={(id, data) => updateSubtaskMutation.mutate({ id, ...data })}
+                        onDelete={(id) => deleteTaskMutation.mutate(id)}
+                      />
                     ))}
 
                     {!isArchived && (
