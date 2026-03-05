@@ -25,7 +25,8 @@ import {
   Download,
   ListTodo,
   Plus,
-  GanttChart
+  GanttChart,
+  Pencil
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -83,6 +84,10 @@ function SubtaskItem({
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(subtask.title);
 
+  useEffect(() => {
+    setTitle(subtask.title);
+  }, [subtask.title]);
+
   const handleUpdate = () => {
     setIsEditing(false);
     if (title.trim() && title !== subtask.title) {
@@ -93,14 +98,14 @@ function SubtaskItem({
   };
 
   return (
-    <div className="flex items-center gap-3 p-1 px-2 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-200 transition-all min-h-[32px]">
+    <div className="flex items-center gap-3 p-1.5 px-2 hover:bg-slate-100/80 rounded-lg group transition-all min-h-[36px]">
       <button
         disabled={isArchived}
         onClick={() => onUpdate(subtask.id, { 
           status: subtask.status === "DONE" ? "TODO" : "DONE" 
         })}
         className={cn(
-          "h-4 w-4 rounded border flex items-center justify-center transition-colors scale-90",
+          "h-4 w-4 rounded border flex items-center justify-center transition-colors scale-90 shrink-0",
           subtask.status === "DONE" ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-primary",
           isArchived && "opacity-50 cursor-not-allowed"
         )}
@@ -109,28 +114,43 @@ function SubtaskItem({
       </button>
       
       {isEditing && !isArchived ? (
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={handleUpdate}
-          onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
-          autoFocus
-          className="h-7 text-xs border-none focus-visible:ring-0 p-0 bg-transparent"
-        />
+        <div className="flex-1 flex items-center gap-2">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={handleUpdate}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleUpdate();
+              if (e.key === "Escape") {
+                setIsEditing(false);
+                setTitle(subtask.title);
+              }
+            }}
+            autoFocus
+            className="h-7 text-xs border-slate-300 focus-visible:ring-1 bg-white"
+          />
+        </div>
       ) : (
-        <span 
-          className={cn(
-            "text-xs flex-1 cursor-text",
-            subtask.status === "DONE" && "line-through text-muted-foreground"
-          )}
+        <div 
+          className="flex-1 flex items-center gap-2 cursor-pointer min-w-0 h-full py-1"
           onClick={() => !isArchived && setIsEditing(true)}
         >
-          {subtask.title}
-        </span>
+          <span 
+            className={cn(
+              "text-xs truncate transition-colors",
+              subtask.status === "DONE" ? "line-through text-muted-foreground" : "text-foreground group-hover:text-primary"
+            )}
+          >
+            {subtask.title}
+          </span>
+          {!isArchived && subtask.status !== "DONE" && (
+            <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity shrink-0" />
+          )}
+        </div>
       )}
 
       {subtask.assignee && (
-        <Avatar className="h-4 w-4">
+        <Avatar className="h-4 w-4 shrink-0">
           <AvatarImage src={subtask.assignee.image} />
           <AvatarFallback className="text-[7px]">{subtask.assignee.name?.[0]}</AvatarFallback>
         </Avatar>
@@ -139,7 +159,7 @@ function SubtaskItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(subtask.id);
@@ -254,7 +274,7 @@ export function TaskDetailSheet({
 
       // Optimistically update single task cache
       if (previousTask) {
-        queryClient.setNodeData(["task", taskId], (old: any) => ({
+        queryClient.setQueryData(["task", taskId], (old: any) => ({
           ...old,
           ...newData,
         }));
@@ -426,7 +446,6 @@ export function TaskDetailSheet({
           </div>
         ) : (
           <div className="flex flex-col h-full overflow-hidden">
-            {/* Scrollable Content Section */}
             <div className="flex-1 overflow-y-auto">
               <div className="p-6 space-y-6 pt-12">
                 <div className="space-y-4">
@@ -533,20 +552,19 @@ export function TaskDetailSheet({
                           <DropdownMenuItem onClick={() => updateTaskMutation.mutate({ assigneeId: null })}>
                             Unassigned
                           </DropdownMenuItem>
-                                                  <Separator className="my-1" />
-                                                  {members?.map((member: any) => (
-                                                    <DropdownMenuItem key={member.user.id} onClick={() => updateTaskMutation.mutate({ assigneeId: member.user.id })}>
-                                                      <div className="flex items-center gap-2">
-                                                        <Avatar className="h-5 w-5">
-                                                          <AvatarImage src={member.user.image} />
-                                                          <AvatarFallback className="text-[10px]">{member.user.name?.[0]}</AvatarFallback>
-                                                        </Avatar>
-                                                        <span>{member.user.name}</span>
-                                                      </div>
-                                                    </DropdownMenuItem>
-                                                  ))}
-                                                </DropdownMenuContent>
-                          
+                          <Separator className="my-1" />
+                          {members?.map((member: any) => (
+                            <DropdownMenuItem key={member.user.id} onClick={() => updateTaskMutation.mutate({ assigneeId: member.user.id })}>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={member.user.image} />
+                                  <AvatarFallback className="text-[10px]">{member.user.name?.[0]}</AvatarFallback>
+                                </Avatar>
+                                <span>{member.user.name}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
                       )}
                     </DropdownMenu>
                   </div>
@@ -847,7 +865,6 @@ export function TaskDetailSheet({
               </div>
             </div>
 
-            {/* Sticky Footer Section */}
             {!isArchived && (
               <div className="p-4 border-t bg-white shrink-0">
                 <div className="flex gap-2">
