@@ -37,6 +37,26 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<'days' | 'weeks'>('days');
   
+  // 1. Fetch data first so it can be used in memos
+  const { data: tasks, isLoading: tasksLoading } = useQuery<TaskWithAssignee[]>({
+    queryKey: ["tasks", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`);
+      if (!res.ok) throw new Error("Failed to fetch tasks");
+      return res.json();
+    },
+  });
+
+  const { data: sections, isLoading: sectionsLoading } = useQuery<any[]>({
+    queryKey: ["sections", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections`);
+      if (!res.ok) throw new Error("Failed to fetch sections");
+      return res.json();
+    },
+  });
+
+  // 2. Memos that depend on data
   const startDate = startOfMonth(viewDate);
   
   const endDate = useMemo(() => {
@@ -45,14 +65,12 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     
     if (!tasks || tasks.length === 0) return defaultEnd;
 
-    // Find the furthest date among all tasks
     const maxTaskDate = tasks.reduce((max, task) => {
       const date = task.dueDate ? new Date(task.dueDate) : (task.startDate ? new Date(task.startDate) : null);
       if (!date) return max;
       return date > max ? date : max;
     }, new Date(0));
 
-    // Use the furthest task date, but cap it at a reasonable limit (e.g., 24 months for days, 60 for weeks)
     const maxAllowed = endOfMonth(addMonths(viewDate, zoomLevel === 'days' ? 24 : 60));
     const targetEnd = maxTaskDate > defaultEnd ? endOfMonth(maxTaskDate) : defaultEnd;
     
@@ -78,24 +96,6 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
       }));
     }
   }, [startDate, endDate, zoomLevel]);
-
-  const { data: tasks, isLoading: tasksLoading } = useQuery<TaskWithAssignee[]>({
-    queryKey: ["tasks", projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`);
-      if (!res.ok) throw new Error("Failed to fetch tasks");
-      return res.json();
-    },
-  });
-
-  const { data: sections, isLoading: sectionsLoading } = useQuery<any[]>({
-    queryKey: ["sections", projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections`);
-      if (!res.ok) throw new Error("Failed to fetch sections");
-      return res.json();
-    },
-  });
 
   const groupedTasks = useMemo(() => {
     if (!tasks) return [];
