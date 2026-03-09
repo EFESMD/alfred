@@ -38,7 +38,26 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
   const [zoomLevel, setZoomLevel] = useState<'days' | 'weeks'>('days');
   
   const startDate = startOfMonth(viewDate);
-  const endDate = endOfMonth(addMonths(viewDate, zoomLevel === 'days' ? 1 : 5));
+  
+  const endDate = useMemo(() => {
+    const defaultDuration = zoomLevel === 'days' ? 1 : 5;
+    const defaultEnd = endOfMonth(addMonths(viewDate, defaultDuration));
+    
+    if (!tasks || tasks.length === 0) return defaultEnd;
+
+    // Find the furthest date among all tasks
+    const maxTaskDate = tasks.reduce((max, task) => {
+      const date = task.dueDate ? new Date(task.dueDate) : (task.startDate ? new Date(task.startDate) : null);
+      if (!date) return max;
+      return date > max ? date : max;
+    }, new Date(0));
+
+    // Use the furthest task date, but cap it at a reasonable limit (e.g., 24 months for days, 60 for weeks)
+    const maxAllowed = endOfMonth(addMonths(viewDate, zoomLevel === 'days' ? 24 : 60));
+    const targetEnd = maxTaskDate > defaultEnd ? endOfMonth(maxTaskDate) : defaultEnd;
+    
+    return targetEnd > maxAllowed ? maxAllowed : targetEnd;
+  }, [tasks, viewDate, zoomLevel]);
   
   const columns = useMemo(() => {
     if (zoomLevel === 'days') {
