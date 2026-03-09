@@ -69,6 +69,7 @@
     - [x] **Fixed Workspace deletion \"Cancel\" button\"** using `DialogClose`
     - [x] **Improved contrast** for Timeline zoom toggle and active states
     - [x] **Timeline UI Fixes**: Resolved task list overlap and Today Line visibility during horizontal scroll.
+    - [x] **Dynamic Timeline Grid**: Implemented dynamic end dates to ensure the calendar grid always covers the full duration of all project tasks.
     - [x] **List View Alignment**: Corrected the mismatch between table headers and task row columns.
     - [x] **Performance Boost**: Optimized project page loading by removing redundant client-side API calls.
     - [x] **Session Persistence**: Enabled 30-day persistent login sessions to keep users authenticated across browser restarts.
