@@ -72,3 +72,40 @@ export async function PATCH(req: Request) {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+// Endpoint to delete a user
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return new NextResponse("User ID required", { status: 400 });
+    }
+
+    // Check if user owns any workspaces
+    const ownedWorkspaces = await prisma.workspace.count({
+      where: { ownerId: userId }
+    });
+
+    if (ownedWorkspaces > 0) {
+      return new NextResponse("Cannot delete user who owns workspaces. Transfer ownership first.", { status: 400 });
+    }
+
+    // Delete the user (Cascade will handle memberships, accounts, etc.)
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("[ADMIN_USER_DELETE]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

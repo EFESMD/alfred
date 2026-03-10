@@ -27,14 +27,28 @@ import {
   UserCheck, 
   Clock,
   ArrowLeft,
-  Mail
+  Mail,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { useState } from "react";
 
 export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
+  const [userToDelete, setUserToDelete] = useState<{ id: string, name: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-stats"],
@@ -62,6 +76,26 @@ export default function AdminDashboardPage() {
       toast.success("User verified manually");
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
     },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await fetch(`/api/admin/stats?userId=${userId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to delete user");
+      }
+    },
+    onSuccess: () => {
+      toast.success("User deleted successfully");
+      setUserToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
   });
 
   if (isLoading) return <div className="p-8 text-center animate-pulse">Loading secure admin panel...</div>;
@@ -196,18 +230,57 @@ export default function AdminDashboardPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    {!user.emailVerified && (
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1.5"
-                        onClick={() => verifyUserMutation.mutate(user.id)}
-                        disabled={verifyUserMutation.isPending}
-                      >
-                        <UserCheck className="h-3.5 w-3.5" />
-                        Verify Manually
-                      </Button>
-                    )}
+                    <div className="flex justify-end gap-2">
+                      {!user.emailVerified && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1.5"
+                          onClick={() => verifyUserMutation.mutate(user.id)}
+                          disabled={verifyUserMutation.isPending}
+                        >
+                          <UserCheck className="h-3.5 w-3.5" />
+                          Verify
+                        </Button>
+                      )}
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setUserToDelete({ id: user.id, name: `${user.firstName} ${user.lastName}` })}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <AlertTriangle className="h-5 w-5 text-destructive" />
+                              Delete User Account
+                            </DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to delete <span className="font-bold text-foreground">{user.firstName} {user.lastName}</span>?
+                              This will remove all their memberships and personal data. This action is permanent.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button 
+                              variant="destructive" 
+                              onClick={() => deleteUserMutation.mutate(user.id)}
+                              disabled={deleteUserMutation.isPending}
+                            >
+                              {deleteUserMutation.isPending ? "Deleting..." : "Permanently Delete User"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
