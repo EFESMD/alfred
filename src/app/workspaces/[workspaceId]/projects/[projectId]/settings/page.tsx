@@ -50,6 +50,11 @@ export default function ProjectSettingsPage({
   const [icon, setIcon] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState("general");
 
+  // New member state
+  const [newMemberUserId, setNewMemberUserId] = useState<string>("");
+  const [newMemberRole, setNewMemberRole] = useState<string>("MEMBER");
+  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
+
   const COLORS = [
     { name: "Blue", value: "bg-blue-50 border-blue-100 text-blue-600" },
     { name: "Red", value: "bg-red-50 border-red-100 text-red-600" },
@@ -153,6 +158,9 @@ export default function ProjectSettingsPage({
     onSuccess: () => {
       toast.success("Member added to project!");
       queryClient.invalidateQueries({ queryKey: ["project-members", projectId] });
+      setIsAddMemberDialogOpen(false);
+      setNewMemberUserId("");
+      setNewMemberRole("MEMBER");
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -224,12 +232,20 @@ export default function ProjectSettingsPage({
     updateProjectMutation.mutate({ isArchived: !project.isArchived });
   };
 
+  const handleAddMember = () => {
+    if (newMemberUserId) {
+      addMemberMutation.mutate({ userId: newMemberUserId, role: newMemberRole });
+    } else {
+      toast.error("Please select a member");
+    }
+  };
+
   // Filter workspace members that are not already in the project
   const availableMembers = workspaceMembers?.filter((wm: any) => 
     !projectMembers?.some((pm: any) => pm.userId === wm.user.id)
   ) || [];
 
-  if (isProjectLoading) return <div className="p-8 text-center text-muted-foreground">Loading settings...</div>;
+  if (isProjectLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading settings...</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -477,7 +493,7 @@ export default function ProjectSettingsPage({
                 <CardTitle>Project Members</CardTitle>
                 <CardDescription>Manage who has access to this project and their roles.</CardDescription>
               </div>
-              <Dialog>
+              <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" className="gap-2">
                     <UserPlus className="h-4 w-4" />
@@ -494,7 +510,7 @@ export default function ProjectSettingsPage({
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
                       <Label>Member</Label>
-                      <Select id="targetUserId">
+                      <Select value={newMemberUserId} onValueChange={setNewMemberUserId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a workspace member" />
                         </SelectTrigger>
@@ -509,7 +525,7 @@ export default function ProjectSettingsPage({
                     </div>
                     <div className="space-y-2">
                       <Label>Role</Label>
-                      <Select id="targetRole" defaultValue="MEMBER">
+                      <Select value={newMemberRole} onValueChange={setNewMemberRole}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -526,16 +542,10 @@ export default function ProjectSettingsPage({
                       <Button variant="outline">Cancel</Button>
                     </DialogClose>
                     <Button 
-                      onClick={() => {
-                        const userId = (document.getElementById("targetUserId") as HTMLSelectElement)?.value;
-                        const role = (document.getElementById("targetRole") as HTMLSelectElement)?.value || "MEMBER";
-                        if (userId) {
-                          addMemberMutation.mutate({ userId, role });
-                        }
-                      }}
+                      onClick={handleAddMember}
                       disabled={addMemberMutation.isPending}
                     >
-                      Add to Project
+                      {addMemberMutation.isPending ? "Adding..." : "Add to Project"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
