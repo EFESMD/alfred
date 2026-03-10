@@ -2,13 +2,14 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { checkIsAdmin } from "@/lib/utils";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
     // Security check: Only the designated master admin can access
-    if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+    if (!session?.user?.email || !checkIsAdmin(session.user.email)) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -53,7 +54,7 @@ export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+    if (!session?.user?.email || !checkIsAdmin(session.user.email)) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -78,7 +79,7 @@ export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+    if (!session?.user?.email || !checkIsAdmin(session.user.email)) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 

@@ -1,10 +1,13 @@
 # Oxana - Project Management Tool
 
-A robust, real-time project management application inspired by Asana, designed for teams to organize, track, and manage their work efficiently.
+A robust, real-time project management application inspired by Asana, designed for teams to organize, track, and manage their work efficiently with enterprise-grade security.
 
 ## 🚀 Key Features
 
 - **Multi-Workspace Support**: Isolated environments for different teams.
+- **Secure Collaboration**: 
+  - **Private Projects**: Projects are private by default. Members only see what they are invited to.
+  - **Granular Roles**: Define specific access levels per project (Owner, Member, Viewer).
 - **Project Management**: Create projects from scratch or use pre-defined templates.
 - **Task Views**:
   - **List View**: Grouped by sections with inline editing.
@@ -12,7 +15,7 @@ A robust, real-time project management application inspired by Asana, designed f
   - **Calendar View**: Visual overview of deadlines.
   - **Interactive Timeline**: Gantt Chart with task dependencies and zoom levels.
 - **Collaboration**: Real-time comments, activity logs, and file attachments.
-- **Super Admin Panel**: Master control panel for system statistics, user management, and manual account verification.
+- **Super Admin Panel**: Master control panel for system statistics, user management, and automated data migration.
 - **Corporate Security**: Restricted registration to specific email domains and integrated mail server support.
 
 ## 🛠️ Technical Stack
@@ -31,8 +34,6 @@ To enable the **Super Admin** features, you must configure the following environ
 ```env
 ADMIN_EMAIL="your-email@md.anadoluefes.com"
 ```
-
-Users logging in with this email address will have access to the **System Admin** dashboard via the profile menu in the sidebar.
 
 ## 🏃 Getting Started
 

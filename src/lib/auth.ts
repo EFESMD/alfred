@@ -3,6 +3,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { checkIsAdmin } from "./utils";
 
 console.log("NEXTAUTH_SECRET status:", !!process.env.NEXTAUTH_SECRET);
 
@@ -102,7 +103,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.firstName = user.firstName;
         token.lastName = user.lastName;
-        token.isAdmin = user.email === process.env.ADMIN_EMAIL;
+        token.isAdmin = checkIsAdmin(user.email);
       } else if (token.id) {
         // Fetch fresh data if user is not provided (periodic check)
         const dbUser = await prisma.user.findUnique({
@@ -112,10 +113,11 @@ export const authOptions: NextAuthOptions = {
         if (dbUser) {
           token.firstName = dbUser.firstName;
           token.lastName = dbUser.lastName;
-          token.isAdmin = dbUser.email === process.env.ADMIN_EMAIL;
+          token.isAdmin = checkIsAdmin(dbUser.email);
         }
       }
       return token;
     },
+
   },
 };

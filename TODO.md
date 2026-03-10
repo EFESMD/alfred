@@ -41,7 +41,7 @@
         - [x] Save existing project as template
         - [x] Sanitized templates (removes dates and assignees)
 
-- [x] **Collaboration & Features**
+- [x] **Collaboration & Security**
     - [x] Task Comments
     - [x] **Real-time Activity Log** (with state tracking and relative timestamps)
     - [x] Profile Management (Name editing & Manual Avatar Upload)
@@ -52,11 +52,12 @@
     - [x] Project Leader assignment and display
     - [x] Project Settings (Color, Icon, Leader, Archiving)
     - [x] **Strict Read-Only mode for archived projects**
-    - [x] **Keyboard Shortcut 't'** for instant task creation in List View
     - [x] **Grouped \"My Tasks\"** view by project for cross-workspace clarity
-    - [x] **Auto-Assign Project Leader**: New tasks (inline or popup) are automatically assigned to the project leader by default.
+    - [x] **Auto-Assign Project Leader**: New tasks are automatically assigned to the project leader by default.
     - [x] **Subtask Inline Editing**: Enabled direct editing of subtask titles in the task detail pane.
-    - [x] **Email Server Integration**: Successfully integrated the company mail server (mail.efes.md) for future automated communications.
+    - [x] **Email Server Integration**: Integrated corporate mail server (mail.efes.md).
+    - [x] **Private Projects**: Projects are now private by default; members only see what they are invited to.
+    - [x] **Granular Project Roles**: Implemented OWNER, MEMBER, and VIEWER roles with UI-level restrictions.
 
 - [x] **Maintenance & Bug Fixes**
     - [x] Resolved Prisma client synchronization issues with Turbopack
@@ -65,18 +66,13 @@
     - [x] **Compact UI**: Reduced row height across all task lists (List, My Tasks, Subtasks)
     - [x] Optimized Settings page loading speed via targeted API calls
     - [x] Task Pane Housekeeping: Moved name to top, unified selector styles
-    - [x] Task Sorting: Fixed order to ensure new tasks appear at the bottom
     - [x] **Fixed P2003 Foreign Key error** in project creation
-    - [x] **Fixed Workspace deletion \"Cancel\" button\"** using `DialogClose`
     - [x] **Improved contrast** for Timeline zoom toggle and active states
-    - [x] **Timeline UI Fixes**: Resolved task list overlap and Today Line visibility during horizontal scroll.
-    - [x] **Dynamic Timeline Grid**: Implemented dynamic end dates to ensure the calendar grid always covers the full duration of all project tasks.
-    - [x] **List View Alignment**: Corrected the mismatch between table headers and task row columns.
-    - [x] **Performance Boost**: Optimized project page loading by removing redundant client-side API calls.
-    - [x] **Session Persistence**: Enabled 30-day persistent login sessions and optimized cookie settings for cross-browser compatibility (including Opera).
-    - [x] **Build Stabilization**: Fixed critical Railway build errors by reordering variable declarations in TimelineView.
-    - [x] **Join Flow Automation**: Optimized the invite system to automatically redirect unregistered users back to the workspace after account creation.
-    - [x] **Admin Navigation**: Integrated the Super Admin dashboard link into the user profile menu with secure session-based detection.
+    - [x] **Dynamic Timeline Grid**: Grid dynamically adjusts to project task durations.
+    - [x] **Performance Boost**: Removed redundant client-side API calls.
+    - [x] **Session Persistence**: 30-day persistent login and Opera compatibility.
+    - [x] **Admin Navigation**: Integrated Super Admin dashboard link in profile menu.
+    - [x] **Data Migration Tool**: Built a master admin tool to migrate legacy project data to the new roles system.
 
 - [ ] **Next Steps**
     - [ ] **Visibility Filters**: Implement "Hide Done" toggle in List, Board, and Timeline views (Persistent via localStorage).
@@ -88,16 +84,13 @@
         - [ ] **Email Verification**: Formalize account creation with email confirmation link.
         - [ ] **Password Management**: Allow users to change their password from profile settings.
     - [ ] **Internationalization (i18n)**: Support for multiple languages (Romanian and Russian).
-    - [ ] **Advanced Roles & Permissions (Future Module)**
+    - [ ] **Advanced Roles & Permissions (Workspace Level)**
     - [x] **Super Admin**: Full platform control (Global stats, User management, Manual verification)
-    - [ ] **Admin**: Workspace management (Invite/Remove members, Workspace settings)
-    - [ ] **Executive**: Strategic overview (Can see all projects and reports, but might not edit tasks)
-    - [ ] **Manager**: Project control (Create projects, manage timelines, assign leaders)
-    - [ ] **Member/Contributor**: Standard task management (Create/Edit tasks they belong to)
-    - [ ] **Viewer/Guest**: Read-only access to specific projects or tasks
-    - [ ] Strict cross-workspace enforcement of these roles
+    - [x] **Admin**: Workspace management (Invite/Remove members, Workspace settings)
+    - [x] **Manager/Project Owner**: Project control (Manage settings, Manage members)
+    - [x] **Member/Contributor**: Standard task management (Create/Edit tasks)
+    - [x] **Viewer/Guest**: Read-only access to specific projects or tasks
 
-Cum putem schimba statuturile?
 Filtru pentru a ascunde cele done
 Export la timeline
 Sortare campuri in list view

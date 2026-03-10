@@ -10,41 +10,25 @@ Acest document descrie planul de lansare și evoluție a infrastructurii pentru 
 - **Stocare Fișiere:** Unificată în volum persistent (via `STORAGE_PATH`).
 - **Configurație Critică:**
     - Utilizarea unui **singur Railway Volume** montat la `/app/storage`.
-    - **Start Command:** `npx prisma db push && npm run start` (asigură crearea/sincronizarea tabelelor pe server).
-    - Conectare automată cu GitHub pentru Continuous Deployment (CD).
-- **Securitate Date:** Fișierul `prisma/dev.db` este inclus în `.gitignore` pentru a preveni suprascrierea bazei de date de producție cu date locale.
+    - **Start Command**: `npx prisma db push && npm run start`
+- **Securitate Date:** Fișierul `prisma/dev.db` este inclus în `.gitignore`.
 
-## Faza 2: Optimizare și Control (Migrare VPS)
-**Scop:** Reducerea costurilor pe termen lung și control total asupra serverului.
-
-- **Platformă:** VPS (DigitalOcean, Hetzner sau similar).
-- **Metodă de Migrare:**
-    - Transferul întregului conținut din `/app/storage` (care include `dev.db` și folderul `uploads`) de pe Railway pe VPS.
-    - Configurarea unui proces de rulare continuă (PM2 sau Docker).
-- **Bază de Date:** Continuăm cu SQLite până când traficul impune o schimbare.
-
-## Evoluție Bază de Date: SQLite -> PostgreSQL
-**Scop:** Scalabilitate pentru utilizare masivă (peste 500+ utilizatori simultani).
-
-- **Indicatori pentru migrare:**
-    - Erori frecvente de tip "Database is locked".
-    - Nevoia de a rula aplicația pe mai multe servere simultan (Load Balancing).
-- **Proces:** Modificarea provider-ului în `schema.prisma` (care folosește deja `env("DATABASE_URL")`) și migrarea datelor.
+### ⚠️ IMPORTANT: Pas post-deploy (Migrare Roluri)
+După implementarea sistemului de **Private Projects**, este obligatoriu să executați migrarea datelor pe serverul live:
+1. Accesați panoul de **System Admin** (vizibil doar pentru `ADMIN_EMAIL`).
+2. Apăsați butonul **"Run Project Roles Migration"**.
+3. Acest pas va popula tabela de permisiuni și va restabili accesul utilizatorilor la proiectele lor.
 
 ## Variabile de Mediu Necesare (Railway)
 - `DATABASE_URL`: `file:/app/storage/dev.db`
 - `STORAGE_PATH`: `/app/storage`
 - `ADMIN_EMAIL`: Email-ul pentru acces Super Admin (Master Dashboard)
 - `NEXTAUTH_SECRET`: Cheia de securitate pentru sesiuni
-- `NEXTAUTH_URL`: URL-ul public al aplicației (ex: `https://vnihub-oxana-production.up.railway.app`)
-- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`
-- `EMAIL_SERVER_HOST`: `mail.efes.md`
-- `EMAIL_SERVER_PORT`: `465`
-- `EMAIL_SERVER_USER`: `noreply@efes.md`
-- `EMAIL_SERVER_PASSWORD`: Parola contului de mail
-- `EMAIL_FROM`: `noreply@efes.md`
+- `NEXTAUTH_URL`: URL-ul public al aplicației
+- `PUSHER_*`: Credențiale pentru sincronizarea în timp real.
+- `MAIL_*`: Integrare cu serverul de mail corporativ.
 
 ## Configurare Volum Persistent (Railway)
 - **Mount Path:** `/app/storage`
-- **Conținut:** Acest folder va conține automat `dev.db` și subfolderul `uploads/` (gestionat prin `src/lib/storage.ts`).
-- **Servire Fișiere:** Fișierele sunt servite din volum prin ruta dinamică `/src/app/uploads/[...path]/route.ts`.
+- **Conținut:** Acest folder va conține automat `dev.db` și subfolderul `uploads/`.
+- **Servire Fișiere:** Fișierele sunt servite din volum prin ruta `/src/app/uploads/[...path]/route.ts`.

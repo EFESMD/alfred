@@ -15,8 +15,13 @@ A robust, real-time project management application designed for teams to organiz
 - **Automatic Join Flow**: New users are automatically enrolled in workspaces via invite links after registration.
 
 ### Project & Task Management
+- **Private Projects**: Projects are private by default. Members only see projects they are explicitly invited to.
+- **Granular Project Roles**:
+    - **Project Owner**: Full control over settings, sections, and members.
+    - **Project Member**: Can create, edit, and delete tasks.
+    - **Project Viewer**: Read-only access to all views.
 - **Projects**: Groupings of tasks, with support for Archiving and Templates.
-- **Sections**: Grouping tasks into milestones or categories within projects.
+- **Sections**: Grouping tasks into milestones or categories.
 - **Task Attributes**: Title, Description (Markdown), Assignee, Due Dates, Priority, Status.
 - **Subtasks**: Hierarchical task management.
 - **Task Sorting**: Automatic and manual task ordering.
@@ -25,7 +30,8 @@ A robust, real-time project management application designed for teams to organiz
 - **Global Control Panel**: Master dashboard for the entire platform.
 - **System Statistics**: Real-time overview of users, workspaces, projects, and tasks.
 - **User Directory**: Full list of registered members with management options.
-- **Manual Verification**: Ability to manually verify user accounts for quick onboarding.
+- **Manual Verification**: Ability to manually verify user accounts.
+- **Data Migration**: Built-in tools for structural database updates.
 
 ### Collaboration & Features
 - **Comments**: Threaded discussions on tasks.
@@ -51,6 +57,8 @@ A robust, real-time project management application designed for teams to organiz
 
 ## 5. Configuration Requirements
 - `ADMIN_EMAIL`: Designated email address for Super Admin access.
+- `DATABASE_URL`: Path to the SQLite database.
+- `STORAGE_PATH`: Persistent volume path for file uploads.
 - `NEXTAUTH_SECRET`: Security key for session encryption.
-- `PUSHER_*`: Credentials for real-time feature synchronization.
-- `MAIL_*`: Integration with corporate mail server for automated notifications.
+- `PUSHER_*`: Credentials for real-time synchronization.
+- `MAIL_*`: Integration with corporate mail server.

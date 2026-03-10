@@ -2,13 +2,14 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { checkIsAdmin } from "@/lib/utils";
 
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
 
     // Security check: Only the designated master admin can trigger migration
-    if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+    if (!session?.user?.email || !checkIsAdmin(session.user.email)) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
