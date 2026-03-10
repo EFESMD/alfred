@@ -3,54 +3,54 @@
 ## 1. Project Overview
 A robust, real-time project management application designed for teams to organize, track, and manage their work.
 
-## 2. Core Features (MVP)
+## 2. Core Features
 ### Authentication & User Management
 - Secure Sign-up/Login/Logout (using NextAuth.js).
-- User profiles with avatars.
-- Workspace creation and member invitations.
+- User profiles with avatars and name splitting.
+- **Corporate Restriction**: Access restricted to specific corporate email domains.
 
-### Workspace & Project Management
-- **Workspaces:** Isolated environments for different teams/organizations.
-- **Projects:** Groupings of tasks within a workspace.
-- **Project Dashboard:** Overview of progress and team members.
+### Workspace & Members
+- **Workspaces**: Isolated team environments.
+- **Member Management**: Role-based access (Owner, Admin, Member) and invite links.
+- **Automatic Join Flow**: New users are automatically enrolled in workspaces via invite links after registration.
 
-### Task Management
-- **Task CRUD:** Create, Read, Update, Delete tasks.
-- **Task Attributes:**
-  - Title & Description (Markdown support).
-  - Assignee(s).
-  - Due Dates.
-  - Priority (Low, Medium, High).
-  - Status (Backlog, To Do, In Progress, Done).
-- **Comments:** Threaded discussions on tasks.
-- **Activity Log:** Audit trail for task changes.
+### Project & Task Management
+- **Projects**: Groupings of tasks, with support for Archiving and Templates.
+- **Sections**: Grouping tasks into milestones or categories within projects.
+- **Task Attributes**: Title, Description (Markdown), Assignee, Due Dates, Priority, Status.
+- **Subtasks**: Hierarchical task management.
+- **Task Sorting**: Automatic and manual task ordering.
 
-### Core Views
-- **List View:** Table-like interface for quick editing.
-- **Kanban Board:** Drag-and-drop board for workflow visualization.
+### Administrative Control (Super Admin)
+- **Global Control Panel**: Master dashboard for the entire platform.
+- **System Statistics**: Real-time overview of users, workspaces, projects, and tasks.
+- **User Directory**: Full list of registered members with management options.
+- **Manual Verification**: Ability to manually verify user accounts for quick onboarding.
 
-## 3. Advanced Features (Phase 2+)
-- **Timeline/Gantt View:** Visualizing task dependencies and schedules.
-- **Calendar View:** Monthly/Weekly view of deadlines.
-- **Subtasks:** Breaking down complex tasks.
-- **File Attachments:** Support for uploading documents and images.
-- **Real-time Updates:** instant UI updates via WebSockets (Pusher/Socket.io).
-- **Notifications:** In-app and email notifications for assignments and mentions.
+### Collaboration & Features
+- **Comments**: Threaded discussions on tasks.
+- **Activity Log**: Real-time audit trail for all task-related changes.
+- **File Attachments**: Local storage system for task documents.
+- **Real-time Updates**: Instant UI synchronization via Pusher.
 
-## 4. Technical Stack (Proposed)
-- **Framework:** Next.js 14+ (App Router).
-- **Language:** TypeScript.
-- **Styling:** Tailwind CSS + Shadcn UI.
-- **Database:** PostgreSQL (hosted on Vercel Postgres or Supabase).
-- **ORM:** Prisma.
-- **Authentication:** NextAuth.js.
-- **State Management:** React Query (TanStack Query).
-- **Drag-and-drop:** @hello-pangea/dnd or dnd-kit.
+## 3. Core Views
+- **List View**: Grouped by sections with collapsible headers and inline editing.
+- **Kanban Board**: Optimized drag-and-drop workflow.
+- **Calendar View**: Visual overview of deadlines.
+- **Interactive Timeline**: Gantt Chart with swimlanes, task dependencies, and zoom levels.
 
-## 5. Database Schema (Draft)
-- `User`: id, name, email, image, password.
-- `Workspace`: id, name, ownerId.
-- `Project`: id, name, description, workspaceId.
-- `Task`: id, title, description, status, priority, dueDate, projectId, assigneeId.
-- `Comment`: id, content, taskId, userId, createdAt.
-- `Activity`: id, type, description, taskId, userId, createdAt.
+## 4. Technical Stack
+- **Framework**: Next.js 15+ (App Router).
+- **Language**: TypeScript.
+- **Styling**: Tailwind CSS + Shadcn UI.
+- **Database**: SQLite (managed via Prisma).
+- **ORM**: Prisma.
+- **Authentication**: NextAuth.js.
+- **Real-time**: Pusher.
+- **State Management**: TanStack Query (React Query).
+
+## 5. Configuration Requirements
+- `ADMIN_EMAIL`: Designated email address for Super Admin access.
+- `NEXTAUTH_SECRET`: Security key for session encryption.
+- `PUSHER_*`: Credentials for real-time feature synchronization.
+- `MAIL_*`: Integration with corporate mail server for automated notifications.

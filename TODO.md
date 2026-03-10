@@ -76,6 +76,7 @@
     - [x] **Session Persistence**: Enabled 30-day persistent login sessions and optimized cookie settings for cross-browser compatibility (including Opera).
     - [x] **Build Stabilization**: Fixed critical Railway build errors by reordering variable declarations in TimelineView.
     - [x] **Join Flow Automation**: Optimized the invite system to automatically redirect unregistered users back to the workspace after account creation.
+    - [x] **Admin Navigation**: Integrated the Super Admin dashboard link into the user profile menu with secure session-based detection.
 
 - [ ] **Next Steps**
     - [ ] **Visibility Filters**: Implement "Hide Done" toggle in List, Board, and Timeline views (Persistent via localStorage).

@@ -34,6 +34,7 @@ Acest document descrie planul de lansare și evoluție a infrastructurii pentru 
 ## Variabile de Mediu Necesare (Railway)
 - `DATABASE_URL`: `file:/app/storage/dev.db`
 - `STORAGE_PATH`: `/app/storage`
+- `ADMIN_EMAIL`: Email-ul pentru acces Super Admin (Master Dashboard)
 - `NEXTAUTH_SECRET`: Cheia de securitate pentru sesiuni
 - `NEXTAUTH_URL`: URL-ul public al aplicației (ex: `https://vnihub-oxana-production.up.railway.app`)
 - `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`
