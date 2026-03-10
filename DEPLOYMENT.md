@@ -37,6 +37,11 @@ Acest document descrie planul de lansare și evoluție a infrastructurii pentru 
 - `NEXTAUTH_SECRET`: Cheia de securitate pentru sesiuni
 - `NEXTAUTH_URL`: URL-ul public al aplicației (ex: `https://vnihub-oxana-production.up.railway.app`)
 - `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`
+- `EMAIL_SERVER_HOST`: `mail.efes.md`
+- `EMAIL_SERVER_PORT`: `465`
+- `EMAIL_SERVER_USER`: `noreply@efes.md`
+- `EMAIL_SERVER_PASSWORD`: Parola contului de mail
+- `EMAIL_FROM`: `noreply@efes.md`
 
 ## Configurare Volum Persistent (Railway)
 - **Mount Path:** `/app/storage`

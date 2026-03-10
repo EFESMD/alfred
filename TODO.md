@@ -56,6 +56,7 @@
     - [x] **Grouped \"My Tasks\"** view by project for cross-workspace clarity
     - [x] **Auto-Assign Project Leader**: New tasks (inline or popup) are automatically assigned to the project leader by default.
     - [x] **Subtask Inline Editing**: Enabled direct editing of subtask titles in the task detail pane.
+    - [x] **Email Server Integration**: Successfully integrated the company mail server (mail.efes.md) for future automated communications.
 
 - [x] **Maintenance & Bug Fixes**
     - [x] Resolved Prisma client synchronization issues with Turbopack
@@ -72,11 +73,15 @@
     - [x] **Dynamic Timeline Grid**: Implemented dynamic end dates to ensure the calendar grid always covers the full duration of all project tasks.
     - [x] **List View Alignment**: Corrected the mismatch between table headers and task row columns.
     - [x] **Performance Boost**: Optimized project page loading by removing redundant client-side API calls.
-    - [x] **Session Persistence**: Enabled 30-day persistent login sessions to keep users authenticated across browser restarts.
+    - [x] **Session Persistence**: Enabled 30-day persistent login sessions and optimized cookie settings for cross-browser compatibility (including Opera).
+    - [x] **Build Stabilization**: Fixed critical Railway build errors by reordering variable declarations in TimelineView.
+    - [x] **Join Flow Automation**: Optimized the invite system to automatically redirect unregistered users back to the workspace after account creation.
 
 - [ ] **Next Steps**
-    - [ ] Global Search (Quick navigation across workspace)
-    - [ ] Notifications system
+    - [ ] **Visibility Filters**: Implement "Hide Done" toggle in List, Board, and Timeline views (Persistent via localStorage).
+    - [ ] **Global Search**: Quick navigation across workspace projects and tasks.
+    - [ ] **Timeline Export**: Export project timeline to PDF/image formats.
+    - [ ] **Notifications System**: In-app and potentially email alerts for task assignments and mentions.
     - [x] Manual Task Sorting (Drag & Drop reordering in List and Kanban)
     - [ ] **Account & Security Enhancements**
         - [ ] **Email Verification**: Formalize account creation with email confirmation link.

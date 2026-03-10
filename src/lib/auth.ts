@@ -67,6 +67,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Check for email verification
+        if (!user.emailVerified) {
+          console.log("Email not verified for:", user.email);
+          throw new Error("Te rugăm să îți confirmi adresa de email înainte de a te autentifica. Verifică-ți inbox-ul.");
+        }
+
         console.log("Authorize successful for:", user.email);
         return {
           id: user.id,
