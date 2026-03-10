@@ -29,7 +29,8 @@ import {
   ArrowLeft,
   Mail,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  DatabaseZap
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -98,6 +99,21 @@ export default function AdminDashboardPage() {
     }
   });
 
+  const runMigrationMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/admin/migrate-roles", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to run migration");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.message}: Processed ${data.projectsProcessed} projects.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
+
   if (isLoading) return <div className="p-8 text-center animate-pulse">Loading secure admin panel...</div>;
   
   if (error || !data) return (
@@ -126,10 +142,22 @@ export default function AdminDashboardPage() {
             <p className="text-muted-foreground font-mono text-xs uppercase tracking-widest mt-1">Master Control Panel</p>
           </div>
         </div>
-        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1 px-3 py-1">
-          <ShieldCheck className="h-3 w-3" />
-          Master Admin Mode
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50"
+            onClick={() => runMigrationMutation.mutate()}
+            disabled={runMigrationMutation.isPending}
+          >
+            <DatabaseZap className="h-4 w-4" />
+            {runMigrationMutation.isPending ? "Migrating..." : "Run Project Roles Migration"}
+          </Button>
+          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1 px-3 py-1">
+            <ShieldCheck className="h-3 w-3" />
+            Master Admin Mode
+          </Badge>
+        </div>
       </div>
 
       {/* Stats Overview */}

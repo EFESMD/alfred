@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive } from "lucide-react";
+import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -15,6 +15,7 @@ interface ProjectHeaderProps {
     image: string | null;
   } | null;
   isArchived?: boolean;
+  userRole?: string;
 }
 
 export function ProjectHeader({ 
@@ -22,7 +23,8 @@ export function ProjectHeader({
   projectId, 
   projectName, 
   projectLeader,
-  isArchived = false
+  isArchived = false,
+  userRole = "MEMBER"
 }: ProjectHeaderProps) {
   const pathname = usePathname();
 
@@ -32,12 +34,21 @@ export function ProjectHeader({
   const isSettings = pathname.endsWith("/settings");
   const isList = !isKanban && !isCalendar && !isTimeline && !isSettings;
 
+  const canEditSettings = userRole === "OWNER";
+  const isViewer = userRole === "VIEWER";
+
   return (
     <div className="border-b bg-white">
       {isArchived && (
         <div className="bg-amber-50 border-b border-amber-100 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm font-medium">
           <Archive className="h-4 w-4" />
           This project is archived and is in read-only mode.
+        </div>
+      )}
+      {!isArchived && isViewer && (
+        <div className="bg-slate-50 border-b border-slate-100 px-6 py-2 flex items-center gap-2 text-slate-600 text-xs font-medium">
+          <Eye className="h-3.5 w-3.5" />
+          You have read-only access to this project.
         </div>
       )}
       <div className="px-6 py-4 flex items-center justify-between">
@@ -106,18 +117,20 @@ export function ProjectHeader({
             Calendar
           </div>
         </Link>
-        <Link
-          href={`/workspaces/${workspaceId}/projects/${projectId}/settings`}
-          className={cn(
-            "pb-3 text-sm font-medium border-b-2 transition-colors",
-            isSettings ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
-          </div>
-        </Link>
+        {canEditSettings && (
+          <Link
+            href={`/workspaces/${workspaceId}/projects/${projectId}/settings`}
+            className={cn(
+              "pb-3 text-sm font-medium border-b-2 transition-colors",
+              isSettings ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </div>
+          </Link>
+        )}
       </div>
     </div>
   );

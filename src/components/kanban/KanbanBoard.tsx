@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { TaskModal } from "../tasks/TaskModal";
 import { TaskDetailSheet } from "../tasks/TaskDetailSheet";
 import { useRealtime } from "@/hooks/use-realtime";
+import { useSession } from "next-auth/react";
 
 interface KanbanBoardProps {
   workspaceId: string;
@@ -38,6 +39,7 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
 
 export function KanbanBoard({ workspaceId, projectId, isArchived = false }: KanbanBoardProps) {
   useRealtime(projectId);
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [activeTask, setActiveTask] = useState<TaskWithAssignee | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,6 +48,32 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
   
   // Local state to manage tasks for immediate UI feedback
   const [localTasks, setLocalTasks] = useState<TaskWithAssignee[]>([]);
+
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}`);
+      if (!res.ok) throw new Error("Failed to fetch project");
+      return res.json();
+    },
+  });
+
+  const { data: workspaceData } = useQuery({
+    queryKey: ["workspace", workspaceId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}`);
+      if (!res.ok) throw new Error("Failed to fetch workspace");
+      return res.json();
+    },
+  });
+
+  const userRole = useMemo(() => {
+    if (workspaceData?.ownerId === session?.user?.id) return "OWNER";
+    const membership = project?.members?.find((m: any) => m.userId === session?.user?.id);
+    return membership?.role || "VIEWER";
+  }, [project, workspaceData, session]);
+
+  const isReadOnly = isArchived || userRole === "VIEWER";
 
   const { data: serverTasks, isLoading, error } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],
@@ -113,12 +141,14 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
   );
 
   const handleDragStart = (event: DragStartEvent) => {
+    if (isReadOnly) return;
     const { active } = event;
     const task = localTasks.find((t) => t.id === active.id);
     if (task) setActiveTask(task);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
+    if (isReadOnly) return;
     const { active, over } = event;
     if (!over) return;
 
@@ -145,6 +175,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (isReadOnly) return;
     const { active, over } = event;
     setActiveTask(null);
 
@@ -200,7 +231,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
                 tasks={localTasks.filter((t) => t.status === column.id)}
                 onAddTask={handleAddTask}
                 onTaskClick={(id) => setSelectedTaskId(id)}
-                isArchived={isArchived}
+                isArchived={isReadOnly}
               />
             ))}
           </div>
@@ -225,7 +256,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
-        isArchived={isArchived}
+        isArchived={isReadOnly}
       />
     </div>
   );

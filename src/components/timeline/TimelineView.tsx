@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { TaskModal } from "../tasks/TaskModal";
 import { TaskDetailSheet } from "../tasks/TaskDetailSheet";
 import { useRealtime } from "@/hooks/use-realtime";
+import { useSession } from "next-auth/react";
 
 interface TimelineViewProps {
   workspaceId: string;
@@ -31,12 +32,39 @@ interface TimelineViewProps {
 
 export function TimelineView({ workspaceId, projectId, isArchived = false }: TimelineViewProps) {
   useRealtime(projectId);
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<'days' | 'weeks'>('days');
   
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}`);
+      if (!res.ok) throw new Error("Failed to fetch project");
+      return res.json();
+    },
+  });
+
+  const { data: workspaceData } = useQuery({
+    queryKey: ["workspace", workspaceId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}`);
+      if (!res.ok) throw new Error("Failed to fetch workspace");
+      return res.json();
+    },
+  });
+
+  const userRole = useMemo(() => {
+    if (workspaceData?.ownerId === session?.user?.id) return "OWNER";
+    const membership = project?.members?.find((m: any) => m.userId === session?.user?.id);
+    return membership?.role || "VIEWER";
+  }, [project, workspaceData, session]);
+
+  const isReadOnly = isArchived || userRole === "VIEWER";
+
   // 1. Fetch data first so it can be used in memos
   const { data: tasks, isLoading: tasksLoading } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],
@@ -208,10 +236,12 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
             Today
           </Button>
         </div>
-        <Button size="sm" onClick={() => setIsModalOpen(true)} disabled={isArchived}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Task
-        </Button>
+        {!isReadOnly && (
+          <Button size="sm" onClick={() => setIsModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Task
+          </Button>
+        )}
       </div>
 
       <div className="flex-1 overflow-auto relative">
@@ -403,7 +433,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
-        isArchived={isArchived}
+        isArchived={isReadOnly}
       />
     </div>
   );

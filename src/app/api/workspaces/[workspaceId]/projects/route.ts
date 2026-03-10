@@ -10,7 +10,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session?.user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -18,14 +18,36 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const isTemplate = searchParams.get("isTemplate") === "true";
 
+    // Check if user is the Workspace Owner
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { ownerId: true }
+    });
+
+    const isWorkspaceOwner = workspace?.ownerId === session.user.id;
+
     const projects = await prisma.project.findMany({
       where: {
         workspaceId,
         isTemplate,
+        // Filter: Workspace Owner sees all, others only where they are members
+        ...(isWorkspaceOwner ? {} : {
+          members: {
+            some: {
+              userId: session.user.id
+            }
+          }
+        })
       },
       orderBy: {
         createdAt: "desc",
       },
+      include: {
+        members: {
+          where: { userId: session.user.id },
+          select: { role: true }
+        }
+      }
     });
 
     return NextResponse.json(projects);
@@ -42,7 +64,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session?.user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -54,7 +76,7 @@ export async function POST(
 
     const { workspaceId } = await params;
 
-    // Verify membership
+    // Verify workspace membership
     const membership = await prisma.workspaceMember.findUnique({
       where: {
         workspaceId_userId: {
@@ -68,12 +90,19 @@ export async function POST(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
+    // Create project and automatically add the creator as OWNER
     const project = await prisma.project.create({
       data: {
         name,
         description,
         workspaceId,
         projectLeaderId,
+        members: {
+          create: {
+            userId: session.user.id,
+            role: "OWNER",
+          }
+        }
       },
     });
 

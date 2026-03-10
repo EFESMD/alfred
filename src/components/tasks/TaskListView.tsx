@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useRealtime } from "@/hooks/use-realtime";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -68,12 +69,14 @@ function SortableTaskRow({
   task, 
   onClick, 
   getStatusColor, 
-  getPriorityColor 
+  getPriorityColor,
+  disabled = false
 }: { 
   task: TaskWithAssignee; 
   onClick: () => void;
   getStatusColor: (s: any) => string;
   getPriorityColor: (p: any) => string;
+  disabled?: boolean;
 }) {
   const {
     attributes,
@@ -82,7 +85,7 @@ function SortableTaskRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -99,9 +102,11 @@ function SortableTaskRow({
       onClick={onClick}
     >
       <TableCell className="font-medium pl-10 py-1 flex items-center gap-2">
-        <div {...listeners} className="cursor-grab active:cursor-grabbing p-1 -ml-6 opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreHorizontal className="h-3 w-3 rotate-90 text-muted-foreground" />
-        </div>
+        {!disabled && (
+          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1 -ml-6 opacity-0 group-hover:opacity-100 transition-opacity">
+            <MoreHorizontal className="h-3 w-3 rotate-90 text-muted-foreground" />
+          </div>
+        )}
         <span className="truncate">{task.title}</span>
         {(task.subtasks?.length ?? 0) > 0 && (
           <Badge variant="outline" className="text-[9px] px-1 h-3.5 gap-1 opacity-50 font-normal">
@@ -152,6 +157,7 @@ function SortableTaskRow({
 
 export function TaskListView({ workspaceId, projectId, isArchived = false }: TaskListViewProps) {
   useRealtime(projectId);
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -178,6 +184,24 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
       return res.json();
     },
   });
+
+  const { data: workspaceData } = useQuery({
+    queryKey: ["workspace", workspaceId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}`);
+      if (!res.ok) throw new Error("Failed to fetch workspace");
+      return res.json();
+    },
+  });
+
+  const userRole = useMemo(() => {
+    if (workspaceData?.ownerId === session?.user?.id) return "OWNER";
+    const membership = project?.members?.find((m: any) => m.userId === session?.user?.id);
+    return membership?.role || "VIEWER";
+  }, [project, workspaceData, session]);
+
+  const isReadOnly = isArchived || userRole === "VIEWER";
+  const canManageStructure = userRole === "OWNER";
 
   const { data: tasks, isLoading: tasksLoading, refetch: refetchTasks } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],
@@ -332,7 +356,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
   // Keyboard shortcut listener
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isArchived) return;
+      if (isReadOnly) return;
 
       const isTyping = 
         e.target instanceof HTMLInputElement || 
@@ -388,9 +412,11 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isArchived, activeSectionId, allSections]);
+  }, [isReadOnly, activeSectionId, allSections]);
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (isReadOnly) return;
+    
     const { active, over } = event;
     if (!over) return;
 
@@ -441,29 +467,31 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
   return (
     <div className="p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={() => {
-            setInitialSectionId(activeSectionId || undefined);
-            setIsModalOpen(true);
-          }} 
-          disabled={isArchived} 
-          size="sm"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Task
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          disabled={isArchived}
-          onClick={() => setIsAddingSection(true)}
-        >
-          Add Section
-        </Button>
-      </div>
+      {!isReadOnly && (
+        <div className="flex items-center gap-3 mb-6">
+          <Button 
+            onClick={() => {
+              setInitialSectionId(activeSectionId || undefined);
+              setIsModalOpen(true);
+            }} 
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Task
+          </Button>
+          {canManageStructure && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsAddingSection(true)}
+            >
+              Add Section
+            </Button>
+          )}
+        </div>
+      )}
 
-      {isAddingSection && (
+      {isAddingSection && !isReadOnly && (
         <div className="mb-4 flex items-center gap-2 p-2 bg-slate-50 rounded-md border border-dashed">
           <Input 
             placeholder="Section name..." 
@@ -533,7 +561,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                               {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </button>
                             
-                            {isEditing ? (
+                            {isEditing && canManageStructure ? (
                               <Input 
                                 value={editingSectionName}
                                 onChange={(e) => setEditingSectionName(e.target.value)}
@@ -561,7 +589,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                             )}
                           </div>
 
-                          {!isArchived && !isEditing && (
+                          {!isReadOnly && canManageStructure && !isEditing && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
@@ -608,12 +636,13 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                             onClick={() => setSelectedTaskId(task.id)}
                             getStatusColor={getStatusColor}
                             getPriorityColor={getPriorityColor}
+                            disabled={isReadOnly}
                           />
                         ))}
                       </SortableContext>
                     )}
 
-                    {!isCollapsed && !isArchived && (
+                    {!isCollapsed && !isReadOnly && (
                       <TableRow className="hover:bg-transparent h-8">
                         <TableCell colSpan={6} className="py-1 pl-10">
                           {inlineSectionId === section.id ? (
@@ -691,7 +720,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
-        isArchived={isArchived}
+        isArchived={isReadOnly}
       />
     </div>
   );

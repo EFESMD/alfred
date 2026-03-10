@@ -40,13 +40,14 @@ model User {
   lastName        String?
   email           String?           @unique
   emailVerified   DateTime?
-  image           String?
+  image           String?           @default("https://oxana-production.up.railway.app/file.svg")
   password        String?
   createdAt       DateTime          @default(now())
   accounts        Account[]
   activities      Activity[]
   comments        Comment[]
   ledProjects     Project[]         @relation("ProjectLeader")
+  projectMemberships ProjectMember[]
   sessions        Session[]
   assignedTasks   Task[]            @relation("TaskAssignee")
   ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
@@ -98,9 +99,22 @@ model Project {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   projectLeader   User?     @relation("ProjectLeader", fields: [projectLeaderId], references: [id])
+  members         ProjectMember[]
   workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   sections        Section[]
   tasks           Task[]
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      String   @default("MEMBER") // OWNER, MEMBER, VIEWER
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
 }
 
 model Section {

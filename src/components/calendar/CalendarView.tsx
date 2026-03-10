@@ -14,13 +14,14 @@ import {
   subMonths 
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TaskWithAssignee, TaskStatus } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { TaskDetailSheet } from "../tasks/TaskDetailSheet";
 import { useRealtime } from "@/hooks/use-realtime";
+import { useSession } from "next-auth/react";
 
 interface CalendarViewProps {
   workspaceId: string;
@@ -30,8 +31,35 @@ interface CalendarViewProps {
 
 export function CalendarView({ workspaceId, projectId, isArchived = false }: CalendarViewProps) {
   useRealtime(projectId);
+  const { data: session } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}`);
+      if (!res.ok) throw new Error("Failed to fetch project");
+      return res.json();
+    },
+  });
+
+  const { data: workspaceData } = useQuery({
+    queryKey: ["workspace", workspaceId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}`);
+      if (!res.ok) throw new Error("Failed to fetch workspace");
+      return res.json();
+    },
+  });
+
+  const userRole = useMemo(() => {
+    if (workspaceData?.ownerId === session?.user?.id) return "OWNER";
+    const membership = project?.members?.find((m: any) => m.userId === session?.user?.id);
+    return membership?.role || "VIEWER";
+  }, [project, workspaceData, session]);
+
+  const isReadOnly = isArchived || userRole === "VIEWER";
 
   const { data: tasks, isLoading } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],
@@ -65,7 +93,7 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading calendar...</div>;
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading calendar...</div>;
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -139,7 +167,7 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
         workspaceId={workspaceId}
         projectId={projectId}
         onClose={() => setSelectedTaskId(null)}
-        isArchived={isArchived}
+        isArchived={isReadOnly}
       />
     </div>
   );
