@@ -20,7 +20,8 @@ import {
   LogOut,
   FolderOpen,
   Users,
-  Archive
+  Archive,
+  ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -158,6 +159,14 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="start" className="w-56">
+                {session?.user?.isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/dashboard" className="flex items-center gap-2 text-amber-600 focus:text-amber-700 focus:bg-amber-50 cursor-pointer">
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="font-medium">System Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>

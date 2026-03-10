@@ -92,6 +92,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.firstName = token.firstName as string | null;
         session.user.lastName = token.lastName as string | null;
+        session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },
@@ -101,15 +102,17 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.firstName = user.firstName;
         token.lastName = user.lastName;
+        token.isAdmin = user.email === process.env.ADMIN_EMAIL;
       } else if (token.id) {
         // Fetch fresh data if user is not provided (periodic check)
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { firstName: true, lastName: true }
+          select: { firstName: true, lastName: true, email: true }
         });
         if (dbUser) {
           token.firstName = dbUser.firstName;
           token.lastName = dbUser.lastName;
+          token.isAdmin = dbUser.email === process.env.ADMIN_EMAIL;
         }
       }
       return token;

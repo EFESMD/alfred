@@ -88,7 +88,7 @@
         - [ ] **Password Management**: Allow users to change their password from profile settings.
     - [ ] **Internationalization (i18n)**: Support for multiple languages (Romanian and Russian).
     - [ ] **Advanced Roles & Permissions (Future Module)**
-    - [ ] **Super Admin**: Full platform control (Global settings, Billing, System health)
+    - [x] **Super Admin**: Full platform control (Global stats, User management, Manual verification)
     - [ ] **Admin**: Workspace management (Invite/Remove members, Workspace settings)
     - [ ] **Executive**: Strategic overview (Can see all projects and reports, but might not edit tasks)
     - [ ] **Manager**: Project control (Create projects, manage timelines, assign leaders)
