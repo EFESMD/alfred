@@ -94,25 +94,28 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = token.firstName as string | null;
         session.user.lastName = token.lastName as string | null;
         session.user.isAdmin = token.isAdmin as boolean;
+        // The default handler puts token.picture into session.user.image
       }
       return session;
     },
-    async jwt({ token, user }) {
-      console.log("JWT callback triggered");
+    async jwt({ token, user, trigger, session }) {
+      console.log("JWT callback triggered", trigger);
       if (user) {
         token.id = user.id;
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.isAdmin = checkIsAdmin(user.email);
       } else if (token.id) {
-        // Fetch fresh data if user is not provided (periodic check)
+        // Fetch fresh data if user is not provided or if update is triggered
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { firstName: true, lastName: true, email: true }
+          select: { firstName: true, lastName: true, email: true, image: true, name: true }
         });
         if (dbUser) {
           token.firstName = dbUser.firstName;
           token.lastName = dbUser.lastName;
+          token.name = dbUser.name;
+          token.picture = dbUser.image; // Important to map to picture for session.user.image
           token.isAdmin = checkIsAdmin(dbUser.email);
         }
       }
