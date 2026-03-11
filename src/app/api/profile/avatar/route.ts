@@ -3,8 +3,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { getUploadDir, getFullUploadPath, getFileUrl } from "@/lib/storage";
+import { getUploadDir, getFullUploadPath, getFileUrl, deletePhysicalFile } from "@/lib/storage";
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +31,12 @@ export async function POST(req: Request) {
       return new NextResponse("Invalid file type", { status: 400 });
     }
 
+    // Fetch the current user to get the old avatar URL
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { image: true }
+    });
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -54,6 +59,11 @@ export async function POST(req: Request) {
       where: { id: session.user.id },
       data: { image: imageUrl },
     });
+
+    // Delete the old avatar from the filesystem if it was a local file
+    if (currentUser?.image && currentUser.image.includes('/uploads/')) {
+      await deletePhysicalFile(currentUser.image);
+    }
 
     return NextResponse.json({ url: imageUrl });
   } catch (error) {

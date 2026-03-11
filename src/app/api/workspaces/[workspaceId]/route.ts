@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { deletePhysicalWorkspaceAttachments } from "@/lib/storage";
 
 export async function GET(
   req: Request,
@@ -110,6 +111,9 @@ export async function DELETE(
     if (!workspace || workspace.ownerId !== session.user.id) {
       return new NextResponse("Only the owner can delete the workspace", { status: 403 });
     }
+
+    // Delete physical attachments before removing from database
+    await deletePhysicalWorkspaceAttachments(workspaceId);
 
     await prisma.workspace.delete({
       where: { id: workspaceId }

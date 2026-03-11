@@ -4,6 +4,7 @@ import { pusherServer } from "@/lib/pusher";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { format } from "date-fns";
+import { deletePhysicalTaskAttachments } from "@/lib/storage";
 
 export async function GET(
   req: Request,
@@ -254,6 +255,9 @@ export async function DELETE(
     }
 
     const { taskId, projectId } = await params;
+
+    // Delete physical attachments before removing from database
+    await deletePhysicalTaskAttachments(taskId);
 
     await prisma.task.delete({
       where: {

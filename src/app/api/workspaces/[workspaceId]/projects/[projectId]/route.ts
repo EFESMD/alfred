@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { deletePhysicalProjectAttachments } from "@/lib/storage";
 
 export async function GET(
   req: Request,
@@ -127,6 +128,9 @@ export async function DELETE(
       // You might want to also allow the Project Leader
       return new NextResponse("Forbidden", { status: 403 });
     }
+
+    // Delete physical attachments before removing from database
+    await deletePhysicalProjectAttachments(projectId);
 
     await prisma.project.delete({
       where: {

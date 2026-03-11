@@ -2,8 +2,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { unlink } from "fs/promises";
-import path from "path";
+import { deletePhysicalFile } from "@/lib/storage";
 
 export async function DELETE(
   req: Request,
@@ -25,14 +24,8 @@ export async function DELETE(
       return new NextResponse("Attachment not found", { status: 404 });
     }
 
-    // Delete file from filesystem
-    try {
-      const filePath = path.join(process.cwd(), "public", attachment.url);
-      await unlink(filePath);
-    } catch (err) {
-      console.error("Failed to delete file from filesystem:", err);
-      // Continue even if file is missing
-    }
+    // Delete file from filesystem using helper
+    await deletePhysicalFile(attachment.url);
 
     await prisma.attachment.delete({
       where: { id: attachmentId },
