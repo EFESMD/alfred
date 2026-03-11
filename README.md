@@ -1,4 +1,4 @@
-# Oxana - Project Management Tool
+# Alfred - Project Management Tool
 
 A robust, real-time project management application inspired by Asana, designed for teams to organize, track, and manage their work efficiently with enterprise-grade security.
 
@@ -29,10 +29,10 @@ A robust, real-time project management application inspired by Asana, designed f
 
 ## ⚙️ Configuration
 
-To enable the **Super Admin** features, you must configure the following environment variable in your `.env` file:
+To enable the **Super Admin** features, you must configure the following environment variable in your `.env` file. You can add multiple emails separated by commas:
 
 ```env
-ADMIN_EMAIL="your-email@md.anadoluefes.com"
+ADMIN_EMAIL="email1@md.anadoluefes.com, email2@md.anadoluefes.com"
 ```
 
 ## 🏃 Getting Started

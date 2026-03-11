@@ -65,7 +65,7 @@ function VerifyContent() {
             <CheckCircle2 className="h-16 w-12 text-green-500" />
             <p className="text-slate-600 font-medium">{message}</p>
             <p className="text-sm text-muted-foreground px-6">
-              Adresa ta de email a fost confirmată. Acum te poți autentifica în platforma Oxana.
+              Adresa ta de email a fost confirmată. Acum te poți autentifica în platforma Alfred.
             </p>
           </>
         )}

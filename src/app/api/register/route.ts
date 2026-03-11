@@ -69,12 +69,12 @@ export async function POST(req: Request) {
     try {
       await sendEmail({
         to: email,
-        subject: "Oxana - Verificarea contului tău",
-        text: `Salut ${firstName},\n\nBine ai venit în Oxana! Te rugăm să îți confirmi adresa de email accesând acest link: ${verificationUrl}\n\nAcest link va expira în 24 de ore.`,
+        subject: "Alfred - Verificarea contului tău",
+        text: `Salut ${firstName},\n\nBine ai venit în Alfred! Te rugăm să îți confirmi adresa de email accesând acest link: ${verificationUrl}\n\nAcest link va expira în 24 de ore.`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
             <h1 style="color: #0f172a; font-size: 24px; margin-bottom: 16px;">Salut ${firstName},</h1>
-            <p style="color: #475569; font-size: 16px; line-height: 24px;">Bine ai venit în platforma de project management <strong>Oxana</strong>!</p>
+            <p style="color: #475569; font-size: 16px; line-height: 24px;">Bine ai venit în platforma de project management <strong>Alfred</strong>!</p>
             <p style="color: #475569; font-size: 16px; line-height: 24px;">Pentru a activa contul tău și a începe colaborarea cu echipa, te rugăm să confirmi adresa de email făcând clic pe butonul de mai jos:</p>
             <div style="margin: 32px 0;">
               <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">Confirmă Email</a>
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
             <p style="color: #2563eb; font-size: 14px; word-break: break-all;">${verificationUrl}</p>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
             <p style="color: #94a3b8; font-size: 12px;">Acest link va expira în 24 de ore. Dacă nu tu ai creat acest cont, te rugăm să ignori acest mesaj.</p>
-            <p style="color: #64748b; font-size: 14px; margin-top: 8px;">Echipa Oxana</p>
+            <p style="color: #64748b; font-size: 14px; margin-top: 8px;">Echipa Alfred</p>
           </div>
         `,
       });

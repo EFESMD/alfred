@@ -1,4 +1,4 @@
-# Oxana - Specification
+# Alfred - Specification
 
 ## 1. Project Overview
 A robust, real-time project management application designed for teams to organize, track, and manage their work.
@@ -56,7 +56,7 @@ A robust, real-time project management application designed for teams to organiz
 - **State Management**: TanStack Query (React Query).
 
 ## 5. Configuration Requirements
-- `ADMIN_EMAIL`: Designated email address for Super Admin access.
+- `ADMIN_EMAIL`: Comma-separated email addresses for Super Admin access.
 - `DATABASE_URL`: Path to the SQLite database.
 - `STORAGE_PATH`: Persistent volume path for file uploads.
 - `NEXTAUTH_SECRET`: Security key for session encryption.

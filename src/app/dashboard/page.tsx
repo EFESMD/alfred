@@ -33,7 +33,7 @@ export default async function DashboardPage() {
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
       <Card className="w-[450px]">
         <CardHeader>
-          <CardTitle>Welcome to Oxana</CardTitle>
+          <CardTitle>Welcome to Alfred</CardTitle>
           <CardDescription>
             You are not part of any workspace yet. Get started by creating one or joining a team.
           </CardDescription>

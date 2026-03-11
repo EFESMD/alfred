@@ -13,9 +13,9 @@ export async function GET() {
 
     await sendEmail({
       to: session.user.email,
-      subject: "Oxana Mail Test",
-      text: "This is a test email from Oxana to confirm your SMTP configuration is working.",
-      html: "<h1>Oxana SMTP Test</h1><p>This is a test email from Oxana to confirm your SMTP configuration is working.</p>",
+      subject: "Alfred Mail Test",
+      text: "This is a test email from Alfred to confirm your SMTP configuration is working.",
+      html: "<h1>Alfred SMTP Test</h1><p>This is a test email from Alfred to confirm your SMTP configuration is working.</p>",
     });
 
     return NextResponse.json({ success: true, message: "Test email sent to " + session.user.email });

@@ -1,6 +1,6 @@
 # Plan de Implementare: Proiecte Private și Roluri Granulare
 
-Acest document descrie pașii tehnici pentru transformarea arhitecturii Oxana dintr-un sistem deschis într-unul securizat, bazat pe acces granular la nivel de proiect.
+Acest document descrie pașii tehnici pentru transformarea arhitecturii Alfred dintr-un sistem deschis într-unul securizat, bazat pe acces granular la nivel de proiect.
 
 ## 1. Obiective
 - **Confidențialitate**: Membrii workspace-ului nu văd proiectele în care nu sunt invitați.

@@ -21,7 +21,8 @@ import {
   FolderOpen,
   Users,
   Archive,
-  ShieldCheck
+  ShieldCheck,
+  User
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -168,11 +169,14 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
+                  <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => signOut()}>
+                <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Logout
+                  <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
