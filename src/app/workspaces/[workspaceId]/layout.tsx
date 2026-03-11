@@ -54,7 +54,7 @@ export default async function WorkspaceLayout({
       <div className="flex h-screen w-full">
         <AppSidebar workspace={workspace} projects={workspace.projects} />
         <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="h-14 border-b flex items-center px-4 bg-white shrink-0">
+          <header className="h-14 border-b flex items-center px-4 bg-[#efefef] shrink-0">
             <SidebarTrigger />
             <div className="ml-4 font-medium">{workspace.name}</div>
           </header>

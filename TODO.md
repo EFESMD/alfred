@@ -61,7 +61,7 @@
 
 - [x] **Maintenance & Bug Fixes**
     - [x] Resolved Prisma client synchronization issues with Turbopack
-    - [x] **API Security**: Replaced detailed error responses with generic \"Internal Error\" for production
+    - [x] **API Security**: Replaced detailed error responses with generic "Internal Error" for production
     - [x] UI Refinement: Improved spacing and layout for Project, Workspace, and Login pages
     - [x] **Compact UI**: Reduced row height across all task lists (List, My Tasks, Subtasks)
     - [x] Optimized Settings page loading speed via targeted API calls
@@ -73,6 +73,7 @@
     - [x] **Session Persistence**: 30-day persistent login and Opera compatibility.
     - [x] **Admin Navigation**: Integrated Super Admin dashboard link in profile menu.
     - [x] **Data Migration Tool**: Built a master admin tool to migrate legacy project data to the new roles system.
+    - [x] **Storage Cleanup**: Automated physical file deletion when tasks, projects, or workspaces are deleted, and old avatars are replaced.
 
 - [ ] **Next Steps**
     - [ ] **Visibility Filters**: Implement "Hide Done" toggle in List, Board, and Timeline views (Persistent via localStorage).
