@@ -37,7 +37,9 @@ A robust, real-time project management application designed for teams to organiz
 - **Comments**: Threaded discussions on tasks.
 - **Activity Log**: Real-time audit trail for all task-related changes.
 - **File Attachments**: Local storage system for task documents.
+- **Automated Storage Cleanup**: Physical deletion of uploaded files and avatars when records are removed from the database to save space.
 - **Real-time Updates**: Instant UI synchronization via Pusher.
+- **Custom UI Theme**: Minimalist, grey-based interface design for optimal readability.
 
 ## 3. Core Views
 - **List View**: Grouped by sections with collapsible headers and inline editing.

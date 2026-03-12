@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { TaskModal } from "../tasks/TaskModal";
 import { TaskDetailSheet } from "../tasks/TaskDetailSheet";
 import { useRealtime } from "@/hooks/use-realtime";
+import { useTaskFilter } from "@/hooks/use-task-filter";
 import { useSession } from "next-auth/react";
 
 interface TimelineViewProps {
@@ -75,6 +76,8 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     },
   });
 
+  const { filteredTasks } = useTaskFilter(tasks);
+
   const { data: sections, isLoading: sectionsLoading } = useQuery<any[]>({
     queryKey: ["sections", projectId],
     queryFn: async () => {
@@ -91,9 +94,9 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     const defaultDuration = zoomLevel === 'days' ? 1 : 5;
     const defaultEnd = endOfMonth(addMonths(viewDate, defaultDuration));
     
-    if (!tasks || tasks.length === 0) return defaultEnd;
+    if (!filteredTasks || filteredTasks.length === 0) return defaultEnd;
 
-    const maxTaskDate = tasks.reduce((max, task) => {
+    const maxTaskDate = filteredTasks.reduce((max, task) => {
       const date = task.dueDate ? new Date(task.dueDate) : (task.startDate ? new Date(task.startDate) : null);
       if (!date) return max;
       return date > max ? date : max;
@@ -103,7 +106,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     const targetEnd = maxTaskDate > defaultEnd ? endOfMonth(maxTaskDate) : defaultEnd;
     
     return targetEnd > maxAllowed ? maxAllowed : targetEnd;
-  }, [tasks, viewDate, zoomLevel]);
+  }, [filteredTasks, viewDate, zoomLevel]);
   
   const columns = useMemo(() => {
     if (zoomLevel === 'days') {
@@ -126,7 +129,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
   }, [startDate, endDate, zoomLevel]);
 
   const groupedTasks = useMemo(() => {
-    if (!tasks) return [];
+    if (!filteredTasks) return [];
     
     const groups: { id: string, name: string, tasks: TaskWithAssignee[] }[] = [];
     
@@ -134,11 +137,11 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
       groups.push({
         id: s.id,
         name: s.name,
-        tasks: tasks.filter(t => t.sectionId === s.id)
+        tasks: filteredTasks.filter(t => t.sectionId === s.id)
       });
     });
     
-    const uncategorized = tasks.filter(t => !t.sectionId);
+    const uncategorized = filteredTasks.filter(t => !t.sectionId);
     if (uncategorized.length > 0) {
       groups.push({
         id: "uncategorized",
@@ -148,7 +151,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     }
     
     return groups;
-  }, [tasks, sections]);
+  }, [filteredTasks, sections]);
 
   const flattenedTasks = useMemo(() => {
     return groupedTasks.flatMap(g => g.tasks);

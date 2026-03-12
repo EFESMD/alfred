@@ -15,8 +15,10 @@ A robust, real-time project management application inspired by Asana, designed f
   - **Calendar View**: Visual overview of deadlines.
   - **Interactive Timeline**: Gantt Chart with task dependencies and zoom levels.
 - **Collaboration**: Real-time comments, activity logs, and file attachments.
+- **System Maintenance**: Automated physical storage cleanup when resources (Tasks, Projects, Workspaces) or avatars are deleted.
 - **Super Admin Panel**: Master control panel for system statistics, user management, and automated data migration.
 - **Corporate Security**: Restricted registration to specific email domains and integrated mail server support.
+- **Custom UI Theme**: Clean, standard grey interface (#f5f6f8 and #efefef) for maximum readability.
 
 ## 🛠️ Technical Stack
 

@@ -21,6 +21,7 @@ import { TaskWithAssignee, TaskStatus } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { TaskDetailSheet } from "../tasks/TaskDetailSheet";
 import { useRealtime } from "@/hooks/use-realtime";
+import { useTaskFilter } from "@/hooks/use-task-filter";
 import { useSession } from "next-auth/react";
 
 interface CalendarViewProps {
@@ -69,6 +70,8 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
       return res.json();
     },
   });
+
+  const { filteredTasks } = useTaskFilter(tasks);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
@@ -122,9 +125,9 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
         ))}
 
         {calendarDays.map((day, i) => {
-          const dayTasks = tasks?.filter(task => 
+          const dayTasks = filteredTasks.filter(task => 
             task.dueDate && isSameDay(new Date(task.dueDate), day)
-          ) || [];
+          );
 
           return (
             <div 

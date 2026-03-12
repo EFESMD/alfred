@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { TaskModal } from "../tasks/TaskModal";
 import { TaskDetailSheet } from "../tasks/TaskDetailSheet";
 import { useRealtime } from "@/hooks/use-realtime";
+import { useTaskFilter } from "@/hooks/use-task-filter";
 import { useSession } from "next-auth/react";
 
 interface KanbanBoardProps {
@@ -93,6 +94,8 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
       setLocalTasks(serverTasks);
     }
   }, [serverTasks]);
+
+  const { filteredTasks } = useTaskFilter(localTasks);
 
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, status }: { taskId: string; status: TaskStatus }) => {
@@ -228,7 +231,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
                 key={column.id}
                 id={column.id}
                 title={column.title}
-                tasks={localTasks.filter((t) => t.status === column.id)}
+                tasks={filteredTasks.filter((t) => t.status === column.id)}
                 onAddTask={handleAddTask}
                 onTaskClick={(id) => setSelectedTaskId(id)}
                 isArchived={isReadOnly}

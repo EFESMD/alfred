@@ -21,6 +21,7 @@ import { useState, useMemo } from "react";
 import { TaskStatus, TaskPriority, TaskWithAssignee } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { useRealtime } from "@/hooks/use-realtime";
+import { useTaskFilter } from "@/hooks/use-task-filter";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -212,6 +213,8 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     },
   });
 
+  const { filteredTasks } = useTaskFilter(tasks);
+
   const { data: sections, isLoading: sectionsLoading, refetch: refetchSections } = useQuery<Section[]>({
     queryKey: ["sections", projectId],
     queryFn: async () => {
@@ -335,19 +338,19 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
   });
 
   const groupedTasks = useMemo(() => {
-    if (!tasks) return {};
+    if (!filteredTasks) return {};
     const groups: Record<string, TaskWithAssignee[]> = { "uncategorized": [] };
     
     sections?.forEach(s => groups[s.id] = []);
     
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
       const key = task.sectionId || "uncategorized";
       if (!groups[key]) groups[key] = [];
       groups[key].push(task);
     });
     
     return groups;
-  }, [tasks, sections]);
+  }, [filteredTasks, sections]);
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));

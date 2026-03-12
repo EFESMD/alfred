@@ -74,6 +74,8 @@
     - [x] **Admin Navigation**: Integrated Super Admin dashboard link in profile menu.
     - [x] **Data Migration Tool**: Built a master admin tool to migrate legacy project data to the new roles system.
     - [x] **Storage Cleanup**: Automated physical file deletion when tasks, projects, or workspaces are deleted, and old avatars are replaced.
+    - [x] **UI Theme**: Updated Sidebar and Topbar background colors to standard grey scheme (#f5f6f8 and #efefef).
+    - [x] **State Synchronization**: Fixed issue where user avatar in Sidebar did not update immediately upon upload via Profile page.
 
 - [ ] **Next Steps**
     - [ ] **Visibility Filters**: Implement "Hide Done" toggle in List, Board, and Timeline views (Persistent via localStorage).

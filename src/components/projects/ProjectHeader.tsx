@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProjectFilter } from "./ProjectFilter";
 
 interface ProjectHeaderProps {
   workspaceId: string;
@@ -131,6 +132,10 @@ export function ProjectHeader({
             </div>
           </Link>
         )}
+        <div className="flex-1" />
+        <div className="pb-3 flex items-center gap-2 pr-4">
+          {!isSettings && <ProjectFilter />}
+        </div>
       </div>
     </div>
   );

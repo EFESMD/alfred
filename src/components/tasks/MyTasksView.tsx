@@ -18,6 +18,8 @@ import { TaskDetailSheet } from "@/components/tasks/TaskDetailSheet";
 import { useState, useMemo } from "react";
 import { TaskStatus, TaskPriority } from "@/types/task";
 import { cn } from "@/lib/utils";
+import { useTaskFilter } from "@/hooks/use-task-filter";
+import { ProjectFilter } from "../projects/ProjectFilter";
 import * as React from "react";
 
 interface MyTasksViewProps {
@@ -37,9 +39,11 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
     },
   });
 
+  const { filteredTasks } = useTaskFilter(tasks);
+
   const groupedTasks = useMemo(() => {
-    if (!tasks) return {};
-    return tasks.reduce((groups: Record<string, any[]>, task) => {
+    if (!filteredTasks) return {};
+    return filteredTasks.reduce((groups: Record<string, any[]>, task) => {
       const projectId = task.projectId;
       if (!groups[projectId]) {
         groups[projectId] = [];
@@ -47,7 +51,7 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
       groups[projectId].push(task);
       return groups;
     }, {});
-  }, [tasks]);
+  }, [filteredTasks]);
 
   const toggleProject = (projectId: string) => {
     setCollapsedProjects(prev => ({ ...prev, [projectId]: !prev[projectId] }));
@@ -78,9 +82,14 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">My Tasks</h1>
-        <p className="text-sm text-muted-foreground">All tasks assigned to you in this workspace.</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">My Tasks</h1>
+          <p className="text-sm text-muted-foreground">All tasks assigned to you in this workspace.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ProjectFilter />
+        </div>
       </div>
 
       <div className="bg-white rounded-md border overflow-hidden">
