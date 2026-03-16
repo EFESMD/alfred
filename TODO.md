@@ -76,9 +76,9 @@
     - [x] **Storage Cleanup**: Automated physical file deletion when tasks, projects, or workspaces are deleted, and old avatars are replaced.
     - [x] **UI Theme**: Updated Sidebar and Topbar background colors to standard grey scheme (#f5f6f8 and #efefef).
     - [x] **State Synchronization**: Fixed issue where user avatar in Sidebar did not update immediately upon upload via Profile page.
+    - [x] **Visibility Filters**: Implemented "Hide Done" toggle in List, Board, Timeline, and Calendar views (Persistent via URL parameters).
 
 - [ ] **Next Steps**
-    - [ ] **Visibility Filters**: Implement "Hide Done" toggle in List, Board, and Timeline views (Persistent via localStorage).
     - [ ] **Global Search**: Quick navigation across workspace projects and tasks.
     - [ ] **Timeline Export**: Export project timeline to PDF/image formats.
     - [ ] **Notifications System**: In-app and potentially email alerts for task assignments and mentions.
@@ -94,7 +94,6 @@
     - [x] **Member/Contributor**: Standard task management (Create/Edit tasks)
     - [x] **Viewer/Guest**: Read-only access to specific projects or tasks
 
-Filtru pentru a ascunde cele done
 Export la timeline
 Sortare campuri in list view
 My tasks:

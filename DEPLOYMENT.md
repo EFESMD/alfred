@@ -1,34 +1,60 @@
-# Alfred - Strategie de Deployment și Infrastructură
+# Alfred - Strategie de Deployment Corporativ (Railway)
 
-Acest document descrie planul de lansare și evoluție a infrastructurii pentru platforma Alfred.
+Acest document descrie configurația finală pentru platforma Alfred, utilizând două medii izolate pe Railway (Dev și Prod) sub contul corporativ.
 
-## Faza 1: Testare Real-World (Railway)
-**Scop:** Lansarea rapidă pentru feedback de la colegi.
+## 1. Arhitectura Mediilor
 
-- **Platformă:** [Railway.app](https://railway.app)
-- **Bază de Date:** SQLite (`dev.db`) în volum persistent.
-- **Stocare Fișiere:** Unificată în volum persistent (via `STORAGE_PATH`).
-- **Configurație Critică:**
-    - Utilizarea unui **singur Railway Volume** montat la `/app/storage`.
-    - **Start Command**: `npx prisma db push && npm run start`
-- **Securitate Date:** Fișierul `prisma/dev.db` este inclus în `.gitignore`.
+| Caracteristică | Mediu de Dezvoltare (Dev) | Mediu de Producție (Prod) |
+| :--- | :--- | :--- |
+| **Railway Project** | `Alfred-Dev` | `Alfred-Prod` |
+| **Git Branch** | `develop` | `main` |
+| **Bază de Date** | SQLite (`dev.db`) în `/app/storage` | SQLite (`prod.db`) în `/app/storage` |
+| **Uploads** | `/app/storage/uploads` (Test) | `/app/storage/uploads` (Real) |
+| **Deployment** | Automat la push pe `develop` | Automat la push pe `main` |
 
-### ⚠️ IMPORTANT: Pas post-deploy (Migrare Roluri)
-După implementarea sistemului de **Private Projects**, este obligatoriu să executați migrarea datelor pe serverul live:
-1. Accesați panoul de **System Admin** (vizibil doar pentru adresele din `ADMIN_EMAIL`).
-2. Apăsați butonul **"Run Project Roles Migration"**.
-3. Acest pas va popula tabela de permisiuni și va restabili accesul utilizatorilor la proiectele lor.
+---
 
-## Variabile de Mediu Necesare (Railway)
-- `DATABASE_URL`: `file:/app/storage/dev.db`
+## 2. Flux de Lucru CI/CD (GitHub -> Railway)
+
+Pentru a asigura stabilitatea producției, urmăm acest proces:
+
+1.  **Dezvoltare Locală**: Creați un branch nou pentru fiecare funcționalitate (`feature/nume-functie`).
+2.  **Testare Dev**: Faceți Merge/Pull Request în branch-ul `develop`.
+    - Railway va face deploy automat pe link-ul de Dev.
+    - Verificați funcționalitatea și baza de date.
+3.  **Lansare Prod**: Faceți Merge din `develop` în `main`.
+    - Railway va face deploy automat pe link-ul de Producție.
+
+---
+
+## 3. Configurație Railway (Pas cu Pas)
+
+Pentru ambele proiecte (`Alfred-Dev` și `Alfred-Prod`):
+
+1.  **Repo**: Conectați repository-ul GitHub.
+2.  **Branch**: Setați branch-ul corespunzător (`develop` sau `main`).
+3.  **Volume**: Creați un Volume în Railway și montați-l la `/app/storage`.
+4.  **Start Command**: `npx prisma db push && npm run start`
+5.  **Variabile de Mediu**: (Vezi secțiunea 4)
+
+---
+
+## 4. Variabile de Mediu Necesare
+
+Configurați următoarele variabile în panoul Railway:
+
+- `DATABASE_URL`: `file:/app/storage/[dev|prod].db`
 - `STORAGE_PATH`: `/app/storage`
-- `ADMIN_EMAIL`: Listă de email-uri separate prin virgulă pentru acces Super Admin (Master Dashboard)
-- `NEXTAUTH_SECRET`: Cheia de securitate pentru sesiuni
-- `NEXTAUTH_URL`: URL-ul public al aplicației
-- `PUSHER_*`: Credențiale pentru sincronizarea în timp real.
-- `MAIL_*`: Integrare cu serverul de mail corporativ.
+- `ADMIN_EMAIL`: Email-urile administratorilor (separate prin virgulă).
+- `NEXTAUTH_SECRET`: Cheie secretă (generată unic pentru fiecare mediu).
+- `NEXTAUTH_URL`: URL-ul public (ex: `https://alfred-dev.up.railway.app`).
+- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`: Credențiale Pusher (recomandat instanțe separate pentru Dev/Prod).
+- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_FROM`: Integrare cu serverul de mail corporativ.
 
-## Configurare Volum Persistent (Railway)
-- **Mount Path:** `/app/storage`
-- **Conținut:** Acest folder va conține automat `dev.db` și subfolderul `uploads/`.
-- **Servire Fișiere:** Fișierele sunt servite din volum prin ruta `/src/app/uploads/[...path]/route.ts`.
+---
+
+## 5. Mentenanță și Backup
+
+- **SQLite**: Baza de date se află în volumul persistent. Railway oferă opțiuni de backup pentru volume.
+- **Prisma**: `npx prisma db push` este folosit în comanda de start pentru a menține schema sincronizată fără a bloca deployment-ul cu migrări manuale complexe, dar pentru schimbări majore se recomandă testarea prealabilă pe Dev.
+- **Cleanup**: Sistemul Alfred șterge automat fișierele fizice la ștergerea task-urilor sau proiectelor pentru a optimiza spațiul în volum.

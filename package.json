@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "start:railway": "npx prisma generate && npx prisma db push && next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
   },

@@ -24,6 +24,7 @@ A robust, real-time project management application designed for teams to organiz
 - **Sections**: Grouping tasks into milestones or categories.
 - **Task Attributes**: Title, Description (Markdown), Assignee, Due Dates, Priority, Status.
 - **Subtasks**: Hierarchical task management.
+- **Task Filtering**: Advanced visibility filters (Incomplete, Completed, All tasks) available across all views and My Tasks.
 - **Task Sorting**: Automatic and manual task ordering.
 
 ### Administrative Control (Super Admin)

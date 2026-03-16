@@ -14,6 +14,7 @@ A robust, real-time project management application inspired by Asana, designed f
   - **Kanban Board**: Optimized drag-and-drop workflow.
   - **Calendar View**: Visual overview of deadlines.
   - **Interactive Timeline**: Gantt Chart with task dependencies and zoom levels.
+- **Advanced Task Filtering**: Toggle between incomplete, completed, and all tasks across all views, including "My Tasks".
 - **Collaboration**: Real-time comments, activity logs, and file attachments.
 - **System Maintenance**: Automated physical storage cleanup when resources (Tasks, Projects, Workspaces) or avatars are deleted.
 - **Super Admin Panel**: Master control panel for system statistics, user management, and automated data migration.
