@@ -78,6 +78,13 @@
     - [x] **State Synchronization**: Fixed issue where user avatar in Sidebar did not update immediately upon upload via Profile page.
     - [x] **Visibility Filters**: Implemented "Hide Done" toggle in List, Board, Timeline, and Calendar views (Persistent via URL parameters).
 
+- [x] **Infrastructure & Professional Deployment**
+    - [x] **Professional Git Workflow**: Established `main` and `develop` branches for safe deployment.
+    - [x] **Railway Environment Isolation**: Strategy for separate Dev and Prod environments.
+    - [x] **Deployment Documentation**: Created `GHID_DEPLOYMENT.md` for step-by-step guidance.
+    - [x] **Automated Server Maintenance**: Added `start:railway` script for automated DB sync on Railway.
+    - [x] **Environment Configuration**: Created `.env.example` as a template for Railway setup.
+
 - [ ] **Next Steps**
     - [ ] **Global Search**: Quick navigation across workspace projects and tasks.
     - [ ] **Timeline Export**: Export project timeline to PDF/image formats.

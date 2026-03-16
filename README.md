@@ -30,13 +30,28 @@ A robust, real-time project management application inspired by Asana, designed f
 - **Real-time**: Pusher
 - **State Management**: TanStack Query (React Query)
 
-## ⚙️ Configuration
+## ⚙️ Configuration & Deployment
 
-To enable the **Super Admin** features, you must configure the following environment variable in your `.env` file. You can add multiple emails separated by commas:
+Proiectul Alfred utilizează un flux de lucru profesional cu două medii izolate pe **Railway**:
 
-```env
-ADMIN_EMAIL="email1@md.anadoluefes.com, email2@md.anadoluefes.com"
+- **Mediu de Dezvoltare (Dev)**: Conectat la branch-ul `develop`. Utilizat pentru testarea funcționalităților noi.
+- **Mediu de Producție (Prod)**: Conectat la branch-ul `main`. Versiunea stabilă utilizată de echipa corporativă.
+
+### Start Command (Railway)
+Pentru ambele medii, utilizați următoarea comandă de pornire în setările Railway:
+```bash
+npm run start:railway
 ```
+Această comandă rulează automat `prisma generate` și `prisma db push` înainte de a porni aplicația, asigurând sincronizarea bazei de date.
+
+### Environment Variables
+Consultați fișierul `.env.example` pentru lista completă a variabilelor necesare (Pusher, Mail Server, NextAuth, etc.).
+
+## 🌿 Git Workflow
+
+1.  **Dezvoltare**: Toate modificările se fac pe branch-ul `develop`.
+2.  **Testare**: Modificările sunt verificate pe instanța de Dev a Railway.
+3.  **Lansare**: Merge din `develop` în `main` pentru a actualiza producția.
 
 ## 🏃 Getting Started
 
