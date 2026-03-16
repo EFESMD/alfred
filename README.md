@@ -47,13 +47,15 @@ Această comandă rulează automat `prisma generate` și `prisma db push` înain
 ### Environment Variables
 Consultați fișierul `.env.example` pentru lista completă a variabilelor necesare (Pusher, Mail Server, NextAuth, etc.).
 
-## 🌿 Git Workflow
+## 🏢 Corporate Infrastructure
 
-1.  **Dezvoltare**: Toate modificările se fac pe branch-ul `develop`.
-2.  **Testare**: Modificările sunt verificate pe instanța de Dev a Railway.
-3.  **Lansare**: Merge din `develop` în `main` pentru a actualiza producția.
+- **Source Code**: [GitHub EFESMD/alfred](https://github.com/EFESMD/alfred)
+- **Deployment**: Railway (Corporate Account)
+- **Status**: Production Ready (Branch: `main`) / Development (Branch: `develop`)
 
-## 🏃 Getting Started
+---
+
+Ultima actualizare a infrastructurii: 16 Martie 2026.
 
 1.  **Install dependencies**:
     ```bash
