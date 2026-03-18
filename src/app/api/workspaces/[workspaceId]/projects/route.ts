@@ -18,20 +18,24 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const isTemplate = searchParams.get("isTemplate") === "true";
 
-    // Check if user is the Workspace Owner
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId },
-      select: { ownerId: true }
+    // Check if user is Workspace Owner or Admin
+    const workspaceMembership = await prisma.workspaceMember.findUnique({
+      where: {
+        workspaceId_userId: {
+          workspaceId,
+          userId: session.user.id,
+        },
+      },
     });
 
-    const isWorkspaceOwner = workspace?.ownerId === session.user.id;
+    const isWorkspaceAdminOrOwner = workspaceMembership?.role === "OWNER" || workspaceMembership?.role === "ADMIN";
 
     const projects = await prisma.project.findMany({
       where: {
         workspaceId,
         isTemplate,
-        // Filter: Workspace Owner sees all, others only where they are members
-        ...(isWorkspaceOwner ? {} : {
+        // Filter: Workspace Owner/Admin sees all, others only where they are members
+        ...(isWorkspaceAdminOrOwner ? {} : {
           members: {
             some: {
               userId: session.user.id

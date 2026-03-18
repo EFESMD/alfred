@@ -14,25 +14,43 @@ export default async function WorkspaceLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
   const { workspaceId } = await params;
 
-  const workspace = await prisma.workspace.findUnique({
+  // 1. Get user's membership in the workspace to check role
+  const membership = await prisma.workspaceMember.findUnique({
     where: {
-      id: workspaceId,
-      members: {
-        some: {
-          userId: session.user.id,
-        },
+      workspaceId_userId: {
+        workspaceId,
+        userId: session.user.id,
       },
     },
+  });
+
+  if (!membership) {
+    redirect("/dashboard");
+  }
+
+  const isAdminOrOwner = membership.role === "OWNER" || membership.role === "ADMIN";
+
+  // 2. Fetch workspace and projects with correct visibility filtering
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
     include: {
       projects: {
         where: {
           isTemplate: false,
+          // Filter: Admin/Owner sees all, others only where they are members
+          ...(isAdminOrOwner ? {} : {
+            members: {
+              some: {
+                userId: session.user.id
+              }
+            }
+          })
         },
         select: {
           id: true,
