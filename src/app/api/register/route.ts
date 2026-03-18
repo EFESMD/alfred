@@ -44,6 +44,7 @@ export async function POST(req: Request) {
         lastName,
         name: `${firstName} ${lastName}`.trim(),
         password: hashedPassword,
+        emailVerified: new Date(), // Auto-verify for now
       },
     });
     console.log("[REGISTER] User created with ID:", user.id);
