@@ -27,6 +27,9 @@ export async function GET(
           },
         },
       },
+      include: {
+        members: true
+      }
     });
 
     if (!workspace) {
@@ -42,6 +45,7 @@ export async function GET(
       const updatedWorkspace = await prisma.workspace.update({
         where: { id: workspaceId },
         data: { inviteCode: `inv_${Math.random().toString(36).substring(2, 9)}` },
+        include: { members: true }
       });
       return NextResponse.json(updatedWorkspace);
     }

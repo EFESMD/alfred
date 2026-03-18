@@ -46,15 +46,28 @@ export default async function ProjectLayout({
     redirect(`/workspaces/${workspaceId}`);
   }
 
-  const isWorkspaceOwner = project.workspace.ownerId === session.user.id;
+  const workspaceMember = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: session.user.id,
+      },
+    },
+  });
+
+  const isWorkspaceAdminOrOwner = 
+    workspaceMember?.role === "OWNER" || 
+    workspaceMember?.role === "ADMIN" || 
+    project.workspace.ownerId === session.user.id;
+
   const projectMember = project.members[0];
   
-  // Forbidden if not workspace owner and not a member of the project
-  if (!isWorkspaceOwner && !projectMember) {
+  // Forbidden if not workspace admin/owner and not a member of the project
+  if (!isWorkspaceAdminOrOwner && !projectMember) {
     redirect(`/workspaces/${workspaceId}`);
   }
 
-  const userRole = isWorkspaceOwner ? "OWNER" : projectMember.role;
+  const userRole = isWorkspaceAdminOrOwner ? "OWNER" : projectMember.role;
 
   return (
     <div className="flex flex-col h-full">

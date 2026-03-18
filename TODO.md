@@ -77,6 +77,7 @@
     - [x] **UI Theme**: Updated Sidebar and Topbar background colors to standard grey scheme (#f5f6f8 and #efefef).
     - [x] **State Synchronization**: Fixed issue where user avatar in Sidebar did not update immediately upon upload via Profile page.
     - [x] **Visibility Filters**: Implemented "Hide Done" toggle in List, Board, Timeline, and Calendar views (Persistent via URL parameters).
+    - [x] **Unified Role Management**: Standardized role calculation to elevate Workspace Admins/Owners in all project views and enforced strict read-only access for archived content.
 
 - [x] **Infrastructure & Professional Deployment**
     - [x] **Professional Git Workflow**: Established `main` and `develop` branches for safe deployment.

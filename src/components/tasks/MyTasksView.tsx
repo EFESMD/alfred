@@ -27,7 +27,7 @@ interface MyTasksViewProps {
 }
 
 export function MyTasksView({ workspaceId }: MyTasksViewProps) {
-  const [selectedTask, setSelectedTask] = useState<{ id: string; projectId: string } | null>(null);
+  const [selectedTask, setSelectedTask] = useState<{ id: string; projectId: string; isArchived: boolean } | null>(null);
   const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
 
   const { data: tasks, isLoading, refetch } = useQuery<any[]>({
@@ -140,7 +140,11 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
                       <TableRow 
                         key={task.id} 
                         className="cursor-pointer group h-9"
-                        onClick={() => setSelectedTask({ id: task.id, projectId: task.projectId })}
+                        onClick={() => setSelectedTask({ 
+                          id: task.id, 
+                          projectId: task.projectId,
+                          isArchived: task.project?.isArchived || false
+                        })}
                       >
                         <TableCell className="font-medium pl-10 py-1">
                           <div className="flex items-center gap-2">
@@ -197,6 +201,7 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
         workspaceId={workspaceId}
         projectId={selectedTask?.projectId || ""}
         onClose={() => setSelectedTask(null)}
+        isArchived={selectedTask?.isArchived}
       />
     </div>
   );

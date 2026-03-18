@@ -1,24 +1,90 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { FolderOpen, CheckSquare, Users, Archive } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
 export default async function WorkspacePage({
   params,
 }: {
   params: Promise<{ workspaceId: string }>;
 }) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
   const { workspaceId } = await params;
 
+  // 1. Get user's membership in the workspace to check role
+  const workspaceMembership = await prisma.workspaceMember.findUnique({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId: session.user.id,
+      },
+    },
+  });
+
+  if (!workspaceMembership) {
+    redirect("/dashboard");
+  }
+
+  const isAdminOrOwner = workspaceMembership.role === "OWNER" || workspaceMembership.role === "ADMIN";
+
+  // 2. Fetch stats and projects with correct visibility filtering
   const [stats, projects] = await Promise.all([
     prisma.$transaction([
-      prisma.project.count({ where: { workspaceId, isArchived: false, isTemplate: false } }),
-      prisma.task.count({ where: { project: { workspaceId, isTemplate: false } } }),
+      prisma.project.count({ 
+        where: { 
+          workspaceId, 
+          isArchived: false, 
+          isTemplate: false,
+          // Filter: Admin/Owner sees all, others only where they are members
+          ...(isAdminOrOwner ? {} : {
+            members: {
+              some: {
+                userId: session.user.id
+              }
+            }
+          })
+        } 
+      }),
+      prisma.task.count({ 
+        where: { 
+          project: { 
+            workspaceId, 
+            isTemplate: false,
+            // Filter tasks from allowed projects
+            ...(isAdminOrOwner ? {} : {
+              members: {
+                some: {
+                  userId: session.user.id
+                }
+              }
+            })
+          } 
+        } 
+      }),
       prisma.workspaceMember.count({ where: { workspaceId } }),
     ]),
     prisma.project.findMany({
-      where: { workspaceId, isTemplate: false },
+      where: { 
+        workspaceId, 
+        isTemplate: false,
+        // Filter: Admin/Owner sees all, others only where they are members
+        ...(isAdminOrOwner ? {} : {
+          members: {
+            some: {
+              userId: session.user.id
+            }
+          }
+        })
+      },
       orderBy: { updatedAt: "desc" },
     })
   ]);
@@ -40,7 +106,6 @@ export default async function WorkspacePage({
             <div className="text-2xl font-bold">{stats[0]}</div>
           </CardContent>
         </Card>
-        {/* ... (rest of stats cards) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tasks</CardTitle>

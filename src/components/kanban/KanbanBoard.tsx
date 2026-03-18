@@ -69,9 +69,15 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
   });
 
   const userRole = useMemo(() => {
-    if (workspaceData?.ownerId === session?.user?.id) return "OWNER";
-    const membership = project?.members?.find((m: any) => m.userId === session?.user?.id);
-    return membership?.role || "VIEWER";
+    // Check workspace-level role first
+    const wsMembership = workspaceData?.members?.find((m: any) => m.userId === session?.user?.id);
+    const isWsAdminOrOwner = wsMembership?.role === "OWNER" || wsMembership?.role === "ADMIN";
+    
+    if (isWsAdminOrOwner) return "OWNER";
+    
+    // Then check project-level role
+    const projectMembership = project?.members?.find((m: any) => m.userId === session?.user?.id);
+    return projectMembership?.role || "VIEWER";
   }, [project, workspaceData, session]);
 
   const isReadOnly = isArchived || userRole === "VIEWER";

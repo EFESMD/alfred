@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,6 +29,7 @@ export function ProjectHeader({
   userRole = "MEMBER"
 }: ProjectHeaderProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isKanban = pathname.endsWith("/kanban");
   const isCalendar = pathname.endsWith("/calendar");

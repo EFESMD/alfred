@@ -1,8 +1,9 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,7 @@ export default function ProjectSettingsPage({
   const { workspaceId, projectId } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -77,6 +79,15 @@ export default function ProjectSettingsPage({
     },
   });
 
+  const { data: workspaceData } = useQuery({
+    queryKey: ["workspace", workspaceId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}`);
+      if (!res.ok) throw new Error("Failed to fetch workspace");
+      return res.json();
+    },
+  });
+
   const { data: workspaceMembers } = useQuery({
     queryKey: ["members", workspaceId],
     queryFn: async () => {
@@ -94,6 +105,27 @@ export default function ProjectSettingsPage({
       return res.json();
     },
   });
+
+  const userRole = useMemo(() => {
+    if (!workspaceData || !project || !session) return "VIEWER";
+    
+    // Check workspace-level role first
+    const wsMembership = workspaceData.members?.find((m: any) => m.userId === session.user.id);
+    const isWsAdminOrOwner = wsMembership?.role === "OWNER" || wsMembership?.role === "ADMIN";
+    
+    if (isWsAdminOrOwner) return "OWNER";
+    
+    // Then check project-level role
+    const projectMembership = project.members?.find((m: any) => m.userId === session.user.id);
+    return projectMembership?.role || "VIEWER";
+  }, [project, workspaceData, session]);
+
+  useEffect(() => {
+    if (!isProjectLoading && workspaceData && project && userRole !== "OWNER") {
+      toast.error("You do not have permission to access project settings");
+      router.push(`/workspaces/${workspaceId}/projects/${projectId}`);
+    }
+  }, [userRole, isProjectLoading, workspaceData, project, workspaceId, projectId, router]);
 
   useEffect(() => {
     if (project) {
