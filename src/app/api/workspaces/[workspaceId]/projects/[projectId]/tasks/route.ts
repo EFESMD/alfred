@@ -59,6 +59,8 @@ export async function POST(
 
     const { projectId } = await params;
 
+    console.log("[TASKS_POST] Creating task with data:", { title, projectId, sectionId });
+
     const task = await prisma.task.create({
       data: {
         title,
@@ -74,14 +76,26 @@ export async function POST(
       },
     });
 
+    console.log("[TASKS_POST] Task created successfully:", task.id);
+
     // Trigger real-time update
     if (pusherServer) {
-      await pusherServer.trigger(`project-${projectId}`, "task-created", task);
+      try {
+        console.log("[TASKS_POST] Triggering Pusher update...");
+        await pusherServer.trigger(`project-${projectId}`, "task-created", task);
+        console.log("[TASKS_POST] Pusher triggered successfully");
+      } catch (pusherError) {
+        console.error("[TASKS_POST] Pusher error (Non-fatal):", pusherError);
+        // We don't fail the whole request if Pusher fails
+      }
     }
 
     return NextResponse.json(task);
-  } catch (error) {
-    console.error("[TASKS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+  } catch (error: any) {
+    console.error("[TASKS_POST] ERROR:", error.message || error);
+    return new NextResponse(JSON.stringify({ error: error.message || "Internal Error" }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
