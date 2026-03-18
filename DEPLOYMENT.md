@@ -34,7 +34,7 @@ Pentru ambele proiecte (`Alfred-Dev` și `Alfred-Prod`):
 1.  **Repo**: Conectați repository-ul GitHub.
 2.  **Branch**: Setați branch-ul corespunzător (`develop` sau `main`).
 3.  **Volume**: Creați un Volume în Railway și montați-l la `/app/storage`.
-4.  **Start Command**: `npx prisma db push && npm run start`
+4.  **Start Command**: `npm run start:railway`
 5.  **Variabile de Mediu**: (Vezi secțiunea 4)
 
 ---
@@ -47,9 +47,9 @@ Configurați următoarele variabile în panoul Railway:
 - `STORAGE_PATH`: `/app/storage`
 - `ADMIN_EMAIL`: Email-urile administratorilor (separate prin virgulă).
 - `NEXTAUTH_SECRET`: Cheie secretă (generată unic pentru fiecare mediu).
-- `NEXTAUTH_URL`: URL-ul public (ex: `https://alfred-dev.up.railway.app`).
-- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`: Credențiale Pusher (recomandat instanțe separate pentru Dev/Prod).
-- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_FROM`: Integrare cu serverul de mail corporativ.
+- `NEXTAUTH_URL`: URL-ul public al mediului respectiv.
+- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`: Credențiale Pusher.
+- `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`, `EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`, `EMAIL_FROM`: Integrare cu serverul de mail corporativ.
 
 ---
 

@@ -9,14 +9,15 @@ const from = process.env.EMAIL_FROM;
 const transporter = nodemailer.createTransport({
   host,
   port,
-  secure: port === 465, // true pentru port 465 (SSL)
+  secure: port === 465, // SSL pentru 465
   auth: {
     user,
     pass,
   },
-  // Setări suplimentare pentru serverul Efes (acceptă certificate self-signed)
   tls: {
     rejectUnauthorized: false,
+    minVersion: "TLSv1.2",
+    ciphers: 'SSLv3' // Uneori serverele mai vechi au nevoie de asta
   },
 });
 
@@ -31,6 +32,14 @@ export async function sendEmail({
   text: string;
   html?: string;
 }) {
+  try {
+    const ipRes = await fetch("https://api.ipify.org?format=json");
+    const ipData = await ipRes.json();
+    console.log(`[MAIL] Railway Server Public IP: ${ipData.ip}`);
+  } catch (ipErr) {
+    console.warn("[MAIL] Could not fetch server IP:", ipErr);
+  }
+
   console.log(`[MAIL] Attempting to send email via ${host}:${port} as ${user}`);
   
   if (!host || !user || !pass) {

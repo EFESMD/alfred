@@ -45,7 +45,12 @@ npm run start:railway
 Această comandă rulează automat `prisma generate` și `prisma db push` înainte de a porni aplicația, asigurând sincronizarea bazei de date.
 
 ### Environment Variables
-Consultați fișierul `.env.example` pentru lista completă a variabilelor necesare (Pusher, Mail Server, NextAuth, etc.).
+Consultați fișierul `.env.example` pentru lista completă. Cele mai importante includ:
+- `DATABASE_URL`: Calea către baza de date SQLite în volumul persistent.
+- `STORAGE_PATH`: Calea către folderul de stocare fișiere.
+- `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`, `EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`: Configurația serverului de mail corporativ.
+- `NEXTAUTH_SECRET`, `NEXTAUTH_URL`: Securitatea sesiunilor.
+- `ADMIN_EMAIL`: Accesul Super Admin.
 
 ## 🏢 Corporate Infrastructure
 

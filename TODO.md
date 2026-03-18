@@ -91,7 +91,7 @@
     - [ ] **Notifications System**: In-app and potentially email alerts for task assignments and mentions.
     - [x] Manual Task Sorting (Drag & Drop reordering in List and Kanban)
     - [ ] **Account & Security Enhancements**
-        - [ ] **Email Verification**: Formalize account creation with email confirmation link.
+        - [x] **Email Verification**: Formalize account creation with email confirmation link.
         - [ ] **Password Management**: Allow users to change their password from profile settings.
     - [ ] **Internationalization (i18n)**: Support for multiple languages (Romanian and Russian).
     - [ ] **Advanced Roles & Permissions (Workspace Level)**

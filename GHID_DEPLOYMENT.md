@@ -59,8 +59,9 @@ Fiecare proiect (Dev și Prod) va avea propriile sale variabile. Asigură-te că
 | :--- | :--- | :--- |
 | `DATABASE_URL` | `file:/app/storage/dev.db` | `file:/app/storage/prod.db` |
 | `STORAGE_PATH` | `/app/storage` | `/app/storage` |
-| `NEXTAUTH_URL` | URL-ul de test de la Railway | URL-ul tău final (domeniul oficial) |
-| `ADMIN_EMAIL` | Email-ul tău de test | Email-urile adminilor reali |
+| `NEXTAUTH_URL` | URL de test (Dev) | URL final (Prod) |
+| `EMAIL_SERVER_HOST` | `mail.efes.md` | `mail.efes.md` |
+| `EMAIL_SERVER_USER` | `noreply@efes.md` | `noreply@efes.md` |
 
 ---
 
