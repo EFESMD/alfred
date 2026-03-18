@@ -9,12 +9,12 @@ const from = process.env.EMAIL_FROM;
 const transporter = nodemailer.createTransport({
   host,
   port,
-  secure: port === 465, // true for port 465
+  secure: port === 465, // true pentru port 465 (SSL)
   auth: {
     user,
     pass,
   },
-  // Efes server might need specific settings for older SSL/TLS or self-signed certs
+  // Setări suplimentare pentru serverul Efes (acceptă certificate self-signed)
   tls: {
     rejectUnauthorized: false,
   },
@@ -31,8 +31,11 @@ export async function sendEmail({
   text: string;
   html?: string;
 }) {
-  if (!user || !pass) {
-    console.warn("[MAIL] Skipping email send: No credentials configured.");
+  console.log(`[MAIL] Attempting to send email via ${host}:${port} as ${user}`);
+  
+  if (!host || !user || !pass) {
+    console.warn("[MAIL] Skipping email send: Missing environment variables.");
+    console.log("[MAIL] Current config:", { host, port, user, hasPass: !!pass });
     return;
   }
 
