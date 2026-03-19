@@ -11,7 +11,9 @@ import {
   isSameMonth, 
   isSameDay, 
   addMonths, 
-  subMonths 
+  subMonths,
+  isBefore,
+  startOfDay
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -138,9 +140,10 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
                     className={cn(
-                      "text-[10px] px-2 py-1 rounded truncate cursor-pointer hover:brightness-95 transition-all shadow-sm",
-                      getStatusColor(task.status as TaskStatus),
-                      "text-white font-medium"
+                      "text-[10px] px-2 py-1 rounded truncate cursor-pointer hover:brightness-95 transition-all shadow-sm font-medium",
+                      task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
+                        ? "bg-red-500 text-white"
+                        : `${getStatusColor(task.status as TaskStatus)} text-white`
                     )}
                   >
                     {task.title}

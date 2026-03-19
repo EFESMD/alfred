@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { 
   DropdownMenu,
@@ -616,7 +616,11 @@ export function TaskDetailSheet({
                           size="sm"
                           className={cn(
                             "h-8 px-2 font-medium justify-start text-left hover:bg-slate-100 relative z-50 pointer-events-auto",
-                            !task.dueDate && "text-muted-foreground"
+                            task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
+                              ? "text-red-500 font-bold"
+                              : !task.dueDate 
+                                ? "text-muted-foreground"
+                                : "text-foreground"
                           )}
                         >
                           {task.dueDate ? format(new Date(task.dueDate), "PPP") : "No date"}

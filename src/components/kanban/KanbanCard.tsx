@@ -1,5 +1,6 @@
 "use client";
 
+import { isBefore, startOfDay } from "date-fns";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskPriority, TaskWithAssignee } from "@/types/task";
@@ -7,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface KanbanCardProps {
   task: TaskWithAssignee;
@@ -64,7 +66,12 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
                 {task.priority}
               </Badge>
               {task.dueDate && (
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <div className={cn(
+                  "flex items-center gap-1 text-[10px]",
+                  isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
+                    ? "text-red-500 font-medium"
+                    : "text-muted-foreground"
+                )}>
                   <Calendar className="h-3 w-3" />
                   <span>{new Date(task.dueDate).toLocaleDateString()}</span>
                 </div>

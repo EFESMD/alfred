@@ -9,6 +9,7 @@ import {
   eachDayOfInterval, 
   addMonths, 
   startOfDay,
+  isBefore,
   differenceInDays,
   isToday,
   isWithinInterval,
@@ -379,9 +380,11 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
                           <div 
                             className={cn(
                               "absolute top-2 h-8 rounded-md flex items-center px-3 text-[11px] text-white font-medium overflow-hidden shadow-sm cursor-pointer hover:brightness-110 transition-all z-10",
-                              task.status === "DONE" ? "bg-green-500" : 
-                              task.status === "IN_PROGRESS" ? "bg-blue-600" : 
-                              task.status === "TODO" ? "bg-yellow-600" : "bg-gray-500"
+                              task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
+                                ? "bg-red-500 border-2 border-red-600 animate-pulse-subtle" 
+                                : task.status === "DONE" ? "bg-green-500" : 
+                                  task.status === "IN_PROGRESS" ? "bg-blue-600" : 
+                                  task.status === "TODO" ? "bg-yellow-600" : "bg-gray-500"
                             )}
                             style={getTaskStyle(task) || {}}
                             onClick={() => setSelectedTaskId(task.id)}

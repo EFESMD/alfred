@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Plus, MoreHorizontal, Calendar, User, FolderOpen, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import { 
   Table, 
   TableBody, 
@@ -159,7 +159,11 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
                         <TableCell className="py-1">
                           <div className={cn(
                             "flex items-center gap-1.5 text-xs",
-                            task.dueDate ? "text-foreground" : "text-muted-foreground"
+                            task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
+                              ? "text-red-500 font-medium"
+                              : task.dueDate 
+                                ? "text-foreground" 
+                                : "text-muted-foreground"
                           )}>
                             <Calendar className="h-3.5 w-3.5" />
                             <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
