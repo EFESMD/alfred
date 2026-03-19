@@ -52,7 +52,20 @@ export async function PATCH(
     const { workspaceId } = await params;
     const { userId, role } = await req.json();
 
-    // Verify current user is OWNER or ADMIN
+    // 1. Fetch workspace to identify owner
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { ownerId: true }
+    });
+
+    if (!workspace) return new NextResponse("Workspace not found", { status: 404 });
+
+    // 2. Prevent changing the role of the workspace owner
+    if (userId === workspace.ownerId) {
+      return new NextResponse("Cannot change the role of the workspace owner", { status: 400 });
+    }
+
+    // 3. Verify requester is OWNER or ADMIN
     const currentMember = await prisma.workspaceMember.findUnique({
       where: {
         workspaceId_userId: { workspaceId, userId: session.user.id }
@@ -107,9 +120,14 @@ export async function DELETE(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    // Don't allow removing yourself if you are the owner (must delete workspace or transfer)
-    if (userId === session.user.id && currentMember.role === "OWNER") {
-      return new NextResponse("Owners cannot remove themselves", { status: 400 });
+    // Don't allow removing the owner (must delete workspace or transfer)
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { ownerId: true }
+    });
+
+    if (userId === workspace?.ownerId) {
+      return new NextResponse("The owner cannot be removed from the workspace", { status: 400 });
     }
 
     await prisma.workspaceMember.delete({

@@ -30,6 +30,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { 
   AlertTriangle, 
   Archive, 
@@ -339,21 +340,29 @@ export default function WorkspaceSettingsPage({
                             <AvatarFallback>{membership.user.name?.[0]}</AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
-                            <span className="font-medium text-sm">{membership.user.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{membership.user.name}</span>
+                              {membership.user.id === workspace?.ownerId && (
+                                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] h-4 py-0">
+                                  Creator
+                                </Badge>
+                              )}
+                            </div>
                             <span className="text-xs text-muted-foreground">{membership.user.email}</span>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Select 
-                          value={membership.role} 
-                          disabled={membership.role === "OWNER" || updateMemberRoleMutation.isPending}
+                          value={membership.user.id === workspace?.ownerId ? "OWNER" : membership.role} 
+                          disabled={membership.role === "OWNER" || membership.user.id === workspace?.ownerId || updateMemberRoleMutation.isPending}
                           onValueChange={(role) => updateMemberRoleMutation.mutate({ userId: membership.user.id, role })}
                         >
                           <SelectTrigger className="w-32 h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="OWNER">Owner</SelectItem>
                             <SelectItem value="ADMIN">Admin</SelectItem>
                             <SelectItem value="MEMBER">Member</SelectItem>
                           </SelectContent>
