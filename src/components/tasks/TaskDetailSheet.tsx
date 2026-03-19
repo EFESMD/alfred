@@ -132,12 +132,12 @@ function SubtaskItem({
         </div>
       ) : (
         <div 
-          className="flex-1 flex items-center gap-2 cursor-pointer min-w-0 h-full py-1"
+          className="flex-1 flex items-center gap-2 cursor-pointer h-full py-1"
           onClick={() => !isArchived && setIsEditing(true)}
         >
           <span 
             className={cn(
-              "text-xs truncate transition-colors",
+              "text-xs transition-colors break-words whitespace-normal leading-relaxed",
               subtask.status === "DONE" ? "line-through text-muted-foreground" : "text-foreground group-hover:text-primary"
             )}
           >
