@@ -3,6 +3,7 @@
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ export default function WorkspaceSettingsPage({
   const { workspaceId } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   
   const [name, setName] = useState("");
   const [workspaceNameConfirm, setWorkspaceNameConfirm] = useState("");
@@ -258,53 +260,55 @@ export default function WorkspaceSettingsPage({
             </CardContent>
           </Card>
 
-          <Card className="border-destructive/50 bg-red-50/10">
-            <CardHeader>
-              <CardTitle className="text-destructive flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                Danger Zone
-              </CardTitle>
-              <CardDescription>
-                Permanently delete this workspace and all its associated data.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="destructive">Delete Workspace</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Are you absolutely sure?</DialogTitle>
-                    <DialogDescription>
-                      This action will delete the <span className="font-bold text-foreground">"{workspace?.name}"</span> workspace, 
-                      all of its projects, tasks, members, and data. This cannot be undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4 space-y-2">
-                    <Label>Type the workspace name to confirm:</Label>
-                    <Input 
-                      placeholder={workspace?.name} 
-                      value={workspaceNameConfirm} 
-                      onChange={(e) => setWorkspaceNameConfirm(e.target.value)}
-                    />
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline" onClick={() => setWorkspaceNameConfirm("")}>Cancel</Button>
-                    </DialogClose>
-                    <Button 
-                      variant="destructive" 
-                      disabled={workspaceNameConfirm !== workspace?.name || deleteWorkspaceMutation.isPending}
-                      onClick={() => deleteWorkspaceMutation.mutate()}
-                    >
-                      {deleteWorkspaceMutation.isPending ? "Deleting..." : "Permanently Delete Workspace"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+          {session?.user?.id === workspace?.ownerId && (
+            <Card className="border-destructive/50 bg-red-50/10">
+              <CardHeader>
+                <CardTitle className="text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription>
+                  Permanently delete this workspace and all its associated data.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive">Delete Workspace</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Are you absolutely sure?</DialogTitle>
+                      <DialogDescription>
+                        This action will delete the <span className="font-bold text-foreground">"{workspace?.name}"</span> workspace, 
+                        all of its projects, tasks, members, and data. This cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                      <Label>Type the workspace name to confirm:</Label>
+                      <Input 
+                        placeholder={workspace?.name} 
+                        value={workspaceNameConfirm} 
+                        onChange={(e) => setWorkspaceNameConfirm(e.target.value)}
+                      />
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline" onClick={() => setWorkspaceNameConfirm("")}>Cancel</Button>
+                      </DialogClose>
+                      <Button 
+                        variant="destructive" 
+                        disabled={workspaceNameConfirm !== workspace?.name || deleteWorkspaceMutation.isPending}
+                        onClick={() => deleteWorkspaceMutation.mutate()}
+                      >
+                        {deleteWorkspaceMutation.isPending ? "Deleting..." : "Permanently Delete Workspace"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="members" className="pt-6">
