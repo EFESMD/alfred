@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Filter, Check, ChevronDown, CheckCircle2, Circle } from "lucide-react";
+import { Filter, Check, ChevronDown, CheckCircle2, Circle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,6 +36,8 @@ export function ProjectFilter() {
         return "Incomplete tasks";
       case "completed":
         return "Completed tasks";
+      case "overdue":
+        return "Overdue tasks";
       case "all":
         return "All tasks";
       default:
@@ -73,6 +75,16 @@ export function ProjectFilter() {
               <span>Completed tasks</span>
             </div>
             {currentFilter === "completed" && <Check className="h-4 w-4" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => setFilter("overdue")}
+            className="flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <span>Overdue tasks</span>
+            </div>
+            {currentFilter === "overdue" && <Check className="h-4 w-4" />}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
