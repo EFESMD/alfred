@@ -36,7 +36,7 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  const { data: project } = useQuery({
+  const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}`);
@@ -45,26 +45,7 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
     },
   });
 
-  const { data: workspaceData } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspaces/${workspaceId}`);
-      if (!res.ok) throw new Error("Failed to fetch workspace");
-      return res.json();
-    },
-  });
-
-  const userRole = useMemo(() => {
-    // Check workspace-level role first
-    const wsMembership = workspaceData?.members?.find((m: any) => m.userId === session?.user?.id);
-    const isWsAdminOrOwner = wsMembership?.role === "OWNER" || wsMembership?.role === "ADMIN";
-    
-    if (isWsAdminOrOwner) return "OWNER";
-    
-    // Then check project-level role
-    const projectMembership = project?.members?.find((m: any) => m.userId === session?.user?.id);
-    return projectMembership?.role || "VIEWER";
-  }, [project, workspaceData, session]);
+  const userRole = project?.currentUserRole || "VIEWER";
 
   const isReadOnly = isArchived || userRole === "VIEWER";
 
@@ -102,7 +83,7 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading calendar...</div>;
+  if (isLoading || projectLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading calendar...</div>;
 
   return (
     <div className="flex flex-col h-full bg-white">

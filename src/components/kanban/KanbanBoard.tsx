@@ -50,7 +50,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
   // Local state to manage tasks for immediate UI feedback
   const [localTasks, setLocalTasks] = useState<TaskWithAssignee[]>([]);
 
-  const { data: project } = useQuery({
+  const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}`);
@@ -59,26 +59,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
     },
   });
 
-  const { data: workspaceData } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspaces/${workspaceId}`);
-      if (!res.ok) throw new Error("Failed to fetch workspace");
-      return res.json();
-    },
-  });
-
-  const userRole = useMemo(() => {
-    // Check workspace-level role first
-    const wsMembership = workspaceData?.members?.find((m: any) => m.userId === session?.user?.id);
-    const isWsAdminOrOwner = wsMembership?.role === "OWNER" || wsMembership?.role === "ADMIN";
-    
-    if (isWsAdminOrOwner) return "OWNER";
-    
-    // Then check project-level role
-    const projectMembership = project?.members?.find((m: any) => m.userId === session?.user?.id);
-    return projectMembership?.role || "VIEWER";
-  }, [project, workspaceData, session]);
+  const userRole = project?.currentUserRole || "VIEWER";
 
   const isReadOnly = isArchived || userRole === "VIEWER";
 

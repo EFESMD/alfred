@@ -40,7 +40,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<'days' | 'weeks'>('days');
   
-  const { data: project } = useQuery({
+  const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}`);
@@ -49,26 +49,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     },
   });
 
-  const { data: workspaceData } = useQuery({
-    queryKey: ["workspace", workspaceId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspaces/${workspaceId}`);
-      if (!res.ok) throw new Error("Failed to fetch workspace");
-      return res.json();
-    },
-  });
-
-  const userRole = useMemo(() => {
-    // Check workspace-level role first
-    const wsMembership = workspaceData?.members?.find((m: any) => m.userId === session?.user?.id);
-    const isWsAdminOrOwner = wsMembership?.role === "OWNER" || wsMembership?.role === "ADMIN";
-    
-    if (isWsAdminOrOwner) return "OWNER";
-    
-    // Then check project-level role
-    const projectMembership = project?.members?.find((m: any) => m.userId === session?.user?.id);
-    return projectMembership?.role || "VIEWER";
-  }, [project, workspaceData, session]);
+  const userRole = project?.currentUserRole || "VIEWER";
 
   const isReadOnly = isArchived || userRole === "VIEWER";
 
@@ -185,7 +166,7 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
     };
   };
 
-  if (tasksLoading || sectionsLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading timeline...</div>;
+  if (tasksLoading || sectionsLoading || projectLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading timeline...</div>;
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">

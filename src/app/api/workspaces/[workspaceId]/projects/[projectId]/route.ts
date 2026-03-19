@@ -36,13 +36,34 @@ export async function GET(
         id: projectId,
         workspaceId: workspaceId,
       },
+      include: {
+        members: true,
+        workspace: {
+          select: {
+            ownerId: true,
+            members: {
+              where: { userId: session.user.id },
+              select: { role: true }
+            }
+          }
+        }
+      }
     });
 
     if (!project) {
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    return NextResponse.json(project);
+    const wsMembership = project.workspace.members[0];
+    const isWsAdminOrOwner = wsMembership?.role === "OWNER" || wsMembership?.role === "ADMIN" || project.workspace.ownerId === session.user.id;
+    
+    const projectMembership = project.members.find(m => m.userId === session.user.id);
+    const currentUserRole = isWsAdminOrOwner ? "OWNER" : (projectMembership?.role || "VIEWER");
+
+    return NextResponse.json({
+      ...project,
+      currentUserRole
+    });
   } catch (error) {
     console.error("[PROJECT_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
