@@ -189,7 +189,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
   const userRole = project?.currentUserRole || "VIEWER";
 
   const isReadOnly = isArchived || userRole === "VIEWER";
-  const canManageStructure = userRole === "OWNER";
+  const canManageStructure = userRole === "OWNER" || userRole === "MEMBER";
 
   const { data: tasks, isLoading: tasksLoading, refetch: refetchTasks } = useQuery<TaskWithAssignee[]>({
     queryKey: ["tasks", projectId],

@@ -18,7 +18,7 @@ A robust, real-time project management application designed for teams to organiz
 - **Private Projects**: Projects are private by default. Members only see projects they are explicitly invited to.
 - **Granular Project Roles**:
     - **Project Owner**: Full control over settings, sections, and members. (Note: Workspace Owners and Admins automatically inherit this role for all projects within their workspace).
-    - **Project Member**: Can create, edit, and delete tasks.
+    - **Project Member**: Can create, edit, and delete tasks, as well as manage project sections.
     - **Project Viewer**: Read-only access to all views.
 - **Projects**: Groupings of tasks, with support for Archiving and Templates.
 - **Sections**: Grouping tasks into milestones or categories.
