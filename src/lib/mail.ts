@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { logEmail } from "@/lib/logger";
 
 const host = process.env.EMAIL_SERVER_HOST;
 const port = parseInt(process.env.EMAIL_SERVER_PORT || "465");
@@ -6,18 +7,24 @@ const user = process.env.EMAIL_SERVER_USER;
 const pass = process.env.EMAIL_SERVER_PASSWORD;
 const from = process.env.EMAIL_FROM;
 
+const secure = port === 465;
+
 const transporter = nodemailer.createTransport({
   host,
   port,
-  secure: port === 465, // True pentru 465 (SSL), False pentru 587 (STARTTLS)
+  secure, // True for 465, False for other ports
   auth: {
     user,
     pass,
   },
   tls: {
-    rejectUnauthorized: false, // Permite certificate interne
+    rejectUnauthorized: false,
     minVersion: "TLSv1.2",
   },
+  // Increase connection timeout for debugging
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,   // 10 seconds
+  socketTimeout: 10000,     // 10 seconds
 });
 
 export async function sendEmail({
@@ -31,23 +38,29 @@ export async function sendEmail({
   text: string;
   html?: string;
 }) {
+  logEmail(`[MAIL_START] Request to send email to: ${to} | Subject: ${subject}`);
+
   try {
     const ipRes = await fetch("https://api.ipify.org?format=json");
     const ipData = await ipRes.json();
-    console.log(`[MAIL] Railway Server Public IP: ${ipData.ip}`);
+    logEmail(`[MAIL_DEBUG] Server Public IP: ${ipData.ip}`);
   } catch (ipErr) {
-    console.warn("[MAIL] Could not fetch server IP:", ipErr);
+    logEmail(`[MAIL_WARN] Could not fetch server IP: ${ipErr}`);
   }
 
-  console.log(`[MAIL] Attempting to send email via ${host}:${port} as ${user}`);
-  
   if (!host || !user || !pass) {
-    console.warn("[MAIL] Skipping email send: Missing environment variables.");
-    console.log("[MAIL] Current config:", { host, port, user, hasPass: !!pass });
+    logEmail("[MAIL_ERROR] Skipping email send: Missing environment variables.", { host, port, user, hasPass: !!pass });
     return;
   }
 
+  logEmail(`[MAIL_CONFIG] Host: ${host} | Port: ${port} | User: ${user} | Secure: ${secure}`);
+
   try {
+    // Verify connection configuration
+    logEmail("[MAIL_DEBUG] Verifying SMTP connection...");
+    await transporter.verify();
+    logEmail("[MAIL_DEBUG] SMTP connection established.");
+
     const info = await transporter.sendMail({
       from: from || user,
       to,
@@ -56,10 +69,14 @@ export async function sendEmail({
       html: html || text.replace(/\n/g, "<br>"),
     });
 
-    console.log("[MAIL] Message sent: %s", info.messageId);
+    logEmail(`[MAIL_SUCCESS] Message sent! MessageID: ${info.messageId}`);
     return info;
-  } catch (error) {
-    console.error("[MAIL] Error sending email:", error);
+  } catch (error: any) {
+    logEmail(`[MAIL_FATAL] Error sending email: ${error.message}`, {
+      code: error.code,
+      response: error.response,
+      stack: error.stack
+    });
     throw error;
   }
 }

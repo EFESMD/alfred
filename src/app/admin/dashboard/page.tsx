@@ -29,7 +29,10 @@ import {
   ArrowLeft,
   Mail,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  FileTerminal,
+  RefreshCw,
+  Send
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -45,10 +48,13 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
   const [userToDelete, setUserToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [testEmailTarget, setTestEmailTarget] = useState("");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-stats"],
@@ -60,6 +66,39 @@ export default function AdminDashboardPage() {
       }
       return res.json();
     },
+  });
+
+  const { data: emailLogs, refetch: refetchLogs, isFetching: isFetchingLogs } = useQuery({
+    queryKey: ["email-logs"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/logs/email");
+      if (!res.ok) return "Failed to fetch logs";
+      return res.text();
+    },
+    enabled: !!data, // Only fetch if admin stats succeeded
+  });
+
+  const sendTestEmailMutation = useMutation({
+    mutationFn: async (targetEmail: string) => {
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetEmail }),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to send test email");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Test email sent! Check your inbox.");
+      refetchLogs();
+    },
+    onError: (error: any) => {
+      toast.error(`Email failed: ${error.message}`);
+      refetchLogs();
+    }
   });
 
   const verifyUserMutation = useMutation({
@@ -173,6 +212,69 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Email Diagnostics Card */}
+      <Card className="shadow-sm border-indigo-100 bg-indigo-50/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-indigo-500" />
+            Email System Diagnostics
+          </CardTitle>
+          <CardDescription>Test SMTP configuration and view transmission logs.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Test Email Section */}
+            <div className="flex-1 space-y-4">
+              <div className="space-y-2">
+                <Label>Send Test Email To</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="name@example.com" 
+                    value={testEmailTarget}
+                    onChange={(e) => setTestEmailTarget(e.target.value)}
+                    className="bg-white"
+                  />
+                  <Button 
+                    onClick={() => sendTestEmailMutation.mutate(testEmailTarget)}
+                    disabled={!testEmailTarget || sendTestEmailMutation.isPending}
+                    className="gap-2"
+                  >
+                    {sendTestEmailMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    Send Test
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Triggers an immediate email send attempt using current server configuration.
+                </p>
+              </div>
+            </div>
+
+            {/* Logs Section */}
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  <FileTerminal className="h-4 w-4" />
+                  Live System Logs
+                </Label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 text-xs gap-1" 
+                  onClick={() => refetchLogs()}
+                  disabled={isFetchingLogs}
+                >
+                  <RefreshCw className={`h-3 w-3 ${isFetchingLogs ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
+              <div className="bg-slate-950 text-slate-50 p-3 rounded-md font-mono text-xs h-[150px] overflow-y-auto whitespace-pre-wrap shadow-inner">
+                {emailLogs || "No logs available."}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Users Table */}
       <Card className="shadow-sm overflow-hidden">
