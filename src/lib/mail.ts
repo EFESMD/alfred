@@ -10,12 +10,13 @@ const from = process.env.EMAIL_FROM;
 const secure = port === 465;
 
 const transporter = nodemailer.createTransport({
-  host: host,
-  port: port,
-  secure: port === 465, 
+  host: "mail.efes.md",
+  port: 465,
+  secure: true, // Implicit SSL
+  name: "mail.efes.md", // EHLO Name from script
   auth: { 
-    user: user, 
-    pass: pass 
+    user: "noreply@efes.md", 
+    pass: "16ditSW2xO45" // Password from the working script
   },
   tls: {
     minVersion: "TLSv1.2",
