@@ -12,19 +12,22 @@ const secure = port === 465;
 const transporter = nodemailer.createTransport({
   host,
   port,
-  secure, // True for 465, False for other ports
-  auth: {
-    user,
-    pass,
-  },
+  secure: port === 465, 
+  auth: { user, pass },
   tls: {
-    rejectUnauthorized: false,
     minVersion: "TLSv1.2",
+    rejectUnauthorized: false,
   },
-  // Increase connection timeout for debugging
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,   // 10 seconds
-  socketTimeout: 10000,     // 10 seconds
+  connectionTimeout: 30000, 
+  greetingTimeout: 30000,   
+  socketTimeout: 30000,     
+  debug: true, 
+  logger: {
+    debug: (msg: string) => logEmail(`[SMTP_DEBUG] ${msg}`),
+    info: (msg: string) => logEmail(`[SMTP_INFO] ${msg}`),
+    warn: (msg: string) => logEmail(`[SMTP_WARN] ${msg}`),
+    error: (msg: string) => logEmail(`[SMTP_ERROR] ${msg}`),
+  }
 });
 
 export async function sendEmail({
