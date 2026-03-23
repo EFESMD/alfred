@@ -54,7 +54,8 @@ import { Label } from "@/components/ui/label";
 export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
   const [userToDelete, setUserToDelete] = useState<{ id: string, name: string } | null>(null);
-  const [testEmailTarget, setTestEmailTarget] = useState("");
+  const [testEmailTarget, setTestEmailTarget] = useState("noreply@efes.md");
+
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-stats"],
