@@ -10,10 +10,13 @@ const from = process.env.EMAIL_FROM;
 const secure = port === 465;
 
 const transporter = nodemailer.createTransport({
-  host,
-  port,
+  host: host,
+  port: port,
   secure: port === 465, 
-  auth: { user, pass },
+  auth: { 
+    user: user, 
+    pass: pass 
+  },
   tls: {
     minVersion: "TLSv1.2",
     rejectUnauthorized: false,
@@ -28,7 +31,7 @@ const transporter = nodemailer.createTransport({
     warn: (msg: string) => logEmail(`[SMTP_WARN] ${msg}`),
     error: (msg: string) => logEmail(`[SMTP_ERROR] ${msg}`),
   }
-});
+} as any);
 
 export async function sendEmail({
   to,

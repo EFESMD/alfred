@@ -13,25 +13,30 @@ if (!fs.existsSync(LOG_DIR)) {
   }
 }
 
-export function logEmail(message: string, meta?: any) {
+export function logEmail(message: any, meta?: any) {
   const timestamp = new Date().toISOString();
-  let logMessage = `[${timestamp}] ${message}`;
+  
+  let formattedMessage = typeof message === 'string' 
+    ? message 
+    : JSON.stringify(message, null, 2);
+
+  let logLine = `[${timestamp}] ${formattedMessage}`;
 
   if (meta) {
     try {
-      logMessage += ` ${JSON.stringify(meta)}`;
+      logLine += ` ${JSON.stringify(meta, null, 2)}`;
     } catch (e) {
-      logMessage += ` [Meta Error: ${e}]`;
+      logLine += ` [Meta Error: ${e}]`;
     }
   }
 
-  logMessage += '\n';
+  logLine += '\n';
 
   // Console log for immediate feedback in dev/build logs
-  console.log(`[EMAIL_LOG] ${message}`, meta || '');
+  console.log(`[EMAIL_LOG] ${formattedMessage}`, meta || '');
 
   try {
-    fs.appendFileSync(EMAIL_LOG_FILE, logMessage);
+    fs.appendFileSync(EMAIL_LOG_FILE, logLine);
   } catch (e) {
     console.error("Failed to write to email log file", e);
   }
