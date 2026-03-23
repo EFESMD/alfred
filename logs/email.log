@@ -6,3 +6,19 @@
 [2026-03-23T13:38:18.093Z] [SMTP_DEBUG] [object Object]
 [2026-03-23T13:38:18.138Z] [SMTP_DEBUG] [object Object]
 [2026-03-23T13:38:18.839Z] [SMTP_DEBUG] [object Object]
+[2026-03-23T14:00:17.540Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-03-23T14:00:17.554Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-03-23T14:00:17.580Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-03-23T14:00:18.364Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}

@@ -26,10 +26,10 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 30000,     
   debug: true, 
   logger: {
-    debug: (msg: string) => logEmail(`[SMTP_DEBUG] ${msg}`),
-    info: (msg: string) => logEmail(`[SMTP_INFO] ${msg}`),
-    warn: (msg: string) => logEmail(`[SMTP_WARN] ${msg}`),
-    error: (msg: string) => logEmail(`[SMTP_ERROR] ${msg}`),
+    debug: (msg: any) => logEmail(`[SMTP_DEBUG]`, msg),
+    info: (msg: any) => logEmail(`[SMTP_INFO]`, msg),
+    warn: (msg: any) => logEmail(`[SMTP_WARN]`, msg),
+    error: (msg: any) => logEmail(`[SMTP_ERROR]`, msg),
   }
 } as any);
 
