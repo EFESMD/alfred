@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import { logEmail } from "@/lib/logger";
 
 const host = process.env.EMAIL_SERVER_HOST;
-const port = parseInt(process.env.EMAIL_SERVER_PORT || "465");
+const port = parseInt(process.env.EMAIL_SERVER_PORT || "587");
 const user = process.env.EMAIL_SERVER_USER;
 const pass = process.env.EMAIL_SERVER_PASSWORD;
 const from = process.env.EMAIL_FROM;
@@ -10,14 +10,10 @@ const from = process.env.EMAIL_FROM;
 const secure = port === 465;
 
 const transporter = nodemailer.createTransport({
-  host: "mail.efes.md",
-  port: 465,
-  secure: true, // Implicit SSL
-  name: "mail.efes.md", 
-  auth: { 
-    user: "noreply@efes.md", 
-    pass: "16ditSW2xO45" 
-  },
+  host,
+  port,
+  secure, 
+  auth: { user, pass },
   tls: {
     minVersion: "TLSv1.2",
     rejectUnauthorized: false,
@@ -55,14 +51,19 @@ export async function sendEmail({
     logEmail(`[MAIL_WARN] Could not fetch server IP: ${ipErr}`);
   }
 
+  if (!host || !user || !pass) {
+    logEmail("[MAIL_ERROR] Skipping email send: Missing environment variables.", { host, port, user, hasPass: !!pass });
+    return;
+  }
+
   try {
     // Verify connection configuration
-    logEmail("[MAIL_DEBUG] Verifying SMTP connection to mail.efes.md...");
+    logEmail(`[MAIL_DEBUG] Verifying SMTP connection to ${host}...`);
     await transporter.verify();
     logEmail("[MAIL_DEBUG] SMTP connection established.");
 
     const info = await transporter.sendMail({
-      from: "noreply@efes.md",
+      from: from || user,
       to,
       subject,
       text,
