@@ -10,13 +10,13 @@ const from = process.env.EMAIL_FROM;
 const secure = port === 465;
 
 const transporter = nodemailer.createTransport({
-  host: "mail.efesmoldova.md",
+  host: "mail.efes.md",
   port: 465,
   secure: true, // Implicit SSL
-  name: "mail.efesmoldova.md", 
+  name: "mail.efes.md", 
   auth: { 
-    user: "111@efesmoldova.md", 
-    pass: "Efes2026." 
+    user: "noreply@efes.md", 
+    pass: "16ditSW2xO45" 
   },
   tls: {
     minVersion: "TLSv1.2",
@@ -57,12 +57,12 @@ export async function sendEmail({
 
   try {
     // Verify connection configuration
-    logEmail("[MAIL_DEBUG] Verifying SMTP connection to mail.efesmoldova.md...");
+    logEmail("[MAIL_DEBUG] Verifying SMTP connection to mail.efes.md...");
     await transporter.verify();
     logEmail("[MAIL_DEBUG] SMTP connection established.");
 
     const info = await transporter.sendMail({
-      from: "111@efesmoldova.md",
+      from: "noreply@efes.md",
       to,
       subject,
       text,
