@@ -56,9 +56,11 @@ export async function sendEmail({
     return;
   }
 
+  logEmail(`[MAIL_CONFIG] Host: ${host} | Port: ${port} | User: ${user} | Secure: ${port === 465}`);
+
   try {
     // Verify connection configuration
-    logEmail(`[MAIL_DEBUG] Verifying SMTP connection to ${host}...`);
+    logEmail(`[MAIL_DEBUG] Verifying SMTP connection to ${host}:${port}...`);
     await transporter.verify();
     logEmail("[MAIL_DEBUG] SMTP connection established.");
 
@@ -73,11 +75,40 @@ export async function sendEmail({
     logEmail(`[MAIL_SUCCESS] Message sent! MessageID: ${info.messageId}`);
     return info;
   } catch (error: any) {
-    logEmail(`[MAIL_FATAL] Error sending email: ${error.message}`, {
-      code: error.code,
-      response: error.response,
-      stack: error.stack
+    logEmail(`[MAIL_SMTP_FAILED] SMTP failed, attempting Brevo API fallback...`, { 
+      message: error.message,
+      code: error.code 
     });
-    throw error;
+
+    // FALLBACK: Brevo API (Port 443 - Never blocked)
+    try {
+      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "api-key": pass || "",
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          sender: { email: from || "noreply@efes.md", name: "Alfred" },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: html || text.replace(/\n/g, "<br>"),
+          textContent: text
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Brevo API Error: ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      logEmail(`[MAIL_API_SUCCESS] Email sent via Brevo API! MessageID: ${data.messageId}`);
+      return data;
+    } catch (apiError: any) {
+      logEmail(`[MAIL_FATAL] Both SMTP and API failed: ${apiError.message}`);
+      throw apiError;
+    }
   }
 }
