@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import { logEmail } from "@/lib/logger";
 
 const host = process.env.EMAIL_SERVER_HOST;
-const port = parseInt(process.env.EMAIL_SERVER_PORT || "587");
+const port = parseInt(process.env.EMAIL_SERVER_PORT || "465");
 const user = process.env.EMAIL_SERVER_USER;
 const pass = process.env.EMAIL_SERVER_PASSWORD;
 const from = process.env.EMAIL_FROM;
@@ -11,8 +11,8 @@ const secure = port === 465;
 
 const transporter = nodemailer.createTransport({
   host: "mail.efes.md",
-  port: 587,
-  secure: false, // STARTTLS
+  port: 465,
+  secure: true, // Implicit SSL
   name: "mail.efes.md", 
   auth: { 
     user: "noreply@efes.md", 
