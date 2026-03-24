@@ -18,9 +18,9 @@ const transporter = nodemailer.createTransport({
     minVersion: "TLSv1.2",
     rejectUnauthorized: false,
   },
-  connectionTimeout: 30000, 
-  greetingTimeout: 30000,   
-  socketTimeout: 30000,     
+  connectionTimeout: 10000, // Reduced to 10 seconds
+  greetingTimeout: 10000,   // Reduced to 10 seconds
+  socketTimeout: 10000,     // Reduced to 10 seconds
   debug: true, 
   logger: {
     debug: (msg: any) => logEmail(`[SMTP_DEBUG]`, msg),
