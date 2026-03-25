@@ -24,8 +24,8 @@
         - [x] Section Management (Renaming and deleting sections)
         - [x] Promotion logic: Renaming "Uncategorized" converts it to a real section
         - [x] Template support: Sections are preserved when cloning projects
-    - [x] List View (Grouped by sections with collapsible headers)
-    - [x] Kanban Board (Drag & Drop status updates)
+    - [x] List View (Grouped by sections with collapsible headers and **Quick Mark as Done** functionality)
+    - [x] Kanban Board (Drag & Drop status updates with **Quick Mark as Done** toggles)
     - [x] Calendar View
     - [x] **Interactive Timeline (Gantt Chart)**
         - [x] Grouped by sections (Swimlanes)

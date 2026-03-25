@@ -44,8 +44,8 @@ A robust, real-time project management application designed for teams to organiz
 - **Custom UI Theme**: Minimalist, grey-based interface design (#f5f6f8 and #efefef).
 
 ## 3. Core Views
-- **List View**: Grouped by sections with collapsible headers, inline editing, and keyboard navigation.
-- **Kanban Board**: Drag-and-drop workflow for status updates.
+- **List View**: Grouped by sections with collapsible headers, inline editing, keyboard navigation, and **Quick Mark as Done** toggles.
+- **Kanban Board**: Drag-and-drop workflow for status updates with permanently visible **Quick Mark as Done** checkboxes.
 - **Calendar View**: Visual overview of deadlines.
 - **Interactive Timeline**: Gantt Chart with swimlanes (sections), task dependencies, and Days/Weeks zoom levels.
 

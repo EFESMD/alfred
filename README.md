@@ -10,8 +10,8 @@ A robust, real-time project management application inspired by Asana, designed f
   - **Granular Roles**: Define specific access levels per project (Owner, Member, Viewer).
 - **Project Management**: Create projects from scratch or use pre-defined templates.
 - **Task Views**:
-  - **List View**: Grouped by sections with collapsible headers and inline editing.
-  - **Kanban Board**: Optimized drag-and-drop workflow (moving between statuses).
+  - **List View**: Grouped by sections with collapsible headers, inline editing, and **Quick Mark as Done** checkboxes.
+  - **Kanban Board**: Drag-and-drop workflow (moving between statuses) with permanently visible **Quick Mark as Done** toggles on cards.
   - **Calendar View**: Visual overview of deadlines.
   - **Interactive Timeline**: Gantt Chart with task dependencies and zoom levels (Days/Weeks).
 - **Advanced Task Filtering**: Toggle between incomplete, completed, and all tasks across all views, including "My Tasks".
