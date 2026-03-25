@@ -41,7 +41,7 @@ export function ProjectHeader({
   const isViewer = userRole === "VIEWER";
 
   return (
-    <div className="border-b bg-[#efefef]">
+    <div className="border-b bg-background">
       {isArchived && (
         <div className="bg-amber-50 border-b border-amber-100 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm font-medium">
           <Archive className="h-4 w-4" />
@@ -49,7 +49,7 @@ export function ProjectHeader({
         </div>
       )}
       {!isArchived && isViewer && (
-        <div className="bg-slate-50 border-b border-slate-100 px-6 py-2 flex items-center gap-2 text-slate-600 text-xs font-medium">
+        <div className="bg-muted/50 border-b border-border px-6 py-2 flex items-center gap-2 text-muted-foreground text-xs font-medium">
           <Eye className="h-3.5 w-3.5" />
           You have read-only access to this project.
         </div>
@@ -59,7 +59,7 @@ export function ProjectHeader({
         {projectLeader && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Project Lead:</span>
-            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+            <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border border-border">
               <Avatar className="h-6 w-6">
                 {projectLeader.image && <AvatarImage src={projectLeader.image} />}
                 <AvatarFallback>

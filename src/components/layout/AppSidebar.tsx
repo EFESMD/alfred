@@ -124,7 +124,7 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                       <div 
                         className={cn(
                           "w-4 h-4 rounded-sm flex items-center justify-center text-[10px] shadow-xs border",
-                          project.color || "bg-blue-500 text-white"
+                          project.color || "bg-primary text-white"
                         )}
                       >
                         {project.icon || <FolderOpen className="h-3 w-3" />}

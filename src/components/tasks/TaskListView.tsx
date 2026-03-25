@@ -440,19 +440,19 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case "BACKLOG": return "bg-slate-500";
-      case "TODO": return "bg-blue-500";
-      case "IN_PROGRESS": return "bg-yellow-500";
-      case "DONE": return "bg-green-500";
-      default: return "bg-slate-500";
+      case "BACKLOG": return "bg-slate-400";
+      case "TODO": return "bg-primary/80";
+      case "IN_PROGRESS": return "bg-amber-500";
+      case "DONE": return "bg-emerald-600";
+      default: return "bg-slate-400";
     }
   };
 
   const getPriorityColor = (priority: TaskPriority) => {
     switch (priority) {
-      case "LOW": return "text-blue-500 bg-blue-50";
-      case "MEDIUM": return "text-yellow-600 bg-yellow-50";
-      case "HIGH": return "text-red-500 bg-red-50";
+      case "LOW": return "text-primary/80 bg-primary/10 border-primary/20";
+      case "MEDIUM": return "text-amber-700 bg-amber-50 border-amber-200";
+      case "HIGH": return "text-red-600 bg-red-50 border-red-200";
       default: return "text-slate-500 bg-slate-50";
     }
   };
@@ -534,14 +534,14 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                     <TableRow 
                       id={section.id}
                       className={cn(
-                        "bg-slate-50/50 hover:bg-slate-100 group transition-all duration-200",
-                        isActive && "bg-blue-50/80 ring-1 ring-blue-200 ring-inset"
+                        "bg-muted/30 hover:bg-muted/50 group transition-all duration-200",
+                        isActive && "bg-accent ring-1 ring-primary/20 ring-inset"
                       )}
                       onClick={() => setActiveSectionId(section.id)}
                     >
                       <TableCell colSpan={6} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground relative">
                         {isActive && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-md" />
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" />
                         )}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-1">
@@ -655,7 +655,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                                   }
                                 }}
                                 autoFocus
-                                className="h-7 text-xs border-none shadow-none focus-visible:ring-1 bg-slate-50"
+                                className="h-7 text-xs border-none shadow-none focus-visible:ring-1 bg-muted/50"
                               />
                               <Button 
                                 size="sm" 
