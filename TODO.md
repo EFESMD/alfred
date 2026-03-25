@@ -1,7 +1,7 @@
 # Alfred - Project Progress
 
 - [x] **Project Foundation**
-    - [x] Project Scaffolding (Next.js 15+, Tailwind, TS)
+    - [x] Project Scaffolding (Next.js 16+, Tailwind, TS)
     - [x] Database Schema (SQLite + Prisma)
     - [x] Authentication (NextAuth.js with Credentials only)
     - [x] **Rebranded platform to "Alfred"**
@@ -25,7 +25,7 @@
         - [x] Promotion logic: Renaming "Uncategorized" converts it to a real section
         - [x] Template support: Sections are preserved when cloning projects
     - [x] List View (Grouped by sections with collapsible headers)
-    - [x] Kanban Board (Optimized Drag & Drop)
+    - [x] Kanban Board (Drag & Drop status updates)
     - [x] Calendar View
     - [x] **Interactive Timeline (Gantt Chart)**
         - [x] Grouped by sections (Swimlanes)
@@ -52,14 +52,15 @@
     - [x] Project Leader assignment and display
     - [x] Project Settings (Color, Icon, Leader, Archiving)
     - [x] **Strict Read-Only mode for archived projects**
-    - [x] **Grouped \"My Tasks\"** view by project for cross-workspace clarity
+    - [x] **Grouped "My Tasks"** view by project for cross-workspace clarity
     - [x] **Auto-Assign Project Leader**: New tasks are automatically assigned to the project leader by default.
     - [x] **Subtask Inline Editing**: Enabled direct editing of subtask titles in the task detail pane.
     - [x] **Email Server Integration**: Integrated corporate mail server (mail.efes.md).
     - [x] **Private Projects**: Projects are now private by default; members only see what they are invited to.
     - [x] **Granular Project Roles**: Implemented OWNER, MEMBER, and VIEWER roles with UI-level restrictions.
+    - [x] **Email Infrastructure**: Created verification logic and `/api/verify` route (Bypassed in registration for easier onboarding).
 
-- [x] **Maintenance & Bug Fixes**
+- [x] **Maintenance & Admin Tools**
     - [x] Resolved Prisma client synchronization issues with Turbopack
     - [x] **API Security**: Replaced detailed error responses with generic "Internal Error" for production
     - [x] UI Refinement: Improved spacing and layout for Project, Workspace, and Login pages
@@ -78,6 +79,7 @@
     - [x] **State Synchronization**: Fixed issue where user avatar in Sidebar did not update immediately upon upload via Profile page.
     - [x] **Visibility Filters**: Implemented "Hide Done" toggle in List, Board, Timeline, and Calendar views (Persistent via URL parameters).
     - [x] **Unified Role Management**: Standardized role calculation to elevate Workspace Admins/Owners in all project views and enforced strict read-only access for archived content. Resolved issues where project members were incorrectly restricted to read-only access by moving role calculation to the server.
+    - [x] **Super Admin Panel**: Implemented stats, user management (manual verification/deletion), and email diagnostics (logs + test send).
 
 - [x] **Infrastructure & Professional Deployment**
     - [x] **Professional Git Workflow**: Established `main` and `develop` branches for safe deployment.
@@ -87,29 +89,23 @@
     - [x] **Environment Configuration**: Created `.env.example` as a template for Railway setup.
 
 - [ ] **Next Steps**
-    - [ ] **Global Search**: Quick navigation across workspace projects and tasks.
-    - [ ] **Timeline Export**: Export project timeline to PDF/image formats.
-    - [ ] **Notifications System**: In-app and potentially email alerts for task assignments and mentions.
-    - [x] Manual Task Sorting (Drag & Drop reordering in List and Kanban)
-    - [ ] **Account & Security Enhancements**
-        - [x] **Email Verification**: Formalize account creation with email confirmation link.
-        - [ ] **Password Management**: Allow users to change their password from profile settings.
-    - [ ] **Internationalization (i18n)**: Support for multiple languages (Romanian and Russian).
-    - [ ] **Advanced Roles & Permissions (Workspace Level)**
-    - [x] **Super Admin**: Full platform control (Global stats, User management, Manual verification)
-    - [x] **Admin**: Workspace management (Invite/Remove members, Workspace settings)
-    - [x] **Manager/Project Owner**: Project control (Manage settings, Manage members)
-    - [x] **Member/Contributor**: Standard task management (Create/Edit tasks)
-    - [x] **Viewer/Guest**: Read-only access to specific projects or tasks
 
-Export la timeline
-Sortare campuri in list view
-My tasks:
- ———Filtre
- ———Grupari
- ———Sortari
-Tasks by others
-Roluri in proiect
-Notificari
-Dependente intre taskuri
-Email verification
+### High Priority
+- [ ] **Manual Task Sorting**: Persist custom task order within sections and Kanban columns (requires `order` field in `Task` model).
+- [ ] **Notifications System**: In-app and email alerts for task assignments and mentions.
+- [ ] **Global Search**: Quick navigation across workspace projects and tasks.
+
+### Features & Polish
+- [ ] **Timeline Export**: Export project timeline to PDF/image formats.
+- [ ] **Internationalization (i18n)**: Support for multiple languages (Romanian and Russian).
+- [ ] **Password Management**: Allow users to change their password from profile settings.
+- [ ] **Email Verification Flow**: Enable the formal account creation flow with email confirmation link in registration.
+- [ ] **Project Analytics**: Basic charts for task status distribution and completion rates.
+- [ ] **Advanced Roles & Permissions (Workspace Level)**: More granular control over what Workspace Admins can do.
+
+---
+**Archive (Completed)**
+- [x] Manual Task Sorting (Drag & Drop moving between sections/statuses)
+- [x] Rebranded platform to \"Alfred\"
+- [x] Deep cloning engine for templates
+- [x] Admin Reset URL for emergency maintenance

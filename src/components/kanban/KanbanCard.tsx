@@ -3,19 +3,22 @@
 import { isBefore, startOfDay } from "date-fns";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { TaskPriority, TaskWithAssignee } from "@/types/task";
+import { TaskPriority, TaskStatus, TaskWithAssignee } from "@/types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface KanbanCardProps {
   task: TaskWithAssignee;
   onClick?: () => void;
+  onStatusChange?: (status: TaskStatus) => void;
+  isArchived?: boolean;
 }
 
-export function KanbanCard({ task, onClick }: KanbanCardProps) {
+export function KanbanCard({ task, onClick, onStatusChange, isArchived }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -23,7 +26,7 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, disabled: isArchived });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -48,10 +51,23 @@ export function KanbanCard({ task, onClick }: KanbanCardProps) {
       {...listeners}
       onClick={onClick}
     >
-      <Card className="cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors shadow-sm">
+      <Card className="cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors shadow-sm relative group">
         <CardContent className="p-3 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <h4 className="text-sm font-medium leading-tight">{task.title}</h4>
+          <div className="flex items-start gap-2">
+            {!isArchived && onStatusChange && (
+              <div 
+                className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <Checkbox 
+                  checked={task.status === "DONE"}
+                  onCheckedChange={(checked) => onStatusChange(checked ? "DONE" : "TODO")}
+                  className="h-3.5 w-3.5"
+                />
+              </div>
+            )}
+            <h4 className={cn("text-sm font-medium leading-tight", task.status === "DONE" && "line-through text-muted-foreground")}>{task.title}</h4>
           </div>
           
           {task.description && (

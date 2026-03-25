@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useRealtime } from "@/hooks/use-realtime";
 import { useTaskFilter } from "@/hooks/use-task-filter";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { 
@@ -40,12 +41,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragStartEvent,
-  DragOverlay,
-  defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -69,12 +66,14 @@ interface TaskListViewProps {
 function SortableTaskRow({ 
   task, 
   onClick, 
+  onStatusChange,
   getStatusColor, 
   getPriorityColor,
   disabled = false
 }: { 
   task: TaskWithAssignee; 
   onClick: () => void;
+  onStatusChange: (status: TaskStatus) => void;
   getStatusColor: (s: any) => string;
   getPriorityColor: (p: any) => string;
   disabled?: boolean;
@@ -102,13 +101,23 @@ function SortableTaskRow({
       className="cursor-pointer group h-9"
       onClick={onClick}
     >
-      <TableCell className="font-medium pl-10 py-1 flex items-center gap-2">
+      <TableCell className="w-[40px] pl-4 pr-0 py-1" onClick={(e) => e.stopPropagation()}>
+        <Checkbox 
+          checked={task.status === "DONE"}
+          onCheckedChange={(checked) => {
+            onStatusChange(checked ? "DONE" : "TODO");
+          }}
+          disabled={disabled}
+          className="translate-y-[2px]"
+        />
+      </TableCell>
+      <TableCell className="font-medium pl-2 py-1 flex items-center gap-2">
         {!disabled && (
           <div {...listeners} className="cursor-grab active:cursor-grabbing p-1 -ml-6 opacity-0 group-hover:opacity-100 transition-opacity">
             <MoreHorizontal className="h-3 w-3 rotate-90 text-muted-foreground" />
           </div>
         )}
-        <span className="truncate">{task.title}</span>
+        <span className={cn("truncate", task.status === "DONE" && "line-through text-muted-foreground")}>{task.title}</span>
         {(task.subtasks?.length ?? 0) > 0 && (
           <Badge variant="outline" className="text-[9px] px-1 h-3.5 gap-1 opacity-50 font-normal">
             {task.subtasks?.length} subtasks
@@ -234,11 +243,11 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ id, sectionId }: { id: string; sectionId: string | null }) => {
+    mutationFn: async ({ id, sectionId, status, priority }: { id: string; sectionId?: string | null; status?: TaskStatus; priority?: TaskPriority }) => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectionId }),
+        body: JSON.stringify({ sectionId, status, priority }),
       });
       return res.json();
     },
@@ -512,6 +521,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[40px]"></TableHead>
                 <TableHead className="w-[40%]">Task name</TableHead>
                 <TableHead>Assignee</TableHead>
                 <TableHead>Due date</TableHead>
@@ -539,7 +549,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                       )}
                       onClick={() => setActiveSectionId(section.id)}
                     >
-                      <TableCell colSpan={6} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground relative">
+                      <TableCell colSpan={7} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground relative">
                         {isActive && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" />
                         )}
@@ -628,6 +638,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                             key={task.id} 
                             task={task} 
                             onClick={() => setSelectedTaskId(task.id)}
+                            onStatusChange={(status) => updateTaskMutation.mutate({ id: task.id, sectionId: task.sectionId, status })}
                             getStatusColor={getStatusColor}
                             getPriorityColor={getPriorityColor}
                             disabled={isReadOnly}
@@ -638,7 +649,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
                     {!isCollapsed && !isReadOnly && (
                       <TableRow className="hover:bg-transparent h-8">
-                        <TableCell colSpan={6} className="py-1 pl-10">
+                        <TableCell colSpan={7} className="py-1 pl-10">
                           {inlineSectionId === section.id ? (
                             <div className="flex items-center gap-2 pr-4">
                               <Input 

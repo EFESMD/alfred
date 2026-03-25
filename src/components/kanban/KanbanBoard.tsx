@@ -221,6 +221,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
                 tasks={filteredTasks.filter((t) => t.status === column.id)}
                 onAddTask={handleAddTask}
                 onTaskClick={(id) => setSelectedTaskId(id)}
+                onStatusChange={(taskId, status) => updateTaskMutation.mutate({ taskId, status })}
                 isArchived={isReadOnly}
               />
             ))}

@@ -30,31 +30,33 @@ A robust, real-time project management application designed for teams to organiz
 ### Administrative Control (Super Admin)
 - **Global Control Panel**: Master dashboard for the entire platform.
 - **System Statistics**: Real-time overview of users, workspaces, projects, and tasks.
-- **User Directory**: Full list of registered members with management options.
+- **User Directory**: Full list of registered members with verify/delete options.
 - **Manual Verification**: Ability to manually verify user accounts.
+- **Email Diagnostics**: Integrated tool to send test emails and view transmission logs.
 - **Data Migration**: Built-in tools for structural database updates.
 
 ### Collaboration & Features
 - **Comments**: Threaded discussions on tasks.
 - **Activity Log**: Real-time audit trail for all task-related changes.
 - **File Attachments**: Local storage system for task documents.
-- **Automated Storage Cleanup**: Physical deletion of uploaded files and avatars when records are removed from the database to save space.
+- **Automated Storage Cleanup**: Physical deletion of uploaded files and avatars when tasks, projects, or workspaces are removed.
 - **Real-time Updates**: Instant UI synchronization via Pusher.
-- **Custom UI Theme**: Minimalist, grey-based interface design for optimal readability.
+- **Custom UI Theme**: Minimalist, grey-based interface design (#f5f6f8 and #efefef).
 
 ## 3. Core Views
-- **List View**: Grouped by sections with collapsible headers and inline editing.
-- **Kanban Board**: Optimized drag-and-drop workflow.
+- **List View**: Grouped by sections with collapsible headers, inline editing, and keyboard navigation.
+- **Kanban Board**: Drag-and-drop workflow for status updates.
 - **Calendar View**: Visual overview of deadlines.
-- **Interactive Timeline**: Gantt Chart with swimlanes, task dependencies, and zoom levels.
+- **Interactive Timeline**: Gantt Chart with swimlanes (sections), task dependencies, and Days/Weeks zoom levels.
 
 ## 4. Technical Stack
-- **Framework**: Next.js 15+ (App Router).
+- **Framework**: Next.js 16+ (App Router, Turbopack).
 - **Language**: TypeScript.
+- **Runtime**: Node.js 20+.
 - **Styling**: Tailwind CSS + Shadcn UI.
 - **Database**: SQLite (managed via Prisma).
 - **ORM**: Prisma.
-- **Authentication**: NextAuth.js.
+- **Authentication**: NextAuth.js (Credentials).
 - **Real-time**: Pusher.
 - **State Management**: TanStack Query (React Query).
 

@@ -10,25 +10,28 @@ A robust, real-time project management application inspired by Asana, designed f
   - **Granular Roles**: Define specific access levels per project (Owner, Member, Viewer).
 - **Project Management**: Create projects from scratch or use pre-defined templates.
 - **Task Views**:
-  - **List View**: Grouped by sections with inline editing.
-  - **Kanban Board**: Optimized drag-and-drop workflow.
+  - **List View**: Grouped by sections with collapsible headers and inline editing.
+  - **Kanban Board**: Optimized drag-and-drop workflow (moving between statuses).
   - **Calendar View**: Visual overview of deadlines.
-  - **Interactive Timeline**: Gantt Chart with task dependencies and zoom levels.
+  - **Interactive Timeline**: Gantt Chart with task dependencies and zoom levels (Days/Weeks).
 - **Advanced Task Filtering**: Toggle between incomplete, completed, and all tasks across all views, including "My Tasks".
 - **Collaboration**: Real-time comments, activity logs, and file attachments.
-- **System Maintenance**: Automated physical storage cleanup when resources (Tasks, Projects, Workspaces) or avatars are deleted.
-- **Super Admin Panel**: Master control panel for system statistics, user management, and automated data migration.
-- **Corporate Security**: Restricted registration to specific email domains and integrated mail server support.
-- **Custom UI Theme**: Clean, standard grey interface (#f5f6f8 and #efefef) for maximum readability.
+- **System Maintenance**: Automated physical storage cleanup for tasks, projects, workspaces, and user avatars.
+- **Super Admin Panel**: Master control panel for system statistics, user management (verify/delete), and email diagnostics.
+- **Corporate Security**: Restricted registration to specific email domains and integrated SMTP mail support.
+- **Custom UI Theme**: Minimalist grey interface (#f5f6f8 and #efefef) for maximum readability.
 
 ## 🛠️ Technical Stack
 
-- **Framework**: Next.js 15+ (App Router, Turbopack)
+- **Framework**: Next.js 16+ (App Router, Turbopack)
+- **Language**: TypeScript
+- **Runtime**: Node.js 20+
 - **Database**: SQLite + Prisma ORM
 - **Authentication**: NextAuth.js (Credentials Provider)
 - **Styling**: Tailwind CSS + shadcn/ui
 - **Real-time**: Pusher
 - **State Management**: TanStack Query (React Query)
+- **Components**: Radix UI
 
 ## ⚙️ Configuration & Deployment
 

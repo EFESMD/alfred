@@ -16,6 +16,7 @@ interface KanbanColumnProps {
   tasks: TaskWithAssignee[];
   onAddTask: (status: TaskStatus) => void;
   onTaskClick: (taskId: string) => void;
+  onStatusChange: (taskId: string, status: TaskStatus) => void;
   isArchived?: boolean;
 }
 
@@ -25,6 +26,7 @@ export function KanbanColumn({
   tasks, 
   onAddTask, 
   onTaskClick,
+  onStatusChange,
   isArchived = false
 }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id });
@@ -54,7 +56,13 @@ export function KanbanColumn({
       <div ref={setNodeRef} className="flex-1 flex flex-col gap-3">
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
-            <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task.id)} />
+            <KanbanCard 
+              key={task.id} 
+              task={task} 
+              onClick={() => onTaskClick(task.id)} 
+              onStatusChange={(status) => onStatusChange(task.id, status)}
+              isArchived={isArchived}
+            />
           ))}
         </SortableContext>
       </div>
