@@ -53,17 +53,17 @@ export function KanbanCard({ task, onClick, onStatusChange, isArchived }: Kanban
     >
       <Card className="cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors shadow-sm relative group">
         <CardContent className="p-3 space-y-3">
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-2">
             {!isArchived && onStatusChange && (
               <div 
-                className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="flex-shrink-0"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >
                 <Checkbox 
                   checked={task.status === "DONE"}
                   onCheckedChange={(checked) => onStatusChange(checked ? "DONE" : "TODO")}
-                  className="h-3.5 w-3.5"
+                  className="h-4 w-4"
                 />
               </div>
             )}

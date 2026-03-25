@@ -101,28 +101,34 @@ function SortableTaskRow({
       className="cursor-pointer group h-9"
       onClick={onClick}
     >
-      <TableCell className="w-[40px] pl-4 pr-0 py-1" onClick={(e) => e.stopPropagation()}>
-        <Checkbox 
-          checked={task.status === "DONE"}
-          onCheckedChange={(checked) => {
-            onStatusChange(checked ? "DONE" : "TODO");
-          }}
-          disabled={disabled}
-          className="translate-y-[2px]"
-        />
-      </TableCell>
-      <TableCell className="font-medium pl-2 py-1 flex items-center gap-2">
+      <TableCell className="w-[30px] pl-3 pr-0 py-1" onClick={(e) => e.stopPropagation()}>
         {!disabled && (
-          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1 -ml-6 opacity-0 group-hover:opacity-100 transition-opacity">
-            <MoreHorizontal className="h-3 w-3 rotate-90 text-muted-foreground" />
+          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <MoreHorizontal className="h-3.5 w-3.5 rotate-90 text-muted-foreground" />
           </div>
         )}
-        <span className={cn("truncate", task.status === "DONE" && "line-through text-muted-foreground")}>{task.title}</span>
-        {(task.subtasks?.length ?? 0) > 0 && (
-          <Badge variant="outline" className="text-[9px] px-1 h-3.5 gap-1 opacity-50 font-normal">
-            {task.subtasks?.length} subtasks
-          </Badge>
-        )}
+      </TableCell>
+      <TableCell className="w-[30px] px-0 py-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-center h-full">
+          <Checkbox 
+            checked={task.status === "DONE"}
+            onCheckedChange={(checked) => {
+              onStatusChange(checked ? "DONE" : "TODO");
+            }}
+            disabled={disabled}
+            className="h-4 w-4"
+          />
+        </div>
+      </TableCell>
+      <TableCell className="font-medium pl-2 py-1">
+        <div className="flex items-center gap-2 h-full">
+          <span className={cn("truncate", task.status === "DONE" && "line-through text-muted-foreground")}>{task.title}</span>
+          {(task.subtasks?.length ?? 0) > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 h-3.5 gap-1 opacity-50 font-normal">
+              {task.subtasks?.length} subtasks
+            </Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell className="py-1">
         <div className="flex items-center gap-2 scale-90 origin-left">
@@ -521,7 +527,8 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[40px]"></TableHead>
+                <TableHead className="w-[30px]"></TableHead>
+                <TableHead className="w-[30px]"></TableHead>
                 <TableHead className="w-[40%]">Task name</TableHead>
                 <TableHead>Assignee</TableHead>
                 <TableHead>Due date</TableHead>
@@ -549,7 +556,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                       )}
                       onClick={() => setActiveSectionId(section.id)}
                     >
-                      <TableCell colSpan={7} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground relative">
+                      <TableCell colSpan={8} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground relative">
                         {isActive && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" />
                         )}
@@ -649,7 +656,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
                     {!isCollapsed && !isReadOnly && (
                       <TableRow className="hover:bg-transparent h-8">
-                        <TableCell colSpan={7} className="py-1 pl-10">
+                        <TableCell colSpan={8} className="py-1 pl-10">
                           {inlineSectionId === section.id ? (
                             <div className="flex items-center gap-2 pr-4">
                               <Input 
