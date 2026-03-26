@@ -14,6 +14,7 @@ A robust, real-time project management application inspired by Asana, designed f
   - **Kanban Board**: Drag-and-drop workflow (moving between statuses) with permanently visible **Quick Mark as Done** toggles on cards.
   - **Calendar View**: Visual overview of deadlines.
   - **Interactive Timeline**: Gantt Chart with task dependencies and zoom levels (Days/Weeks).
+- **Global Project Favorites**: Star projects for instant access via the sidebar from any workspace.
 - **Advanced Task Filtering**: Toggle between incomplete, completed, and all tasks across all views, including "My Tasks".
 - **Collaboration**: Real-time comments, activity logs, and file attachments.
 - **System Maintenance**: Automated physical storage cleanup for tasks, projects, workspaces, and user avatars.

@@ -36,6 +36,12 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { cn } from "@/lib/utils";
 
@@ -86,52 +92,94 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
       <SidebarHeader className="p-4">
         <WorkspaceSwitcher currentWorkspace={workspace} />
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === `/workspaces/${workspace.id}`}>
-                <Link href={`/workspaces/${workspace.id}`}>
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname.includes("/tasks")}>
-                <Link href={`/workspaces/${workspace.id}/tasks`}>
-                  <CheckSquare className="h-4 w-4" />
-                  <span>My Tasks</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            {isAdminOrOwner && (
+      <TooltipProvider delayDuration={0}>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.includes("/settings")}>
-                  <Link href={`/workspaces/${workspace.id}/settings`}>
-                    <Settings className="h-4 w-4" />
-                    <span>Workspace Settings</span>
+                <SidebarMenuButton asChild isActive={pathname === `/workspaces/${workspace.id}`}>
+                  <Link href={`/workspaces/${workspace.id}`}>
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span>Dashboard</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            )}
-          </SidebarMenu>
-        </SidebarGroup>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.includes("/tasks")}>
+                  <Link href={`/workspaces/${workspace.id}/tasks`}>
+                    <CheckSquare className="h-4 w-4" />
+                    <span>My Tasks</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {isAdminOrOwner && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname.includes("/settings")}>
+                    <Link href={`/workspaces/${workspace.id}/settings`}>
+                      <Settings className="h-4 w-4" />
+                      <span>Workspace Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroup>
 
-        {favorites && favorites.length > 0 && (
+          {favorites && favorites.length > 0 && (
+            <SidebarGroup>
+              <SidebarGroupLabel className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                  <span>Favorites</span>
+                </div>
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {favorites.map((project: any) => (
+                    <SidebarMenuItem key={project.id}>
+                      <SidebarMenuButton asChild isActive={pathname.includes(`/projects/${project.id}`)}>
+                        <Link href={`/workspaces/${project.workspaceId}/projects/${project.id}`}>
+                          <div 
+                            className={cn(
+                              "w-4 h-4 rounded-sm flex items-center justify-center text-[10px] shadow-xs border",
+                              project.color || "bg-primary text-white"
+                            )}
+                          >
+                            {project.icon || <FolderOpen className="h-3 w-3" />}
+                          </div>
+                          <span>{project.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
+
           <SidebarGroup>
             <SidebarGroupLabel className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                <span>Favorites</span>
-              </div>
+              <span>Projects</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link 
+                    href={`/workspaces/${workspace.id}/projects/create`} 
+                    className="hover:bg-slate-200 p-1.5 rounded-md border bg-slate-50 transition-colors group/add"
+                  >
+                    <Plus className="h-4 w-4 text-muted-foreground group-hover/add:text-primary transition-colors" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  Create new project
+                </TooltipContent>
+              </Tooltip>
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {favorites.map((project: any) => (
+                {activeProjects.map((project) => (
                   <SidebarMenuItem key={project.id}>
                     <SidebarMenuButton asChild isActive={pathname.includes(`/projects/${project.id}`)}>
-                      <Link href={`/workspaces/${project.workspaceId}/projects/${project.id}`}>
+                      <Link href={`/workspaces/${workspace.id}/projects/${project.id}`}>
                         <div 
                           className={cn(
                             "w-4 h-4 rounded-sm flex items-center justify-center text-[10px] shadow-xs border",
@@ -145,46 +193,16 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                {activeProjects.length === 0 && (
+                  <div className="px-4 py-2 text-xs text-muted-foreground">
+                    No active projects
+                  </div>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center justify-between">
-            <span>Projects</span>
-            <Link href={`/workspaces/${workspace.id}/projects/create`} className="hover:bg-slate-200 p-1 rounded">
-              <Plus className="h-3 w-3" />
-            </Link>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {activeProjects.map((project) => (
-                <SidebarMenuItem key={project.id}>
-                  <SidebarMenuButton asChild isActive={pathname.includes(`/projects/${project.id}`)}>
-                    <Link href={`/workspaces/${workspace.id}/projects/${project.id}`}>
-                      <div 
-                        className={cn(
-                          "w-4 h-4 rounded-sm flex items-center justify-center text-[10px] shadow-xs border",
-                          project.color || "bg-primary text-white"
-                        )}
-                      >
-                        {project.icon || <FolderOpen className="h-3 w-3" />}
-                      </div>
-                      <span>{project.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              {activeProjects.length === 0 && (
-                <div className="px-4 py-2 text-xs text-muted-foreground">
-                  No active projects
-                </div>
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+        </SidebarContent>
+      </TooltipProvider>
       <SidebarFooter className="p-4 border-t">
         <SidebarMenu>
           <SidebarMenuItem>

@@ -58,6 +58,7 @@
     - [x] **Email Server Integration**: Integrated corporate mail server (mail.efes.md).
     - [x] **Private Projects**: Projects are now private by default; members only see what they are invited to.
     - [x] **Granular Project Roles**: Implemented OWNER, MEMBER, and VIEWER roles with UI-level restrictions.
+    - [x] **Global Project Favorites**: Users can star projects for quick access in a global sidebar section.
     - [x] **Email Infrastructure**: Created verification logic and `/api/verify` route (Bypassed in registration for easier onboarding).
 
 - [x] **Maintenance & Admin Tools**

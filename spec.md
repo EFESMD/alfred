@@ -26,6 +26,7 @@ A robust, real-time project management application designed for teams to organiz
 - **Subtasks**: Hierarchical task management.
 - **Task Filtering**: Advanced visibility filters (Incomplete, Completed, All tasks) available across all views and My Tasks.
 - **Task Sorting**: Automatic and manual task ordering.
+- **Global Project Favorites**: Ability to "star" projects for immediate access via a global sidebar section, facilitating cross-workspace navigation.
 
 ### Administrative Control (Super Admin)
 - **Global Control Panel**: Master dashboard for the entire platform.
