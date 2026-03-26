@@ -22,7 +22,8 @@ import {
   Users,
   Archive,
   ShieldCheck,
-  User
+  User,
+  Star
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
