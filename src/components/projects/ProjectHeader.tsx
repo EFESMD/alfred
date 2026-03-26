@@ -3,10 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye } from "lucide-react";
+import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectFilter } from "./ProjectFilter";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProjectHeaderProps {
   workspaceId: string;
@@ -18,6 +23,7 @@ interface ProjectHeaderProps {
   } | null;
   isArchived?: boolean;
   userRole?: string;
+  initialIsFavorite?: boolean;
 }
 
 export function ProjectHeader({ 
@@ -26,10 +32,31 @@ export function ProjectHeader({
   projectName, 
   projectLeader,
   isArchived = false,
-  userRole = "MEMBER"
+  userRole = "MEMBER",
+  initialIsFavorite = false
 }: ProjectHeaderProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/favorite`, {
+        method: "PATCH",
+      });
+      if (!res.ok) throw new Error("Failed to update favorite status");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setIsFavorite(data.isFavorite);
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      toast.success(data.isFavorite ? "Project added to favorites" : "Project removed from favorites");
+    },
+    onError: () => {
+      toast.error("Something went wrong");
+    }
+  });
 
   const isKanban = pathname.endsWith("/kanban");
   const isCalendar = pathname.endsWith("/calendar");
@@ -55,7 +82,30 @@ export function ProjectHeader({
         </div>
       )}
       <div className="px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">{projectName}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold">{projectName}</h1>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8 transition-colors",
+                    isFavorite ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50" : "text-muted-foreground hover:text-amber-500 hover:bg-amber-50"
+                  )}
+                  onClick={() => toggleFavoriteMutation.mutate()}
+                  disabled={toggleFavoriteMutation.isPending}
+                >
+                  <Star className={cn("h-5 w-5", isFavorite && "fill-current")} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isFavorite ? "Remove from favorites" : "Add to favorites"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         {projectLeader && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Project Lead:</span>

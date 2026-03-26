@@ -37,7 +37,7 @@ export default async function ProjectLayout({
       },
       members: {
         where: { userId: session.user.id },
-        select: { role: true }
+        select: { role: true, isFavorite: true }
       }
     },
   });
@@ -68,6 +68,7 @@ export default async function ProjectLayout({
   }
 
   const userRole = isWorkspaceAdminOrOwner ? "OWNER" : projectMember.role;
+  const isFavorite = projectMember?.isFavorite || false;
 
   return (
     <div className="flex flex-col h-full">
@@ -78,6 +79,7 @@ export default async function ProjectLayout({
         projectLeader={project.projectLeader}
         isArchived={project.isArchived}
         userRole={userRole}
+        initialIsFavorite={isFavorite}
       />
       <div className="flex-1 overflow-auto">
         {children}

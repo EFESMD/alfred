@@ -59,10 +59,12 @@ export async function GET(
     
     const projectMembership = project.members.find(m => m.userId === session.user.id);
     const currentUserRole = isWsAdminOrOwner ? "OWNER" : (projectMembership?.role || "VIEWER");
+    const isFavorite = projectMembership?.isFavorite || false;
 
     return NextResponse.json({
       ...project,
-      currentUserRole
+      currentUserRole,
+      isFavorite
     });
   } catch (error) {
     console.error("[PROJECT_GET]", error);

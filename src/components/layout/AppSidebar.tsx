@@ -71,6 +71,15 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
   const currentUserMembership = members?.find((m: any) => m.user.id === session?.user?.id);
   const isAdminOrOwner = currentUserMembership?.role === "OWNER" || currentUserMembership?.role === "ADMIN";
 
+  const { data: favorites, isLoading: favoritesLoading } = useQuery({
+    queryKey: ["favorites"],
+    queryFn: async () => {
+      const res = await fetch("/api/projects/favorites");
+      if (!res.ok) throw new Error("Failed to fetch favorites");
+      return res.json();
+    },
+  });
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -107,6 +116,38 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
             )}
           </SidebarMenu>
         </SidebarGroup>
+
+        {favorites && favorites.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                <span>Favorites</span>
+              </div>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {favorites.map((project: any) => (
+                  <SidebarMenuItem key={project.id}>
+                    <SidebarMenuButton asChild isActive={pathname.includes(`/projects/${project.id}`)}>
+                      <Link href={`/workspaces/${project.workspaceId}/projects/${project.id}`}>
+                        <div 
+                          className={cn(
+                            "w-4 h-4 rounded-sm flex items-center justify-center text-[10px] shadow-xs border",
+                            project.color || "bg-primary text-white"
+                          )}
+                        >
+                          {project.icon || <FolderOpen className="h-3 w-3" />}
+                        </div>
+                        <span>{project.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center justify-between">
