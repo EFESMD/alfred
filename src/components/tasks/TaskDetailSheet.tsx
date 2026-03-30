@@ -661,7 +661,7 @@ export function TaskDetailSheet({
                   ) : (
                     <div 
                       className={cn(
-                        "text-sm p-2 -ml-2 rounded transition-colors min-h-[40px]",
+                        "text-sm p-2 -ml-2 rounded transition-colors min-h-[40px] whitespace-pre-wrap",
                         !isArchived && "cursor-pointer hover:bg-slate-100",
                         !task.description && "text-muted-foreground italic"
                       )}
