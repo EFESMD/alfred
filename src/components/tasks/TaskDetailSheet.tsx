@@ -37,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { formatDistanceToNow, format, isBefore, startOfDay } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatStatus } from "@/lib/utils";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -481,9 +481,9 @@ export function TaskDetailSheet({
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="h-7 rounded-full px-3 text-xs gap-1 relative z-50 pointer-events-auto"
+                          className="h-7 rounded-full px-3 text-xs gap-1 relative z-50 pointer-events-auto text-foreground font-medium bg-muted/30"
                         >
-                          {task.status}
+                          {formatStatus(task.status)}
                           <ChevronDown className="h-3 w-3 opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -494,7 +494,7 @@ export function TaskDetailSheet({
                               <span className={cn("mr-2", task.status === status ? "opacity-100" : "opacity-0")}>
                                 <Check className="h-4 w-4" />
                               </span>
-                              {status}
+                              {formatStatus(status)}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>

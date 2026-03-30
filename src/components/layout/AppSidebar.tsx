@@ -164,9 +164,9 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                 <TooltipTrigger asChild>
                   <Link 
                     href={`/workspaces/${workspace.id}/projects/create`} 
-                    className="hover:bg-slate-200 p-1.5 rounded-md border bg-slate-50 transition-colors group/add"
+                    className="hover:bg-green-100 p-1 rounded-md border border-green-200 bg-green-50 transition-colors group/add"
                   >
-                    <Plus className="h-4 w-4 text-muted-foreground group-hover/add:text-primary transition-colors" />
+                    <Plus className="h-3 w-3 text-black transition-colors" />
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">

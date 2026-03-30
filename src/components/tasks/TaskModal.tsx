@@ -272,8 +272,8 @@ export function TaskModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="BACKLOG">Backlog</SelectItem>
-                  <SelectItem value="TODO">To Do</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="TODO">TO DO</SelectItem>
+                  <SelectItem value="IN_PROGRESS">IN PROGRESS</SelectItem>
                   <SelectItem value="DONE">Done</SelectItem>
                 </SelectContent>
               </Select>

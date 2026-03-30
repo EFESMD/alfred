@@ -33,8 +33,8 @@ interface KanbanBoardProps {
 
 const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: "BACKLOG", title: "Backlog" },
-  { id: "TODO", title: "To Do" },
-  { id: "IN_PROGRESS", title: "In Progress" },
+  { id: "TODO", title: "TO DO" },
+  { id: "IN_PROGRESS", title: "IN PROGRESS" },
   { id: "DONE", title: "Done" },
 ];
 

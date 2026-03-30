@@ -19,7 +19,7 @@ import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskDetailSheet } from "@/components/tasks/TaskDetailSheet";
 import { useState, useMemo } from "react";
 import { TaskStatus, TaskPriority, TaskWithAssignee } from "@/types/task";
-import { cn } from "@/lib/utils";
+import { cn, formatStatus } from "@/lib/utils";
 import { useRealtime } from "@/hooks/use-realtime";
 import { useTaskFilter } from "@/hooks/use-task-filter";
 import { Input } from "@/components/ui/input";
@@ -163,7 +163,7 @@ function SortableTaskRow({
       </TableCell>
       <TableCell className="py-1">
         <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
-          {task.status.replace("_", " ")}
+          {formatStatus(task.status)}
         </Badge>
       </TableCell>
       <TableCell className="text-right py-1">

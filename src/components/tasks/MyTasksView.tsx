@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskDetailSheet } from "@/components/tasks/TaskDetailSheet";
 import { useState, useMemo } from "react";
 import { TaskStatus, TaskPriority } from "@/types/task";
-import { cn } from "@/lib/utils";
+import { cn, formatStatus } from "@/lib/utils";
 import { useTaskFilter } from "@/hooks/use-task-filter";
 import { ProjectFilter } from "../projects/ProjectFilter";
 import * as React from "react";
@@ -176,7 +176,7 @@ export function MyTasksView({ workspaceId }: MyTasksViewProps) {
                         </TableCell>
                         <TableCell className="py-1">
                           <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
-                            {task.status.replace("_", " ")}
+                            {formatStatus(task.status)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right py-1">
