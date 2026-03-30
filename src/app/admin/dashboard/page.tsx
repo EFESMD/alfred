@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
     </div>
   );
 
-  const { stats, users } = data;
+  const { stats, users, workspaces } = data;
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
@@ -274,6 +274,68 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Workspaces Table */}
+      <Card className="shadow-sm overflow-hidden">
+        <CardHeader className="bg-slate-50/50 border-b">
+          <CardTitle>Workspace Directory</CardTitle>
+          <CardDescription>A complete list of all workspaces created in the system.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Workspace</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Projects</TableHead>
+                <TableHead>Members</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {workspaces.map((workspace: any) => (
+                <TableRow key={workspace.id} className="group hover:bg-slate-50/50 transition-colors">
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900">{workspace.name}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">{workspace.id}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col text-sm">
+                      <span className="font-medium">{workspace.owner?.firstName} {workspace.owner?.lastName}</span>
+                      <span className="text-xs text-muted-foreground">{workspace.owner?.email}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 text-slate-600 text-sm">
+                      <Clock className="h-3 w-3 opacity-50" />
+                      {format(new Date(workspace.createdAt), "MMM d, yyyy")}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-normal text-xs px-2 py-0">
+                      {workspace._count?.projects || 0}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-normal text-xs px-2 py-0">
+                      {workspace._count?.members || 0}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {workspaces.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
+                    No workspaces found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

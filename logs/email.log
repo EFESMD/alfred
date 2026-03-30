@@ -154,3 +154,19 @@
   "component": "mail",
   "tnx": "create"
 }
+[2026-03-30T11:31:40.467Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-03-30T11:31:40.503Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-03-30T11:31:41.147Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-03-30T11:31:44.141Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}

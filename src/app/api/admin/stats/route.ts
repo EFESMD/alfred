@@ -13,7 +13,7 @@ export async function GET() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const [users, workspaces, projects, tasks] = await Promise.all([
+    const [users, workspaces, totalWorkspaces, totalProjects, totalTasks] = await Promise.all([
       prisma.user.findMany({
         orderBy: { createdAt: "desc" },
         select: {
@@ -29,6 +29,24 @@ export async function GET() {
           }
         }
       }),
+      prisma.workspace.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          owner: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+            }
+          },
+          _count: {
+            select: {
+              members: true,
+              projects: true,
+            }
+          }
+        }
+      }),
       prisma.workspace.count(),
       prisma.project.count(),
       prisma.task.count(),
@@ -37,11 +55,12 @@ export async function GET() {
     return NextResponse.json({
       stats: {
         totalUsers: users.length,
-        totalWorkspaces: workspaces,
-        totalProjects: projects,
-        totalTasks: tasks,
+        totalWorkspaces: totalWorkspaces,
+        totalProjects: totalProjects,
+        totalTasks: totalTasks,
       },
       users,
+      workspaces,
     });
   } catch (error) {
     console.error("[ADMIN_STATS_GET]", error);
