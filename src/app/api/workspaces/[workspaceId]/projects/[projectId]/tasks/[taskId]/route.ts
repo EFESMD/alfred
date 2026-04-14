@@ -49,7 +49,7 @@ export async function GET(
             },
           },
           orderBy: {
-            createdAt: "desc",
+            createdAt: "asc",
           },
         },
         activities: {
@@ -62,7 +62,7 @@ export async function GET(
             },
           },
           orderBy: {
-            createdAt: "desc",
+            createdAt: "asc",
           },
         },
         attachments: {

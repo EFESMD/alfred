@@ -795,40 +795,55 @@ export function TaskDetailSheet({
                   </div>
 
                   <div className="space-y-6 pt-6 pb-6">
-                    {task.comments.map((comment: any) => (
-                      <div key={comment.id} className="flex gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={comment.user.image} />
-                          <AvatarFallback>{comment.user.name?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{comment.user.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                            </span>
-                          </div>
-                          <div className="text-sm bg-white border rounded-lg p-3 shadow-sm">
-                            {comment.content}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    {(() => {
+                      const feed = [
+                        ...task.comments.map((c: any) => ({ ...c, isComment: true })),
+                        ...task.activities.map((a: any) => ({ ...a, isActivity: true }))
+                      ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-                    {task.activities.map((activity: any) => (
-                      <div key={activity.id} className="flex items-start gap-3 text-xs text-muted-foreground pl-11">
-                        <History className="h-3 w-3 mt-0.5 shrink-0" />
-                        <div className="flex flex-col gap-0.5">
-                          <span>
-                            <span className="font-medium text-foreground">{activity.user.name}</span>{" "}
-                            {activity.description}
-                          </span>
-                          <span className="text-[10px] opacity-70">
-                            {format(new Date(activity.createdAt), "d MMM yyyy HH:mm")}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      return feed.map((item: any) => {
+                        if (item.isComment) {
+                          return (
+                            <div key={item.id} className="flex gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={item.user.image} />
+                                <AvatarFallback>{item.user.name?.[0]}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold">{item.user.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                                  </span>
+                                </div>
+                                <div className="text-sm bg-white border rounded-lg p-3 shadow-sm">
+                                  {item.content}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={item.id} className="flex items-start gap-3 text-xs text-muted-foreground pl-11">
+                              {item.type === "TASK_CREATED" ? (
+                                <Plus className="h-3 w-3 mt-0.5 shrink-0 text-primary font-bold" />
+                              ) : (
+                                <History className="h-3 w-3 mt-0.5 shrink-0" />
+                              )}
+                              <div className="flex flex-col gap-0.5">
+                                <span>
+                                  <span className="font-medium text-foreground">{item.user.name}</span>{" "}
+                                  {item.description}
+                                </span>
+                                <span className="text-[10px] opacity-70">
+                                  {format(new Date(item.createdAt), "d MMM yyyy HH:mm")}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                      });
+                    })()}
                   </div>
                 </div>
 

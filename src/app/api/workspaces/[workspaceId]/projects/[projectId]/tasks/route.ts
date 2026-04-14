@@ -76,6 +76,16 @@ export async function POST(
       },
     });
 
+    // Create activity log for task creation
+    await prisma.activity.create({
+      data: {
+        type: "TASK_CREATED",
+        description: "created the task",
+        taskId: task.id,
+        userId: session.user.id,
+      },
+    });
+
     console.log("[TASKS_POST] Task created successfully:", task.id);
 
     // Trigger real-time update
