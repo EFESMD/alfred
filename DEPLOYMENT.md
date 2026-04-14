@@ -14,20 +14,38 @@ Acest document descrie configurația finală pentru platforma Alfred, utilizând
 
 ---
 
-## 2. Flux de Lucru CI/CD (GitHub -> Railway)
+## 2. Cum folosești VS Code pentru Git (Fără terminal)
 
-Pentru a asigura stabilitatea producției, urmăm acest proces:
+În loc să scrii comenzi, poți folosi butoanele din VS Code pentru a gestiona codul:
 
-1.  **Dezvoltare Locală**: Creați un branch nou pentru fiecare funcționalitate (`feature/nume-functie`).
-2.  **Testare Dev**: Faceți Merge/Pull Request în branch-ul `develop`.
-    - Railway va face deploy automat pe link-ul de Dev.
-    - Verificați funcționalitatea și baza de date.
-3.  **Lansare Prod**: Faceți Merge din `develop` în `main`.
-    - Railway va face deploy automat pe link-ul de Producție.
+### Schimbarea între ramuri (Branch-uri):
+- În colțul din **stânga-jos** al ferestrei VS Code, vei vedea numele branch-ului curent (ex: `main` sau `develop`).
+- Click pe el -> Se deschide o listă sus -> Selectează branch-ul pe care vrei să lucrezi.
+
+### Salvarea modificărilor (Commit):
+- Mergi la iconița de **Source Control** din bara laterală stângă (pictograma cu 3 puncte unite).
+- Scrie un mesaj descriptiv în căsuța "Message".
+- Apasă butonul albastru **Commit**.
+
+### Trimiterea pe GitHub (Push):
+- După Commit, apasă butonul **Sync Changes** sau cerculețul cu o săgeată de lângă numele branch-ului (jos) pentru a trimite codul pe server.
 
 ---
 
-## 3. Configurație Railway (Pas cu Pas)
+## 3. Flux de Lucru CI/CD (GitHub -> Railway)
+
+Pentru a asigura stabilitatea producției, urmăm acest proces:
+
+1.  **Dezvoltare Locală**: Lucrează pe branch-ul `develop`.
+2.  **Testare Dev**: Fă push pe `develop`.
+    - Railway va face deploy automat pe mediul de Dev.
+    - Verificați funcționalitatea și baza de date.
+3.  **Lansare Prod**: Când totul e OK, unește `develop` cu `main` în VS Code și fă push pe `main`.
+    - Railway va face deploy automat pe mediul de Producție.
+
+---
+
+## 4. Configurație Railway (Pas cu Pas)
 
 Pentru ambele proiecte (`Alfred-Dev` și `Alfred-Prod`):
 
@@ -35,26 +53,29 @@ Pentru ambele proiecte (`Alfred-Dev` și `Alfred-Prod`):
 2.  **Branch**: Setați branch-ul corespunzător (`develop` sau `main`).
 3.  **Volume**: Creați un Volume în Railway și montați-l la `/app/storage`.
 4.  **Start Command**: `npm run start:railway`
-5.  **Variabile de Mediu**: (Vezi secțiunea 4)
+5.  **Variabile de Mediu**: (Vezi secțiunea 5)
 
 ---
 
-## 4. Variabile de Mediu Necesare
+## 5. Checklist: Variabile de Mediu (ENV)
 
-Configurați următoarele variabile în panoul Railway:
+Configurați următoarele variabile în panoul Railway pentru fiecare proiect:
 
-- `DATABASE_URL`: `file:/app/storage/[dev|prod].db`
-- `STORAGE_PATH`: `/app/storage`
-- `ADMIN_EMAIL`: Email-urile administratorilor (separate prin virgulă).
-- `NEXTAUTH_SECRET`: Cheie secretă (generată unic pentru fiecare mediu).
-- `NEXTAUTH_URL`: URL-ul public al mediului respectiv.
-- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_KEY`, `NEXT_PUBLIC_PUSHER_CLUSTER`: Credențiale Pusher.
-- `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`, `EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`, `EMAIL_FROM`: Integrare cu serverul de mail corporativ.
+| Variabilă | Valoare pentru Dev | Valoare pentru Prod |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | `file:/app/storage/dev.db` | `file:/app/storage/prod.db` |
+| `STORAGE_PATH` | `/app/storage` | `/app/storage` |
+| `NEXTAUTH_URL` | URL-ul public de test (Dev) | URL-ul public final (Prod) |
+| `EMAIL_SERVER_HOST` | `mail.efes.md` | `mail.efes.md` |
+| `EMAIL_SERVER_USER` | `noreply@efes.md` | `noreply@efes.md` |
+| `ADMIN_EMAIL` | Email-urile adminilor | Email-urile adminilor |
+| `NEXTAUTH_SECRET` | Cheie unică | Cheie unică |
+| `PUSHER_*` | Credențiale Pusher | Credențiale Pusher |
 
 ---
 
-## 5. Mentenanță și Backup
+## 6. Mentenanță și Backup
 
 - **SQLite**: Baza de date se află în volumul persistent. Railway oferă opțiuni de backup pentru volume.
-- **Prisma**: `npx prisma db push` este folosit în comanda de start pentru a menține schema sincronizată fără a bloca deployment-ul cu migrări manuale complexe, dar pentru schimbări majore se recomandă testarea prealabilă pe Dev.
+- **Prisma**: `npx prisma db push` este folosit în comanda de start pentru a menține schema sincronizată fără a bloca deployment-ul cu migrări manuale complexe.
 - **Cleanup**: Sistemul Alfred șterge automat fișierele fizice la ștergerea task-urilor sau proiectelor pentru a optimiza spațiul în volum.

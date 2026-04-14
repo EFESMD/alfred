@@ -32,6 +32,7 @@ A robust, real-time project management application designed for teams to organiz
 - **Global Control Panel**: Master dashboard for the entire platform.
 - **System Statistics**: Real-time overview of users, workspaces, projects, and tasks.
 - **User Directory**: Full list of registered members with verify/delete options.
+- **Workspace Directory**: Complete overview of all created workspaces, including owner information and activity stats.
 - **Manual Verification**: Ability to manually verify user accounts.
 - **Email Diagnostics**: Integrated tool to send test emails and view transmission logs.
 - **Data Migration**: Built-in tools for structural database updates.
@@ -39,6 +40,7 @@ A robust, real-time project management application designed for teams to organiz
 ### Collaboration & Features
 - **Comments**: Threaded discussions on tasks.
 - **Activity Log**: Real-time audit trail for all task-related changes.
+- **Global Project Favorites**: Ability to "star" projects for immediate access via a global sidebar section, facilitating cross-workspace navigation.
 - **File Attachments**: Local storage system for task documents.
 - **Automated Storage Cleanup**: Physical deletion of uploaded files and avatars when tasks, projects, or workspaces are removed.
 - **Real-time Updates**: Instant UI synchronization via Pusher.

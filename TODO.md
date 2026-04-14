@@ -80,7 +80,10 @@
     - [x] **State Synchronization**: Fixed issue where user avatar in Sidebar did not update immediately upon upload via Profile page.
     - [x] **Visibility Filters**: Implemented "Hide Done" toggle in List, Board, Timeline, and Calendar views (Persistent via URL parameters).
     - [x] **Unified Role Management**: Standardized role calculation to elevate Workspace Admins/Owners in all project views and enforced strict read-only access for archived content. Resolved issues where project members were incorrectly restricted to read-only access by moving role calculation to the server.
-    - [x] **Super Admin Panel**: Implemented stats, user management (manual verification/deletion), and email diagnostics (logs + test send).
+    - [x] **Super Admin Panel**: Implemented stats, user management (manual verification/deletion), workspace directory, and email diagnostics (logs + test send).
+    - [x] **Description Formatting**: Fixed issue where newlines were lost in task description view mode (added whitespace-pre-wrap).
+    - [x] **Status Label Updates**: Standardized task status display to "TO DO" and "IN PROGRESS" for better readability.
+    - [x] **Enhanced Sidebar UX**: Improved visibility of the "Create Project" button (pale green theme with tooltips).
 
 - [x] **Infrastructure & Professional Deployment**
     - [x] **Professional Git Workflow**: Established `main` and `develop` branches for safe deployment.
