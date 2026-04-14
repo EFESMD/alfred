@@ -101,7 +101,7 @@
     - [x] Password change history tracking (`lastPasswordChange`)
     - [x] Automated security notification emails for all password actions
 
-- [ ] **Cleanup**: Remove `[DEBUG]` logs from `api/auth/forgot-password`, `api/profile/password/request`, and `api/profile/password/confirm`.
+- [x] **Cleanup**: Removed `[DEBUG]` logs from `api/auth/forgot-password`, `api/profile/password/request`, and `api/profile/password/confirm`.
 
 ### High Priority
 - [ ] **Manual Task Sorting**: Persist custom task order within sections and Kanban columns (requires `order` field in `Task` model).
