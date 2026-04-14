@@ -64,8 +64,8 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart);
-  const endDate = endOfWeek(monthEnd);
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
   const calendarDays = eachDayOfInterval({
     start: startDate,
