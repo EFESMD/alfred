@@ -48,15 +48,17 @@ export default function ForgotPasswordPage() {
               Back to login
             </Link>
           </div>
-          <CardTitle>Reset Password</CardTitle>
+          <CardTitle>{isSubmitted ? "Link Dispatched" : "Reset Password"}</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a link to reset your password.
+            {isSubmitted 
+              ? "Please check your inbox for the recovery instructions." 
+              : "Enter your email address and we'll send you a link to reset your password."}
           </CardDescription>
         </CardHeader>
         
         {!isSubmitted ? (
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
@@ -72,8 +74,6 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
               </div>
-            </CardContent>
-            <CardFooter>
               <Button type="submit" className="w-full" disabled={isLoading || !email}>
                 {isLoading ? (
                   <>
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
                   "Send Reset Link"
                 )}
               </Button>
-            </CardFooter>
+            </CardContent>
           </form>
         ) : (
           <CardContent className="space-y-4 py-6">
