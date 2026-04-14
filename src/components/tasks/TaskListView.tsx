@@ -455,11 +455,11 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case "BACKLOG": return "bg-slate-400";
-      case "TODO": return "bg-primary/80";
+      case "BACKLOG": return "bg-slate-500";
+      case "TODO": return "bg-blue-600";
       case "IN_PROGRESS": return "bg-amber-500";
       case "DONE": return "bg-emerald-600";
-      default: return "bg-slate-400";
+      default: return "bg-slate-500";
     }
   };
 

@@ -78,9 +78,9 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
       case "BACKLOG": return "bg-slate-500";
-      case "TODO": return "bg-blue-500";
-      case "IN_PROGRESS": return "bg-yellow-500";
-      case "DONE": return "bg-green-500";
+      case "TODO": return "bg-blue-600";
+      case "IN_PROGRESS": return "bg-amber-500";
+      case "DONE": return "bg-emerald-600";
       default: return "bg-slate-500";
     }
   };
