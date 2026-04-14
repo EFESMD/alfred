@@ -43,6 +43,14 @@ model User {
   image           String?           @default("https://alfred-production.up.railway.app/file.svg")
   password        String?
   createdAt       DateTime          @default(now())
+  
+  // Password Management Fields
+  resetPasswordToken    String?   @unique
+  resetPasswordExp      DateTime?
+  changePasswordOTP     String?
+  changePasswordOTPExp  DateTime?
+  lastPasswordChange    DateTime?
+
   accounts        Account[]
   activities      Activity[]
   comments        Comment[]

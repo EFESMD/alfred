@@ -19,7 +19,10 @@ A robust, real-time project management application inspired by Asana, designed f
 - **Collaboration**: Real-time comments, activity logs, and file attachments.
 - **System Maintenance**: Automated physical storage cleanup for tasks, projects, workspaces, and user avatars.
 - **Super Admin Panel**: Master control panel for system statistics, user management (verify/delete), and email diagnostics.
-- **Corporate Security**: Restricted registration to specific email domains and integrated SMTP mail support.
+- **Corporate Security**: 
+  - Restricted registration to specific email domains (@md.anadoluefes.com).
+  - **Hardened Identity Management**: Strict 10-character password complexity, secure "Forgot Password" flows, and "Double-Lock" password changes with mandatory email OTP verification.
+  - Integrated SMTP mail support with fallback mechanisms.
 - **Custom UI Theme**: Minimalist grey interface (#f5f6f8 and #efefef) for maximum readability.
 
 ## 🛠️ Technical Stack

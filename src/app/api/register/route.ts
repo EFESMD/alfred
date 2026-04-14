@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/mail";
+import { validatePassword } from "@/lib/password-validator";
 import crypto from "crypto";
 
 export async function POST(req: Request) {
@@ -14,6 +15,13 @@ export async function POST(req: Request) {
     if (!email || !password || !firstName || !lastName) {
       console.log("[REGISTER] Missing fields");
       return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    // Password complexity check
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      console.log("[REGISTER] Password too weak");
+      return new NextResponse("Password does not meet complexity requirements.", { status: 400 });
     }
 
     // Check for allowed company domain

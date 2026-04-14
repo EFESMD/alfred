@@ -112,3 +112,73 @@ export async function sendEmail({
     }
   }
 }
+
+export async function sendPasswordResetEmail(to: string, resetUrl: string) {
+  return sendEmail({
+    to,
+    subject: "Alfred - Resetare Parolă",
+    text: `Ai solicitat resetarea parolei pentru contul tău Alfred. 
+Dacă nu ai solicitat acest lucru, poți ignora acest email.
+
+Accesează următorul link pentru a seta o nouă parolă (link-ul expiră în o oră):
+${resetUrl}
+
+Echipa Alfred`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #333;">Resetare Parolă Alfred</h2>
+        <p>Ai solicitat resetarea parolei pentru contul tău Alfred.</p>
+        <p>Dacă nu ai solicitat acest lucru, poți ignora acest email în siguranță.</p>
+        <div style="margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Resetează Parola</a>
+        </div>
+        <p style="font-size: 12px; color: #666;">Dacă butonul nu funcționează, copiază și lipește acest link în browser: <br>${resetUrl}</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #999;">Acest link expiră în 60 de minute.</p>
+      </div>
+    `
+  });
+}
+
+export async function sendPasswordChangeOTP(to: string, code: string) {
+  return sendEmail({
+    to,
+    subject: "Alfred - Cod Verificare Modificare Parolă",
+    text: `Codul tău de verificare pentru modificarea parolei este: ${code}. 
+Acest cod expiră în 10 minute. 
+
+Dacă nu ai inițiat această modificare, contactează administratorul imediat.`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #333;">Verificare Modificare Parolă</h2>
+        <p>Folosește codul de mai jos pentru a confirma modificarea parolei în platforma Alfred:</p>
+        <div style="background-color: #f5f6f8; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; border-radius: 5px; margin: 20px 0;">
+          ${code}
+        </div>
+        <p style="font-size: 14px; color: #666;">Codul este valabil timp de 10 minute.</p>
+        <p style="font-size: 12px; color: #e11d48; font-weight: bold;">Dacă nu ai cerut tu acest cod, te rugăm să contactezi administratorul imediat.</p>
+      </div>
+    `
+  });
+}
+
+export async function sendPasswordChangedNotification(to: string) {
+  return sendEmail({
+    to,
+    subject: "Alfred - Parola a fost modificată",
+    text: `Salut,\n\nParola contului tău Alfred a fost modificată cu succes.\n\nDacă nu tu ai făcut această modificare, te rugăm să contactezi administratorul sistemului imediat.\n\nEchipa Alfred`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #16a34a;">Parolă Modificată cu Succes</h2>
+        <p>Salut,</p>
+        <p>Te informăm că parola pentru contul tău <strong>Alfred</strong> a fost schimbată recent.</p>
+        <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #166534;">Dacă tu ai efectuat această schimbare, poți ignora acest email.</p>
+        </div>
+        <p style="font-size: 12px; color: #e11d48; font-weight: bold;">IMPORTANT: Dacă NU tu ai făcut această modificare, contactează administratorul platformei imediat!</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #999;">Acesta este un email automat, te rugăm să nu răspunzi.</p>
+      </div>
+    `
+  });
+}

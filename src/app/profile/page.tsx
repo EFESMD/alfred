@@ -22,11 +22,264 @@ import {
   Save,
   Loader2,
   ArrowLeft,
-  Upload
+  Upload,
+  Lock,
+  KeyRound,
+  ShieldCheck,
+  Check,
+  X,
+  History
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { validatePassword, PASSWORD_REQUIREMENTS } from "@/lib/password-validator";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
+function PasswordSection({ user }: { user: any }) {
+  const [step, setStep] = useState<"input" | "otp">("input");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [isPending, setIsPending] = useState(false);
+
+  const passwordValidation = useMemo(() => validatePassword(newPassword), [newPassword]);
+
+  const handleRequestChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (!passwordValidation.isValid) {
+      toast.error("New password does not meet requirements");
+      return;
+    }
+
+    setIsPending(true);
+    try {
+      const res = await fetch("/api/profile/password/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || "Failed to initiate change");
+      }
+
+      toast.success("Verification code sent to your email!");
+      setStep("otp");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  const handleConfirmChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsPending(true);
+    try {
+      const res = await fetch("/api/profile/password/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp, newPassword }),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || "Invalid verification code");
+      }
+
+      toast.success("Password changed successfully!");
+      setStep("input");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setOtp("");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Lock className="h-5 w-5 text-primary" />
+          Security
+        </CardTitle>
+        <CardDescription>
+          Update your password and manage account security.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {user.lastPasswordChange && (
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-slate-50 p-2 rounded border border-dashed mb-2">
+            <History className="h-3 w-3" />
+            Last changed: {format(new Date(user.lastPasswordChange), "PPP 'at' p")}
+          </div>
+        )}
+
+        {step === "input" ? (
+          <form onSubmit={handleRequestChange} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Required to make changes"
+              />
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 10 chars"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Match new password"
+                />
+              </div>
+            </div>
+
+            {newPassword.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider font-bold">
+                  <span className={cn(
+                    passwordValidation.score <= 1 ? "text-red-500" :
+                    passwordValidation.score <= 3 ? "text-amber-500" :
+                    "text-emerald-500"
+                  )}>
+                    Strength: {
+                      passwordValidation.score <= 1 ? "Weak" :
+                      passwordValidation.score <= 3 ? "Medium" :
+                      "Strong"
+                    }
+                  </span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div 
+                        key={step} 
+                        className={cn(
+                          "h-1 w-6 rounded-full transition-colors",
+                          step <= passwordValidation.score 
+                            ? (passwordValidation.score <= 1 ? "bg-red-500" : passwordValidation.score <= 3 ? "bg-amber-500" : "bg-emerald-500")
+                            : "bg-slate-200"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5 p-3 rounded-lg border bg-slate-50/50">
+                  {PASSWORD_REQUIREMENTS.map((req) => {
+                    const isMet = !passwordValidation.errors[req.key];
+                    return (
+                      <div key={req.key} className="flex items-center gap-2">
+                        {isMet ? (
+                          <Check className="h-3 w-3 text-emerald-500" />
+                        ) : (
+                          <X className="h-3 w-3 text-slate-300" />
+                        )}
+                        <span className={cn(
+                          "text-[10px]",
+                          isMet ? "text-emerald-700 font-medium" : "text-slate-500"
+                        )}>
+                          {req.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button 
+                type="submit" 
+                className="gap-2"
+                disabled={isPending || !passwordValidation.isValid || newPassword !== confirmPassword || !currentPassword}
+              >
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                Change Password
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleConfirmChange} className="space-y-4">
+            <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg space-y-2">
+              <div className="flex items-center gap-2 text-amber-800 font-semibold text-sm">
+                <ShieldCheck className="h-4 w-4" />
+                Two-Step Verification
+              </div>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                We've sent a 6-digit verification code to your email. Please enter it below to confirm your new password.
+              </p>
+            </div>
+
+            <div className="space-y-2 text-center py-4">
+              <Label htmlFor="otp" className="text-center block text-xs uppercase tracking-widest text-muted-foreground">Verification Code</Label>
+              <Input
+                id="otp"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                className="text-center text-3xl h-14 font-bold tracking-[10px] bg-slate-50"
+                required
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1" 
+                onClick={() => setStep("input")}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="flex-1"
+                disabled={isPending || otp.length < 6}
+              >
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Confirm Change
+              </Button>
+            </div>
+          </form>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function ProfilePage() {
   const queryClient = useQueryClient();
@@ -155,7 +408,7 @@ export default function ProfilePage() {
                     {user?.firstName?.[0] || user?.email?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <input 
                   type="file" 
                   ref={fileInputRef}
@@ -163,7 +416,7 @@ export default function ProfilePage() {
                   accept="image/*"
                   onChange={handleFileChange}
                 />
-                
+
                 <Button 
                   size="sm" 
                   variant="outline" 
@@ -245,6 +498,9 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* New Security Section */}
+        <PasswordSection user={user} />
 
         <Card>
           <CardHeader>

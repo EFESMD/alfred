@@ -94,8 +94,16 @@
 
 - [ ] **Next Steps**
 
+- [x] **Hardened Password Management**
+    - [x] 10-character complexity threshold with real-time feedback
+    - [x] Secure "Forgot Password" flow with 1-hour email reset links
+    - [x] "Double-Lock" password change with 6-digit email OTP confirmation
+    - [x] Password change history tracking (`lastPasswordChange`)
+    - [x] Automated security notification emails for all password actions
+
 ### High Priority
 - [ ] **Manual Task Sorting**: Persist custom task order within sections and Kanban columns (requires `order` field in `Task` model).
+- [ ] **User Sessions Management**: Invalidate all sessions/force logout on password change (Security best practice).
 - [ ] **Notifications System**: In-app and email alerts for task assignments and mentions.
 - [ ] **Global Search**: Quick navigation across workspace projects and tasks.
 

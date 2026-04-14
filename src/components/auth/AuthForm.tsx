@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { validatePassword, PASSWORD_REQUIREMENTS } from "@/lib/password-validator";
+import { Check, X, Shield, ShieldCheck, ShieldAlert } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -26,12 +29,22 @@ export function AuthForm({ mode }: AuthFormProps) {
     lastName: "",
   });
 
+  const passwordValidation = useMemo(() => {
+    if (mode === "login") return null;
+    return validatePassword(formData.password);
+  }, [formData.password, mode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       if (mode === "register") {
+        // Client-side complexity check
+        if (!passwordValidation?.isValid) {
+          throw new Error("Please fulfill all password requirements.");
+        }
+
         // Client-side domain check
         const allowedDomain = "md.anadoluefes.com";
         if (!formData.email.toLowerCase().endsWith(`@${allowedDomain}`)) {
@@ -59,15 +72,12 @@ export function AuthForm({ mode }: AuthFormProps) {
       });
 
       if (result?.error) {
-        // NextAuth returns a generic error for security, 
-        // but we can make it friendlier.
         const errorMessage = result.error === "CredentialsSignin" 
           ? "Invalid email or password. Make sure you have an account."
           : result.error;
         throw new Error(errorMessage);
       }
 
-      // Use callbackUrl if provided, otherwise go to dashboard
       router.push(callbackUrl);
       router.refresh();
     } catch (error: any) {
@@ -91,25 +101,27 @@ export function AuthForm({ mode }: AuthFormProps) {
         <CardContent className="space-y-4">
           {mode === "register" && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="John"
+                    required
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Doe"
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  />
+                </div>
               </div>
             </>
           )}
@@ -125,7 +137,18 @@ export function AuthForm({ mode }: AuthFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => router.push("/forgot-password")}
+                  className="text-xs text-muted-foreground hover:text-primary underline underline-offset-4"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
             <Input
               id="password"
               type="password"
@@ -133,11 +156,71 @@ export function AuthForm({ mode }: AuthFormProps) {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
+            
+            {mode === "register" && formData.password.length > 0 && passwordValidation && (
+              <div className="space-y-3 pt-2">
+                {/* Strength Meter */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-wider font-bold">
+                    <span className={cn(
+                      passwordValidation.score <= 1 ? "text-red-500" :
+                      passwordValidation.score <= 3 ? "text-amber-500" :
+                      "text-emerald-500"
+                    )}>
+                      Strength: {
+                        passwordValidation.score <= 1 ? "Weak" :
+                        passwordValidation.score <= 3 ? "Medium" :
+                        "Strong"
+                      }
+                    </span>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4].map((step) => (
+                        <div 
+                          key={step} 
+                          className={cn(
+                            "h-1 w-6 rounded-full transition-colors",
+                            step <= passwordValidation.score 
+                              ? (passwordValidation.score <= 1 ? "bg-red-500" : passwordValidation.score <= 3 ? "bg-amber-500" : "bg-emerald-500")
+                              : "bg-slate-200"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Requirements List */}
+                <div className="grid grid-cols-1 gap-1.5 p-3 rounded-lg border bg-slate-50/50">
+                  {PASSWORD_REQUIREMENTS.map((req) => {
+                    const isMet = !passwordValidation.errors[req.key];
+                    return (
+                      <div key={req.key} className="flex items-center gap-2">
+                        {isMet ? (
+                          <Check className="h-3 w-3 text-emerald-500" />
+                        ) : (
+                          <X className="h-3 w-3 text-slate-300" />
+                        )}
+                        <span className={cn(
+                          "text-[11px] transition-colors",
+                          isMet ? "text-emerald-700 font-medium" : "text-slate-500"
+                        )}>
+                          {req.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 pt-6">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Loading..." : mode === "login" ? "Login" : "Register"}
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading || (mode === "register" && !passwordValidation?.isValid)}
+          >
+            {isLoading ? "Processing..." : mode === "login" ? "Login" : "Create Account"}
           </Button>
           <p className="text-sm text-center text-muted-foreground">
             {mode === "login" ? (
@@ -145,7 +228,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 Don&apos;t have an account?{" "}
                 <button
                   type="button"
-                  className="underline underline-offset-4 hover:text-primary"
+                  className="underline underline-offset-4 hover:text-primary font-medium"
                   onClick={() => router.push(`/register${callbackUrl !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`)}
                 >
                   Sign up
@@ -156,7 +239,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 Already have an account?{" "}
                 <button
                   type="button"
-                  className="underline underline-offset-4 hover:text-primary"
+                  className="underline underline-offset-4 hover:text-primary font-medium"
                   onClick={() => router.push(`/login${callbackUrl !== "/dashboard" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`)}
                 >
                   Login

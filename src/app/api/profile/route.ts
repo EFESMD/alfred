@@ -20,6 +20,7 @@ export async function GET() {
         lastName: true,
         email: true,
         image: true,
+        lastPasswordChange: true,
         memberships: {
           include: {
             workspace: {

@@ -1,8 +1,13 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import crypto from "crypto"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+export function hashToken(token: string) {
+  return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 export function checkIsAdmin(email: string | null | undefined) {

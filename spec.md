@@ -6,8 +6,11 @@ A robust, real-time project management application designed for teams to organiz
 ## 2. Core Features
 ### Authentication & User Management
 - Secure Sign-up/Login/Logout (using NextAuth.js).
+- **Hardened Passwords**: Minimum 10 characters, including Uppercase, Lowercase, Numbers, and Special characters.
+- **Forgot Password**: Secure recovery flow via signed email links (1-hour expiry).
+- **Proactive Change Password**: Authenticated "Double-Lock" flow requiring a 6-digit email OTP for confirmation.
 - User profiles with avatars and name splitting.
-- **Corporate Restriction**: Access restricted to specific corporate email domains.
+- **Corporate Restriction**: Access restricted to specific corporate email domains (@md.anadoluefes.com).
 
 ### Workspace & Members
 - **Workspaces**: Isolated team environments.
