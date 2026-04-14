@@ -58,7 +58,6 @@ model User {
   projectMemberships ProjectMember[]
   sessions        Session[]
   assignedTasks   Task[]            @relation("TaskAssignee")
-  createdTasks    Task[]            @relation("TaskCreator")
   ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
   memberships     WorkspaceMember[]
 }
