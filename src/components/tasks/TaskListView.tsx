@@ -19,8 +19,162 @@ import { TaskModal } from "@/components/tasks/TaskModal";
 import { TaskDetailSheet } from "@/components/tasks/TaskDetailSheet";
 import { useSearchParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
+import { TaskStatus, TaskPriority, TaskWithAssignee } from "@/types/task";
+import { cn, formatStatus } from "@/lib/utils";
+import { useRealtime } from "@/hooks/use-realtime";
+import { useTaskFilter } from "@/hooks/use-task-filter";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
-// ... existing imports
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+interface Section {
+  id: string;
+  name: string;
+  order: number;
+}
+
+interface TaskListViewProps {
+  workspaceId: string;
+  projectId: string;
+  isArchived?: boolean;
+  projectLeaderId?: string | null;
+}
+
+function SortableTaskRow({ 
+  task, 
+  onClick, 
+  onStatusChange,
+  getStatusColor, 
+  getPriorityColor,
+  disabled = false
+}: { 
+  task: TaskWithAssignee; 
+  onClick: () => void;
+  onStatusChange: (status: TaskStatus) => void;
+  getStatusColor: (s: any) => string;
+  getPriorityColor: (p: any) => string;
+  disabled?: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id, disabled });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow 
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className="cursor-pointer group h-9"
+      onClick={onClick}
+    >
+      <TableCell className="w-[30px] pl-3 pr-0 py-1" onClick={(e) => e.stopPropagation()}>
+        {!disabled && (
+          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <MoreHorizontal className="h-3.5 w-3.5 rotate-90 text-muted-foreground" />
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="w-[30px] px-0 py-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-center h-full">
+          <Checkbox 
+            checked={task.status === "DONE"}
+            onCheckedChange={(checked) => {
+              onStatusChange(checked ? "DONE" : "TODO");
+            }}
+            disabled={disabled}
+            className="h-4 w-4"
+          />
+        </div>
+      </TableCell>
+      <TableCell className="font-medium pl-2 py-1">
+        <div className="flex items-center gap-2 h-full">
+          <span className={cn("truncate", task.status === "DONE" && "line-through text-muted-foreground")}>{task.title}</span>
+          {(task.subtasks?.length ?? 0) > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 h-3.5 gap-1 opacity-50 font-normal">
+              {task.subtasks?.length} subtasks
+            </Badge>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="py-1">
+        <div className="flex items-center gap-2 scale-90 origin-left">
+          <Avatar className="h-5 w-5">
+            {task.assignee?.image && <AvatarImage src={task.assignee.image} />}
+            <AvatarFallback className="text-[9px]">
+              {task.assignee?.name?.[0] || <User className="h-2.5 w-2.5" />}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-xs truncate max-w-[100px]">
+            {task.assignee?.name || "Unassigned"}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="py-1">
+        <div className={cn(
+          "flex items-center gap-1.5 text-xs",
+          task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
+            ? "text-red-500 font-medium"
+            : task.dueDate 
+              ? "text-foreground" 
+              : "text-muted-foreground"
+        )}>
+          <Calendar className="h-3.5 w-3.5" />
+          <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
+        </div>
+      </TableCell>
+      <TableCell className="py-1">
+        <Badge variant="outline" className={cn("text-[10px] py-0 h-5", getPriorityColor(task.priority as TaskPriority))}>
+          {task.priority}
+        </Badge>
+      </TableCell>
+      <TableCell className="py-1">
+        <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
+          {formatStatus(task.status)}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-right py-1">
+        <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-7 w-7">
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export function TaskListView({ workspaceId, projectId, isArchived = false }: TaskListViewProps) {
   useRealtime(projectId);
@@ -78,7 +232,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
   const { filteredTasks } = useTaskFilter(tasks);
 
-  const { data: sections, isLoading: sectionsLoading, refetch: refetchSections } = useQuery<Section[]>({
+  const { data: sections, isLoading: sectionsLoading, refetch: refetchSections } = useQuery({
     queryKey: ["sections", projectId],
     queryFn: async () => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/sections`);
@@ -120,7 +274,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
   });
 
   const allSections = useMemo(() => {
-    const list = [...(sections || [])];
+    const list = [...((sections as Section[]) || [])];
     list.push({ id: "uncategorized", name: "Uncategorized", order: 999 });
     return list;
   }, [sections]);
@@ -204,7 +358,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     if (!filteredTasks) return {};
     const groups: Record<string, TaskWithAssignee[]> = { "uncategorized": [] };
     
-    sections?.forEach(s => groups[s.id] = []);
+    (sections as Section[])?.forEach(s => groups[s.id] = []);
     
     filteredTasks.forEach(task => {
       const key = task.sectionId || "uncategorized";

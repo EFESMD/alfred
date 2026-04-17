@@ -43,7 +43,9 @@ export function useNotifications() {
     });
 
     return () => {
-      pusherClient.unsubscribe(channelName);
+      if (pusherClient) {
+        pusherClient.unsubscribe(channelName);
+      }
     };
   }, [session?.user?.id, queryClient, router]);
 
