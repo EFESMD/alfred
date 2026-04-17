@@ -21,7 +21,7 @@ export async function POST(
       return new NextResponse("Content is required", { status: 400 });
     }
 
-    const { taskId } = await params;
+    const { taskId, projectId } = await params;
 
     const comment = await prisma.comment.create({
       data: {
@@ -37,6 +37,13 @@ export async function POST(
             image: true,
           },
         },
+        task: {
+          select: {
+            id: true,
+            title: true,
+            assigneeId: true,
+          },
+        },
       },
     });
 
@@ -50,11 +57,21 @@ export async function POST(
       },
     });
 
-    const { projectId, taskId: tid } = await params;
+    // Send notification to task assignee if it's not the commenter
+    if (comment.task.assigneeId && comment.task.assigneeId !== session.user.id) {
+      const { createNotification } = await import("@/lib/notifications");
+      await createNotification({
+        userId: comment.task.assigneeId,
+        type: "COMMENT_ADDED",
+        title: "New Comment",
+        message: `${session.user.name} commented on "${comment.task.title}": ${content.substring(0, 50)}${content.length > 50 ? "..." : ""}`,
+        link: `/workspaces/${projectId}/projects/${projectId}?taskId=${taskId}`,
+      });
+    }
 
     // Trigger real-time update
     if (pusherServer) {
-      await pusherServer.trigger(`project-${projectId}`, "comment-added", { taskId: tid });
+      await pusherServer.trigger(`project-${projectId}`, "comment-added", { taskId });
     }
 
     return NextResponse.json(comment);

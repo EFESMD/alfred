@@ -60,6 +60,7 @@ model User {
   assignedTasks   Task[]            @relation("TaskAssignee")
   ownedWorkspaces Workspace[]       @relation("WorkspaceOwner")
   memberships     WorkspaceMember[]
+  notifications   Notification[]
 }
 
 model VerificationToken {
@@ -194,4 +195,18 @@ model Activity {
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
   task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // "TASK_ASSIGNED", "COMMENT_ADDED", "WORKSPACE_INVITE", "PROJECT_UPDATE"
+  title     String
+  message   String
+  link      String?  // e.g., "/workspaces/ws1/projects/p1?taskId=t1"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

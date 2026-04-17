@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 export default async function WorkspaceLayout({
   children,
@@ -72,9 +73,14 @@ export default async function WorkspaceLayout({
       <div className="flex h-screen w-full">
         <AppSidebar workspace={workspace} projects={workspace.projects} />
         <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="h-14 border-b flex items-center px-4 bg-background shrink-0">
-            <SidebarTrigger />
-            <div className="ml-4 font-medium">{workspace.name}</div>
+          <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0">
+            <div className="flex items-center">
+              <SidebarTrigger />
+              <div className="ml-4 font-medium">{workspace.name}</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+            </div>
           </header>
           <div className="flex-1 overflow-auto bg-muted/30">
             {children}

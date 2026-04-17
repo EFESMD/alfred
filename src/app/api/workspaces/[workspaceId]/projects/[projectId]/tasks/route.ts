@@ -88,6 +88,18 @@ export async function POST(
 
     console.log("[TASKS_POST] Task created successfully:", task.id);
 
+    // Send notification to assignee
+    if (task.assigneeId && task.assigneeId !== session.user.id) {
+      const { createNotification } = await import("@/lib/notifications");
+      await createNotification({
+        userId: task.assigneeId,
+        type: "TASK_ASSIGNED",
+        title: "New Task Assigned",
+        message: `${session.user.name} assigned you a task: ${task.title}`,
+        link: `/workspaces/${projectId}/projects/${projectId}?taskId=${task.id}`,
+      });
+    }
+
     // Trigger real-time update
     if (pusherServer) {
       try {
