@@ -189,6 +189,8 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     const taskId = searchParams.get("taskId");
     if (taskId) {
       setSelectedTaskId(taskId);
+    } else {
+      setSelectedTaskId(null);
     }
   }, [searchParams]);
 
@@ -742,7 +744,16 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
         taskId={selectedTaskId}
         workspaceId={workspaceId}
         projectId={projectId}
-        onClose={() => setSelectedTaskId(null)}
+        onClose={() => {
+          setSelectedTaskId(null);
+          // Remove taskId from URL if it exists
+          if (searchParams.has("taskId")) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete("taskId");
+            const newUrl = `${window.location.pathname}${params.toString() ? "?" + params.toString() : ""}`;
+            window.history.replaceState({}, "", newUrl);
+          }
+        }}
         isArchived={isReadOnly}
       />
     </div>
