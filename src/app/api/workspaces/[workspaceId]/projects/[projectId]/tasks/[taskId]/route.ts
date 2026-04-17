@@ -227,12 +227,13 @@ export async function PATCH(
       // Send notification to new assignee
       if (assigneeId && assigneeId !== session.user.id) {
         const { createNotification } = await import("@/lib/notifications");
+        const { workspaceId } = await params;
         await createNotification({
           userId: assigneeId,
           type: "TASK_ASSIGNED",
           title: "New Task Assigned",
           message: `${session.user.name} assigned you a task: ${task.title}`,
-          link: `/workspaces/${projectId}/projects/${projectId}?taskId=${task.id}`,
+          link: `/workspaces/${workspaceId}/projects/${projectId}?taskId=${task.id}`,
         });
       }
     }

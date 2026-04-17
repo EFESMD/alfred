@@ -60,12 +60,13 @@ export async function POST(
     // Send notification to task assignee if it's not the commenter
     if (comment.task.assigneeId && comment.task.assigneeId !== session.user.id) {
       const { createNotification } = await import("@/lib/notifications");
+      const { workspaceId } = await params;
       await createNotification({
         userId: comment.task.assigneeId,
         type: "COMMENT_ADDED",
         title: "New Comment",
         message: `${session.user.name} commented on "${comment.task.title}": ${content.substring(0, 50)}${content.length > 50 ? "..." : ""}`,
-        link: `/workspaces/${projectId}/projects/${projectId}?taskId=${taskId}`,
+        link: `/workspaces/${workspaceId}/projects/${projectId}?taskId=${taskId}`,
       });
     }
 
