@@ -57,6 +57,14 @@ export async function POST(req: Request) {
     });
     console.log("[REGISTER] User created with ID:", user.id);
 
+    // Add to Brevo Mailing List
+    const { addContactToMailingList } = await import("@/lib/brevo");
+    addContactToMailingList({
+      email,
+      firstName,
+      lastName,
+    }).catch(err => console.error("[REGISTER] Brevo addition failed:", err));
+
     // Try sending email in background but don't block registration
     console.log("[REGISTER] Attempting background email send...");
     sendEmail({
