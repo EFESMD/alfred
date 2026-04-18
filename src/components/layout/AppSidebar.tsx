@@ -206,7 +206,8 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                         {project.status === "COMPLETED" && (
                           <CheckCircle2 className="h-3 w-3 ml-auto text-emerald-500" />
                         )}
-                        </Link>                    </SidebarMenuButton>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
                 {activeProjects.length === 0 && (

@@ -144,12 +144,10 @@ export function ProjectHeader({
             {canEditStatus ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="hover:opacity-80 transition-opacity focus:outline-none">
-                    <div className="flex items-center gap-1 group">
-                      <ProjectStatusBadge status={currentStatus} />
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    </div>
-                  </button>
+                  <span className="hover:opacity-80 transition-opacity cursor-pointer flex items-center gap-1 group">
+                    <ProjectStatusBadge status={currentStatus} />
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
                   <DropdownMenuLabel>Update Status</DropdownMenuLabel>
