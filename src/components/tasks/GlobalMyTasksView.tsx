@@ -19,6 +19,7 @@ import { useState, useMemo } from "react";
 import { TaskStatus, TaskPriority } from "@/types/task";
 import { cn, formatStatus } from "@/lib/utils";
 import { useTaskFilter } from "@/hooks/use-task-filter";
+import { ProjectFilter } from "../projects/ProjectFilter";
 import * as React from "react";
 
 interface GlobalTask {
@@ -139,9 +140,14 @@ export function GlobalMyTasksView() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">All My Tasks</h1>
-        <p className="text-sm text-muted-foreground">Every task assigned to you across all your workspaces.</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">All My Tasks</h1>
+          <p className="text-sm text-muted-foreground">Every task assigned to you across all your workspaces.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ProjectFilter />
+        </div>
       </div>
 
       <div className="bg-white rounded-md border overflow-hidden">
