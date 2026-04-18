@@ -18,6 +18,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Alfred",
   description: "Modern project management for teams",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    title: "Alfred",
+    statusBarStyle: "default",
+    capable: true,
+  },
+  icons: {
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
