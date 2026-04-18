@@ -23,7 +23,8 @@ import {
   Archive,
   ShieldCheck,
   User,
-  Star
+  Star,
+  Layout
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -105,10 +106,18 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.includes("/tasks")}>
+                <SidebarMenuButton asChild isActive={pathname.includes("/tasks") && !pathname.includes("/all-tasks")}>
                   <Link href={`/workspaces/${workspace.id}/tasks`}>
                     <CheckSquare className="h-4 w-4" />
                     <span>My Tasks</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.includes("/all-tasks")}>
+                  <Link href={`/workspaces/${workspace.id}/all-tasks`}>
+                    <Layout className="h-4 w-4" />
+                    <span>All My Tasks</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
