@@ -101,15 +101,7 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                 <SidebarMenuButton asChild isActive={pathname === `/workspaces/${workspace.id}`}>
                   <Link href={`/workspaces/${workspace.id}`}>
                     <LayoutDashboard className="h-4 w-4" />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.includes("/all-tasks")}>
-                  <Link href={`/workspaces/${workspace.id}/all-tasks`}>
-                    <CheckSquare className="h-4 w-4" />
-                    <span>My Tasks</span>
+                    <span>Workspace Overview</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -118,11 +110,22 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                   <SidebarMenuButton asChild isActive={pathname.includes("/settings")}>
                     <Link href={`/workspaces/${workspace.id}/settings`}>
                       <Settings className="h-4 w-4" />
-                      <span>Workspace Settings</span>
+                      <span>Workspace settings</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              
+              <SidebarSeparator className="my-2" />
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.includes("/all-tasks")}>
+                  <Link href={`/workspaces/${workspace.id}/all-tasks`}>
+                    <CheckSquare className="h-4 w-4" />
+                    <span>All my Tasks</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
 
