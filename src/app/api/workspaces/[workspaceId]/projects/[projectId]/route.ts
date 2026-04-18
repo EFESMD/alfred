@@ -85,7 +85,7 @@ export async function PATCH(
 
     const { projectId, workspaceId } = await params;
     const body = await req.json();
-    const { name, description, projectLeaderId, isArchived, color, icon } = body;
+    const { name, description, projectLeaderId, isArchived, color, icon, status } = body;
 
     // Verify membership and role (e.g., only owner or project leader can edit)
     const membership = await prisma.workspaceMember.findUnique({
@@ -113,6 +113,7 @@ export async function PATCH(
         isArchived,
         color,
         icon,
+        status,
       },
     });
 

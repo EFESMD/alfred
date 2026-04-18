@@ -6,6 +6,7 @@ import { FolderOpen, CheckSquare, Users, Archive } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 
 export default async function WorkspacePage({
   params,
@@ -151,6 +152,9 @@ export default async function WorkspacePage({
                         {project.description || "No description"}
                       </CardDescription>
                     </div>
+                  </div>
+                  <div className="mt-4 flex items-center">
+                    <ProjectStatusBadge status={project.status} />
                   </div>
                 </CardHeader>
               </Card>

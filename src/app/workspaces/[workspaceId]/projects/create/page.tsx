@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FolderOpen, Layout, Trash2 } from "lucide-react";
+import { FolderOpen, Layout, Trash2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { statusConfig } from "@/components/projects/ProjectStatusBadge";
 
 export default function CreateProjectPage({
   params,
@@ -31,6 +32,7 @@ export default function CreateProjectPage({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [projectLeaderId, setProjectLeaderId] = useState<string | undefined>(undefined);
+  const [status, setStatus] = useState("ON_TRACK");
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: members } = useQuery({
@@ -75,7 +77,7 @@ export default function CreateProjectPage({
       const res = await fetch(`/api/workspaces/${workspaceId}/projects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, projectLeaderId }),
+        body: JSON.stringify({ name, description, projectLeaderId, status }),
       });
 
       if (!res.ok) throw new Error("Failed to create project");
@@ -177,6 +179,30 @@ export default function CreateProjectPage({
                             </div>
                           </SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Initial Status</Label>
+                    <Select 
+                      value={status} 
+                      onValueChange={setStatus}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select initial status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(statusConfig).map(([key, config]) => {
+                          const Icon = config.icon;
+                          return (
+                            <SelectItem key={key} value={key}>
+                              <div className="flex items-center gap-2">
+                                <Icon className={cn("h-4 w-4", config.iconColor)} />
+                                <span>{config.label}</span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>

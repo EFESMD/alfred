@@ -182,3 +182,23 @@
   "component": "mail",
   "tnx": "create"
 }
+[2026-04-18T20:29:40.648Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-04-18T20:29:40.691Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-04-18T20:29:41.217Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-04-18T20:29:41.228Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-04-18T20:29:41.350Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}

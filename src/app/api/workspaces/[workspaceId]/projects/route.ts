@@ -72,7 +72,7 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { name, description, projectLeaderId } = await req.json();
+    const { name, description, projectLeaderId, status } = await req.json();
 
     if (!name) {
       return new NextResponse("Name is required", { status: 400 });
@@ -101,6 +101,7 @@ export async function POST(
         description,
         workspaceId,
         projectLeaderId,
+        status: status || "ON_TRACK",
         members: {
           create: {
             userId: session.user.id,

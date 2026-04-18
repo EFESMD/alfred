@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye, Star } from "lucide-react";
+import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye, Star, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProjectFilter } from "./ProjectFilter";
@@ -12,6 +12,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProjectStatusBadge, statusConfig, ProjectStatus } from "./ProjectStatusBadge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProjectHeaderProps {
   workspaceId: string;
@@ -21,6 +30,7 @@ interface ProjectHeaderProps {
     name: string | null;
     image: string | null;
   } | null;
+  status?: string;
   isArchived?: boolean;
   userRole?: string;
   initialIsFavorite?: boolean;
@@ -31,6 +41,7 @@ export function ProjectHeader({
   projectId, 
   projectName, 
   projectLeader,
+  status = "ON_TRACK",
   isArchived = false,
   userRole = "MEMBER",
   initialIsFavorite = false
@@ -39,6 +50,7 @@ export function ProjectHeader({
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [currentStatus, setCurrentStatus] = useState(status);
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
@@ -58,12 +70,32 @@ export function ProjectHeader({
     }
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update project status");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setCurrentStatus(data.status);
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      toast.success("Project status updated");
+    },
+    onError: () => {
+      toast.error("Failed to update status");
+    }
+  });
+
   const isKanban = pathname.endsWith("/kanban");
   const isCalendar = pathname.endsWith("/calendar");
   const isTimeline = pathname.endsWith("/timeline");
   const isSettings = pathname.endsWith("/settings");
   const isList = !isKanban && !isCalendar && !isTimeline && !isSettings;
 
+  const canEditStatus = (userRole === "OWNER" || userRole === "ADMIN" || session?.user?.id === projectLeader?.name) && !isArchived;
   const canEditSettings = userRole === "OWNER";
   const isViewer = userRole === "VIEWER";
 
@@ -82,29 +114,68 @@ export function ProjectHeader({
         </div>
       )}
       <div className="px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold">{projectName}</h1>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-8 w-8 transition-colors",
-                    isFavorite ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50" : "text-muted-foreground hover:text-amber-500 hover:bg-amber-50"
-                  )}
-                  onClick={() => toggleFavoriteMutation.mutate()}
-                  disabled={toggleFavoriteMutation.isPending}
-                >
-                  <Star className={cn("h-5 w-5", isFavorite && "fill-current")} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isFavorite ? "Remove from favorites" : "Add to favorites"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold">{projectName}</h1>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8 transition-colors",
+                      isFavorite ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50" : "text-muted-foreground hover:text-amber-500 hover:bg-amber-50"
+                    )}
+                    onClick={() => toggleFavoriteMutation.mutate()}
+                    disabled={toggleFavoriteMutation.isPending}
+                  >
+                    <Star className={cn("h-5 w-5", isFavorite && "fill-current")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isFavorite ? "Remove from favorites" : "Add to favorites"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div className="flex items-center gap-2 h-7">
+            {canEditStatus ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="hover:opacity-80 transition-opacity focus:outline-none">
+                    <div className="flex items-center gap-1 group">
+                      <ProjectStatusBadge status={currentStatus} />
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuLabel>Update Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {Object.entries(statusConfig).map(([key, config]) => {
+                    const Icon = config.icon;
+                    return (
+                      <DropdownMenuItem 
+                        key={key} 
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => updateStatusMutation.mutate(key)}
+                      >
+                        <Icon className={cn("h-4 w-4", config.iconColor)} />
+                        <span>{config.label}</span>
+                        {currentStatus === key && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <ProjectStatusBadge status={currentStatus} />
+            )}
+          </div>
         </div>
         {projectLeader && (
           <div className="flex items-center gap-2">

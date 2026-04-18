@@ -77,6 +77,7 @@ export default async function ProjectLayout({
         projectId={projectId} 
         projectName={project.name} 
         projectLeader={project.projectLeader}
+        status={project.status}
         isArchived={project.isArchived}
         userRole={userRole}
         initialIsFavorite={isFavorite}

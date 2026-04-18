@@ -59,6 +59,7 @@ export default async function WorkspaceLayout({
           isArchived: true,
           color: true,
           icon: true,
+          status: true,
         },
       },
     },

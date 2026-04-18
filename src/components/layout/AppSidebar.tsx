@@ -25,7 +25,8 @@ import {
   ShieldCheck,
   User,
   Star,
-  Layout
+  Layout,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -58,6 +59,7 @@ interface AppSidebarProps {
     isArchived: boolean;
     color: string | null;
     icon: string | null;
+    status: string;
   }[];
 }
 
@@ -152,7 +154,12 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                           >
                             {project.icon || <FolderOpen className="h-3 w-3" />}
                           </div>
-                          <span>{project.name}</span>
+                          <span className={cn(project.status === "COMPLETED" && "text-muted-foreground")}>
+                            {project.name}
+                          </span>
+                          {project.status === "COMPLETED" && (
+                            <CheckCircle2 className="h-3 w-3 ml-auto text-emerald-500" />
+                          )}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -193,9 +200,13 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
                         >
                           {project.icon || <FolderOpen className="h-3 w-3" />}
                         </div>
-                        <span>{project.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                        <span className={cn(project.status === "COMPLETED" && "text-muted-foreground")}>
+                          {project.name}
+                        </span>
+                        {project.status === "COMPLETED" && (
+                          <CheckCircle2 className="h-3 w-3 ml-auto text-emerald-500" />
+                        )}
+                        </Link>                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
                 {activeProjects.length === 0 && (
