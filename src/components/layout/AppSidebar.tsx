@@ -135,7 +135,7 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
               <SidebarGroupLabel className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                  <span>Favorites</span>
+                  <span>All favorite projects</span>
                 </div>
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -164,7 +164,7 @@ export function AppSidebar({ workspace, projects }: AppSidebarProps) {
 
           <SidebarGroup>
             <SidebarGroupLabel className="flex items-center justify-between">
-              <span>Projects</span>
+              <span>Workspace projects</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link 
