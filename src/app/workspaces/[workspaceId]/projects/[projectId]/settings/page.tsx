@@ -58,17 +58,20 @@ export default function ProjectSettingsPage({
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
 
   const COLORS = [
-    { name: "Blue", value: "bg-blue-50 border-blue-100 text-blue-600" },
-    { name: "Red", value: "bg-red-50 border-red-100 text-red-600" },
-    { name: "Green", value: "bg-green-50 border-green-100 text-green-600" },
-    { name: "Yellow", value: "bg-yellow-50 border-yellow-100 text-yellow-600" },
-    { name: "Purple", value: "bg-purple-50 border-purple-100 text-purple-600" },
-    { name: "Pink", value: "bg-pink-50 border-pink-100 text-pink-600" },
-    { name: "Indigo", value: "bg-indigo-50 border-indigo-100 text-indigo-600" },
-    { name: "Slate", value: "bg-slate-50 border-slate-100 text-slate-600" },
+    { name: "Blue", value: "bg-blue-500 border-blue-600 text-white" },
+    { name: "Red", value: "bg-red-500 border-red-600 text-white" },
+    { name: "Green", value: "bg-emerald-500 border-emerald-600 text-white" },
+    { name: "Yellow", value: "bg-amber-400 border-amber-500 text-amber-950" },
+    { name: "Purple", value: "bg-purple-500 border-purple-600 text-white" },
+    { name: "Pink", value: "bg-pink-500 border-pink-600 text-white" },
+    { name: "Indigo", value: "bg-indigo-500 border-indigo-600 text-white" },
+    { name: "Slate", value: "bg-slate-600 border-slate-700 text-white" },
   ];
 
-  const ICONS = ["📁", "🚀", "📊", "💡", "🛠️", "🎨", "📣", "🔒", "🌐", "📱"];
+  const ICONS = [
+    "📁", "🚀", "📊", "💡", "🛠️", "🎨", "📣", "🔒", "🌐", 
+    "📱", "📅", "✅", "📝", "🎯", "🔥", "✨", "🔍", "🤝"
+  ];
 
   const { data: project, isLoading: isProjectLoading } = useQuery({
     queryKey: ["project-settings", projectId],
@@ -372,7 +375,7 @@ export default function ProjectSettingsPage({
 
                 <div className="space-y-3">
                   <Label>Project Icon</Label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-9 gap-2">
                     {ICONS.map((i) => (
                       <button
                         key={i}

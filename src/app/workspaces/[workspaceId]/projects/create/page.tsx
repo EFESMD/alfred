@@ -209,7 +209,7 @@ export default function CreateProjectPage({
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div className={cn(
                           "w-10 h-10 rounded-lg flex items-center justify-center text-xl border shadow-sm shrink-0",
-                          template.color || "bg-blue-50 text-blue-600 border-blue-100"
+                          template.color || "bg-blue-500 text-white border-blue-600"
                         )}>
                           {template.icon || "📁"}
                         </div>

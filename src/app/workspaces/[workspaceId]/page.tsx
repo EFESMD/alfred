@@ -134,13 +134,13 @@ export default async function WorkspacePage({
               <Card className="hover:border-primary transition-colors cursor-pointer group h-full">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div 
-                      className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm border",
-                        project.color || "bg-blue-50 border-blue-100 text-blue-600"
-                      )}
-                      style={project.color && project.color.startsWith('#') ? { backgroundColor: project.color } : {}}
-                    >
+                      <div 
+                        className={cn(
+                          "w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm border",
+                          project.color || "bg-blue-500 border-blue-600 text-white"
+                        )}
+                        style={project.color && project.color.startsWith('#') ? { backgroundColor: project.color } : {}}
+                      >
                       {project.icon || <FolderOpen className="h-5 w-5" />}
                     </div>
                     <div>
