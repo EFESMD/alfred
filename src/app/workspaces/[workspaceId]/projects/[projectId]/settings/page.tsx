@@ -131,14 +131,14 @@ export default function ProjectSettingsPage({
   }, [userRole, isProjectLoading, workspaceData, project, workspaceId, projectId, router]);
 
   useEffect(() => {
-    if (project) {
+    if (project && !name) { // Only initialize if state is empty
       setName(project.name);
       setDescription(project.description || "");
       setProjectLeaderId(project.projectLeaderId);
       setColor(project.color || COLORS[0].value);
       setIcon(project.icon || "📁");
     }
-  }, [project]);
+  }, [project, COLORS]);
 
   const updateProjectMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -153,6 +153,9 @@ export default function ProjectSettingsPage({
     onSuccess: () => {
       toast.success("Project updated!");
       queryClient.invalidateQueries({ queryKey: ["project-settings", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
       router.refresh();
     },
     onError: (error: any) => {
@@ -260,6 +263,7 @@ export default function ProjectSettingsPage({
   });
 
   const handleSave = () => {
+    console.log("[SETTINGS] Saving project:", { name, color, icon });
     updateProjectMutation.mutate({ name, description, projectLeaderId, color, icon });
   };
 
