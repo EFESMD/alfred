@@ -71,6 +71,7 @@ export async function POST(
         dueDate: dueDate ? new Date(dueDate) : null,
         projectId,
         assigneeId: assigneeId || null,
+        creatorId: session.user.id,
         parentId: parentId || null,
         sectionId: (sectionId === "uncategorized" || !sectionId) ? null : sectionId,
       },

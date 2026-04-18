@@ -531,6 +531,22 @@ export function TaskDetailSheet({
                 <div className="grid grid-cols-1 gap-4 text-sm">
                   <div className="flex items-center">
                     <div className="flex items-center gap-2 text-muted-foreground w-24">
+                      <Plus className="h-4 w-4" />
+                      <span>Created by</span>
+                    </div>
+                    <div className="flex items-center gap-2 h-auto p-1">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={task.creator?.image} />
+                        <AvatarFallback className="text-[10px]">
+                          {task.creator?.name?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{task.creator?.name || "Unknown"}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <div className="flex items-center gap-2 text-muted-foreground w-24">
                       <User className="h-4 w-4" />
                       <span>Assignee</span>
                     </div>

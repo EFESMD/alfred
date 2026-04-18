@@ -32,6 +32,13 @@ export async function GET(
             image: true,
           },
         },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
         predecessors: {
           select: {
             id: true,
