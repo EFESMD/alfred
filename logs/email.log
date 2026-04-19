@@ -202,3 +202,81 @@
   "component": "mail",
   "tnx": "create"
 }
+[2026-04-19T16:47:39.814Z] [SMTP_DEBUG] {
+  "component": "mail",
+  "tnx": "create"
+}
+[2026-04-19T16:47:39.921Z] [MAIL_START] Request to send email to: victor.nicolaescu@md.anadoluefes.com | Subject: Alfred - Contul tău a fost creat
+[2026-04-19T16:47:40.170Z] [MAIL_DEBUG] Server Public IP: 89.149.89.235
+[2026-04-19T16:47:40.170Z] [MAIL_CONFIG] Host: mail.efes.md | Port: 465 | User: noreply@efes.md | Secure: true
+[2026-04-19T16:47:40.170Z] [MAIL_DEBUG] Verifying SMTP connection to mail.efes.md:465...
+[2026-04-19T16:47:40.184Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "dns",
+  "source": "mail.efes.md",
+  "resolved": "185.181.230.90",
+  "cached": false
+}
+[2026-04-19T16:47:40.300Z] [SMTP_INFO] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "network",
+  "localAddress": "192.168.2.114",
+  "localPort": 53649,
+  "remoteAddress": "185.181.230.90",
+  "remotePort": 465
+}
+[2026-04-19T16:47:40.301Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "server"
+}
+[2026-04-19T16:47:40.301Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "client"
+}
+[2026-04-19T16:47:40.317Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "server"
+}
+[2026-04-19T16:47:40.318Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "smtp"
+}
+[2026-04-19T16:47:40.318Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "client"
+}
+[2026-04-19T16:47:42.373Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "server"
+}
+[2026-04-19T16:47:42.374Z] [SMTP_INFO] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "smtp",
+  "username": "noreply@efes.md",
+  "action": "authfail",
+  "method": "PLAIN"
+}
+[2026-04-19T16:47:42.375Z] [SMTP_DEBUG] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "smtp"
+}
+[2026-04-19T16:47:42.376Z] [MAIL_SMTP_FAILED] SMTP failed, attempting Brevo API fallback... {
+  "message": "Invalid login: 535 Incorrect authentication data",
+  "code": "EAUTH"
+}
+[2026-04-19T16:47:42.382Z] [SMTP_INFO] {
+  "component": "smtp-connection",
+  "sid": "oBuqTJUfc",
+  "tnx": "network"
+}
+[2026-04-19T16:47:42.480Z] [MAIL_FATAL] Both SMTP and API failed: Brevo API Error: {"message":"Key not found","code":"unauthorized"}

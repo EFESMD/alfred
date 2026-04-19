@@ -37,17 +37,24 @@ import {
 import { 
   DndContext, 
   closestCenter,
+  closestCorners,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
+  DragOverlay,
+  useDroppable,
+  defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
+  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -64,47 +71,49 @@ interface TaskListViewProps {
   projectLeaderId?: string | null;
 }
 
-function SortableTaskRow({ 
+const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
+  task: TaskWithAssignee;
+  onClick?: () => void;
+  onStatusChange?: (status: TaskStatus) => void;
+  getStatusColor: (s: any) => string;
+  getPriorityColor: (p: any) => string;
+  disabled?: boolean;
+  isOverlay?: boolean;
+  isDragging?: boolean;
+  attributes?: any;
+  listeners?: any;
+  style?: React.CSSProperties;
+}>(({ 
   task, 
   onClick, 
   onStatusChange,
   getStatusColor, 
   getPriorityColor,
-  disabled = false
-}: { 
-  task: TaskWithAssignee; 
-  onClick: () => void;
-  onStatusChange: (status: TaskStatus) => void;
-  getStatusColor: (s: any) => string;
-  getPriorityColor: (p: any) => string;
-  disabled?: boolean;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id, disabled });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
+  disabled = false,
+  isOverlay = false,
+  isDragging = false,
+  attributes,
+  listeners,
+  style
+}, ref) => {
   return (
     <TableRow 
-      ref={setNodeRef}
+      ref={ref}
       style={style}
       {...attributes}
-      className="cursor-pointer group h-9"
+      className={cn(
+        "cursor-pointer group h-9 bg-white",
+        isOverlay && "shadow-xl border ring-1 ring-primary/10",
+        isDragging && !isOverlay && "opacity-30"
+      )}
       onClick={onClick}
     >
       <TableCell className="w-[30px] pl-3 pr-0 py-1" onClick={(e) => e.stopPropagation()}>
         {!disabled && (
-          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div {...listeners} className={cn(
+            "cursor-grab active:cursor-grabbing p-1 transition-opacity flex items-center justify-center",
+            isOverlay ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          )}>
             <MoreHorizontal className="h-3.5 w-3.5 rotate-90 text-muted-foreground" />
           </div>
         )}
@@ -114,7 +123,7 @@ function SortableTaskRow({
           <Checkbox 
             checked={task.status === "DONE"}
             onCheckedChange={(checked) => {
-              onStatusChange(checked ? "DONE" : "TODO");
+              onStatusChange?.(checked ? "DONE" : "TODO");
             }}
             disabled={disabled}
             className="h-4 w-4"
@@ -174,6 +183,153 @@ function SortableTaskRow({
       </TableCell>
     </TableRow>
   );
+});
+TaskRowUI.displayName = "TaskRowUI";
+
+function SortableTaskRow(props: { 
+  task: TaskWithAssignee; 
+  onClick: () => void;
+  onStatusChange: (status: TaskStatus) => void;
+  getStatusColor: (s: any) => string;
+  getPriorityColor: (p: any) => string;
+  disabled?: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.task.id, disabled: props.disabled });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
+  return (
+    <TaskRowUI 
+      ref={setNodeRef}
+      attributes={attributes}
+      listeners={listeners}
+      style={style}
+      isDragging={isDragging}
+      {...props}
+    />
+  );
+}
+
+function SectionHeader({ 
+  section, 
+  tasksCount,
+  isCollapsed,
+  onToggle,
+  isActive,
+  onActive,
+  isEditing,
+  editingName,
+  onEditNameChange,
+  onEditBlur,
+  onEditKeyDown,
+  onDelete,
+  onStartEdit,
+  canManageStructure,
+  isReadOnly
+}: {
+  section: Section;
+  tasksCount: number;
+  isCollapsed: boolean;
+  onToggle: () => void;
+  isActive: boolean;
+  onActive: () => void;
+  isEditing: boolean;
+  editingName: string;
+  onEditNameChange: (val: string) => void;
+  onEditBlur: () => void;
+  onEditKeyDown: (e: React.KeyboardEvent) => void;
+  onDelete: () => void;
+  onStartEdit: () => void;
+  canManageStructure: boolean;
+  isReadOnly: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: section.id });
+
+  return (
+    <TableRow 
+      ref={setNodeRef}
+      id={section.id}
+      className={cn(
+        "bg-muted/30 hover:bg-muted/50 group transition-all duration-200",
+        isActive && "bg-accent ring-1 ring-primary/20 ring-inset",
+        isOver && "bg-primary/5 shadow-inner"
+      )}
+      onClick={onActive}
+    >
+      <TableCell colSpan={8} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground relative">
+        {isActive && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" />
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-1">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              className="hover:bg-slate-200 p-0.5 rounded transition-colors"
+            >
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            
+            {isEditing && canManageStructure ? (
+              <Input 
+                value={editingName}
+                onChange={(e) => onEditNameChange(e.target.value)}
+                className="h-7 max-w-[250px] text-xs font-semibold uppercase py-0 px-2"
+                autoFocus
+                onBlur={onEditBlur}
+                onKeyDown={onEditKeyDown}
+              />
+            ) : (
+              <>
+                <span>{section.name}</span>
+                <span className="ml-2 font-normal lowercase opacity-50">({tasksCount})</span>
+              </>
+            )}
+          </div>
+
+          {!isReadOnly && canManageStructure && !isEditing && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStartEdit(); }}>
+                  <Pencil className="h-3 w-3 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                {section.id !== "uncategorized" && (
+                  <DropdownMenuItem 
+                    className="text-destructive focus:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  );
 }
 
 export function TaskListView({ workspaceId, projectId, isArchived = false }: TaskListViewProps) {
@@ -204,6 +360,11 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
   const [inlineTitle, setInlineTitle] = useState("");
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
+  // New states for improved Drag & Drop
+  const [localTasks, setLocalTasks] = useState<TaskWithAssignee[]>([]);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [hidingTaskIds, setHidingTaskIds] = useState<Set<string>>(new Set());
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -232,7 +393,67 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     },
   });
 
-  const { filteredTasks } = useTaskFilter(tasks);
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, sectionId, status, priority }: { id: string; sectionId?: string | null; status?: TaskStatus; priority?: TaskPriority }) => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectionId, status, priority }),
+      });
+      return res.json();
+    },
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["tasks", projectId] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData<TaskWithAssignee[]>(["tasks", projectId]);
+
+      // Optimistically update to the new value in the cache
+      if (previousTasks) {
+        queryClient.setQueryData<TaskWithAssignee[]>(["tasks", projectId], (old) => {
+          if (!old) return [];
+          // Use the current state of localTasks to preserve order during cross-section moves
+          return localTasks.map(t => {
+            if (t.id === variables.id) {
+              return {
+                ...t,
+                sectionId: variables.sectionId === "uncategorized" ? null : (variables.sectionId ?? t.sectionId),
+                status: variables.status ?? t.status,
+                priority: variables.priority ?? t.priority
+              };
+            }
+            return t;
+          });
+        });
+      }
+
+      return { previousTasks };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["tasks", projectId], context.previousTasks);
+        setLocalTasks(context.previousTasks);
+      }
+      toast.error("Failed to update task");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+    }
+  });
+
+  // Sync local state when tasks change
+  useEffect(() => {
+    if (tasks && !activeTaskId && !updateTaskMutation.isPending) {
+      setLocalTasks(tasks);
+    }
+  }, [tasks, activeTaskId, updateTaskMutation.isPending]);
+
+  const activeTask = useMemo(() => 
+    activeTaskId ? localTasks.find(t => t.id === activeTaskId) : null
+  , [activeTaskId, localTasks]);
+
+  const { filteredTasks } = useTaskFilter(localTasks);
 
   const { data: sections, isLoading: sectionsLoading, refetch: refetchSections } = useQuery({
     queryKey: ["sections", projectId],
@@ -259,20 +480,6 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
       refetchSections();
       toast.success("Section created");
     },
-  });
-
-  const updateTaskMutation = useMutation({
-    mutationFn: async ({ id, sectionId, status, priority }: { id: string; sectionId?: string | null; status?: TaskStatus; priority?: TaskPriority }) => {
-      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectionId, status, priority }),
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-    }
   });
 
   const allSections = useMemo(() => {
@@ -362,14 +569,19 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     
     (sections as Section[])?.forEach(s => groups[s.id] = []);
     
-    filteredTasks.forEach(task => {
+    // Maintain the original order from localTasks while filtering
+    const tasksToDisplay = localTasks.filter(task => 
+      filteredTasks.some(ft => ft.id === task.id) || hidingTaskIds.has(task.id)
+    );
+
+    tasksToDisplay.forEach(task => {
       const key = task.sectionId || "uncategorized";
       if (!groups[key]) groups[key] = [];
       groups[key].push(task);
     });
     
     return groups;
-  }, [filteredTasks, sections]);
+  }, [filteredTasks, sections, hidingTaskIds, localTasks]);
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
@@ -436,34 +648,96 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isReadOnly, activeSectionId, allSections]);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    if (isReadOnly) return;
+    setActiveTaskId(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    if (isReadOnly) return;
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    const activeTask = localTasks.find(t => t.id === activeId);
+    if (!activeTask) return;
+
+    // Determine target section
+    let overSectionId: string | null = null;
+    
+    // Check if over a section header
+    if (allSections.some(s => s.id === overId)) {
+      overSectionId = overId;
+    } else {
+      // Check if over another task
+      const overTask = localTasks.find(t => t.id === overId);
+      if (overTask) {
+        overSectionId = overTask.sectionId || "uncategorized";
+      }
+    }
+
+    if (!overSectionId) return;
+
+    const currentSectionId = activeTask.sectionId || "uncategorized";
+
+    if (currentSectionId !== overSectionId) {
+      setLocalTasks(prev => {
+        const activeIndex = prev.findIndex(t => t.id === activeId);
+        const overIndex = prev.findIndex(t => t.id === overId);
+        
+        const newTasks = [...prev];
+        const updatedTask = { 
+          ...activeTask, 
+          sectionId: overSectionId === "uncategorized" ? null : overSectionId 
+        };
+        
+        newTasks[activeIndex] = updatedTask;
+        
+        if (overIndex !== -1 && activeIndex !== overIndex) {
+          return arrayMove(newTasks, activeIndex, overIndex);
+        }
+        
+        return newTasks;
+      });
+    } else {
+      // Reordering within same section
+      const activeIndex = localTasks.findIndex(t => t.id === activeId);
+      const overIndex = localTasks.findIndex(t => t.id === overId);
+      
+      if (activeIndex !== overIndex && overIndex !== -1) {
+        setLocalTasks(prev => arrayMove(prev, activeIndex, overIndex));
+      }
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     if (isReadOnly) return;
     
     const { active, over } = event;
-    if (!over) return;
+
+    if (!over) {
+      setActiveTaskId(null);
+      setLocalTasks(tasks || []);
+      return;
+    }
 
     const taskId = active.id as string;
-    const overId = over.id as string;
-
-    // Detect if dropped over a section row or another task
-    let targetSectionId = overId;
     
-    // Find task being dragged
-    const draggedTask = tasks?.find(t => t.id === taskId);
-    if (!draggedTask) return;
+    // The current section is already updated in localTasks by onDragOver
+    const draggedTask = localTasks.find(t => t.id === taskId);
+    const serverTask = tasks?.find(t => t.id === taskId);
 
-    // If dropped over another task, get that task's section
-    const overTask = tasks?.find(t => t.id === overId);
-    if (overTask) {
-      targetSectionId = overTask.sectionId || "uncategorized";
-    }
-
-    if (draggedTask.sectionId !== (targetSectionId === "uncategorized" ? null : targetSectionId)) {
+    if (draggedTask && serverTask && draggedTask.sectionId !== serverTask.sectionId) {
       updateTaskMutation.mutate({ 
         id: taskId, 
-        sectionId: targetSectionId === "uncategorized" ? "uncategorized" : targetSectionId 
+        sectionId: draggedTask.sectionId || "uncategorized" 
       });
     }
+    
+    // Set to null after triggering mutation so useEffect doesn't sync too early
+    setActiveTaskId(null);
   };
 
   const getStatusColor = (status: TaskStatus) => {
@@ -534,7 +808,9 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
       <div className="bg-white rounded-md border overflow-hidden">
         <DndContext 
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <Table>
@@ -561,92 +837,41 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                 
                 return (
                   <React.Fragment key={section.id}>
-                    <TableRow 
-                      id={section.id}
-                      className={cn(
-                        "bg-muted/30 hover:bg-muted/50 group transition-all duration-200",
-                        isActive && "bg-accent ring-1 ring-primary/20 ring-inset"
-                      )}
-                      onClick={() => setActiveSectionId(section.id)}
-                    >
-                      <TableCell colSpan={8} className="py-2 px-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground relative">
-                        {isActive && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" />
-                        )}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 flex-1">
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleSection(section.id);
-                              }}
-                              className="hover:bg-slate-200 p-0.5 rounded transition-colors"
-                            >
-                              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </button>
-                            
-                            {isEditing && canManageStructure ? (
-                              <Input 
-                                value={editingSectionName}
-                                onChange={(e) => setEditingSectionName(e.target.value)}
-                                className="h-7 max-w-[250px] text-xs font-semibold uppercase py-0 px-2"
-                                autoFocus
-                                onBlur={() => {
-                                  if (editingSectionName.trim() && editingSectionName !== section.name) {
-                                    updateSectionMutation.mutate({ id: section.id, name: editingSectionName });
-                                  } else {
-                                    setEditingSectionId(null);
-                                  }
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    updateSectionMutation.mutate({ id: section.id, name: editingSectionName });
-                                  }
-                                  if (e.key === "Escape") setEditingSectionId(null);
-                                }}
-                              />
-                            ) : (
-                              <>
-                                <span>{section.name}</span>
-                                <span className="ml-2 font-normal lowercase opacity-50">({sectionTasks.length})</span>
-                              </>
-                            )}
-                          </div>
-
-                          {!isReadOnly && canManageStructure && !isEditing && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                                  <MoreHorizontal className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => {
-                                  setEditingSectionId(section.id);
-                                  setEditingSectionName(section.id === "uncategorized" ? "" : section.name);
-                                }}>
-                                  <Pencil className="h-3 w-3 mr-2" />
-                                  Rename
-                                </DropdownMenuItem>
-                                {section.id !== "uncategorized" && (
-                                  <DropdownMenuItem 
-                                    className="text-destructive focus:text-destructive"
-                                    onClick={() => {
-                                      if (confirm("Are you sure? Tasks in this section will be moved to Uncategorized.")) {
-                                        deleteSectionMutation.mutate(section.id);
-                                      }
-                                    }}
-                                  >
-                                    <Trash2 className="h-3 w-3 mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    <SectionHeader 
+                      section={section}
+                      tasksCount={sectionTasks.length}
+                      isCollapsed={isCollapsed}
+                      onToggle={() => toggleSection(section.id)}
+                      isActive={isActive}
+                      onActive={() => setActiveSectionId(section.id)}
+                      isEditing={isEditing}
+                      editingName={editingSectionName}
+                      onEditNameChange={setEditingSectionName}
+                      onEditBlur={() => {
+                        if (editingSectionName.trim() && editingSectionName !== section.name) {
+                          updateSectionMutation.mutate({ id: section.id, name: editingSectionName });
+                        } else {
+                          setEditingSectionId(null);
+                        }
+                      }}
+                      onEditKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          updateSectionMutation.mutate({ id: section.id, name: editingSectionName });
+                        }
+                        if (e.key === "Escape") setEditingSectionId(null);
+                      }}
+                      onDelete={() => {
+                        if (confirm("Are you sure? Tasks in this section will be moved to Uncategorized.")) {
+                          deleteSectionMutation.mutate(section.id);
+                        }
+                      }}
+                      onStartEdit={() => {
+                        setEditingSectionId(section.id);
+                        setEditingSectionName(section.id === "uncategorized" ? "" : section.name);
+                      }}
+                      canManageStructure={canManageStructure}
+                      isReadOnly={isReadOnly}
+                    />
                     
                     {!isCollapsed && (
                       <SortableContext 
@@ -658,7 +883,25 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                             key={task.id} 
                             task={task} 
                             onClick={() => setSelectedTaskId(task.id)}
-                            onStatusChange={(status) => updateTaskMutation.mutate({ id: task.id, sectionId: task.sectionId, status })}
+                            onStatusChange={(status) => {
+                              if (status === "DONE") {
+                                setHidingTaskIds(prev => new Set(prev).add(task.id));
+                                setTimeout(() => {
+                                  setHidingTaskIds(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(task.id);
+                                    return next;
+                                  });
+                                }, 800);
+                              } else {
+                                setHidingTaskIds(prev => {
+                                  const next = new Set(prev);
+                                  next.delete(task.id);
+                                  return next;
+                                });
+                              }
+                              updateTaskMutation.mutate({ id: task.id, sectionId: task.sectionId, status });
+                            }}
                             getStatusColor={getStatusColor}
                             getPriorityColor={getPriorityColor}
                             disabled={isReadOnly}
@@ -725,6 +968,29 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
               })}
             </TableBody>
           </Table>
+
+          <DragOverlay dropAnimation={{
+            sideEffects: defaultDropAnimationSideEffects({
+              styles: {
+                active: {
+                  opacity: "0.5",
+                },
+              },
+            }),
+          }}>
+            {activeTask ? (
+              <Table className="bg-white border-separate border-spacing-0 shadow-2xl rounded-md overflow-hidden ring-1 ring-primary/10">
+                <TableBody>
+                  <TaskRowUI 
+                    task={activeTask} 
+                    getStatusColor={getStatusColor}
+                    getPriorityColor={getPriorityColor}
+                    isOverlay
+                  />
+                </TableBody>
+              </Table>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </div>
 
