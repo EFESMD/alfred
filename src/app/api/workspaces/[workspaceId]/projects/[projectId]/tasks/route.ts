@@ -65,7 +65,7 @@ export async function POST(
       data: {
         title,
         description,
-        status: status || "TODO",
+        status: status || "PLANNED",
         priority: priority || "MEDIUM",
         startDate: startDate ? new Date(startDate) : null,
         dueDate: dueDate ? new Date(dueDate) : null,

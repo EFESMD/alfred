@@ -107,6 +107,26 @@ export default function AdminDashboardPage() {
     enabled: !!data, // Only fetch if admin stats succeeded
   });
 
+  const migrateTasksMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/admin/migrate-statuses", {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Migration failed");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast.success(`Migration complete! Updated ${data.details.todoUpdated} TODO and ${data.details.backlogUpdated} BACKLOG tasks.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (error: any) => {
+      toast.error(`Migration failed: ${error.message}`);
+    }
+  });
+
   const sendTestEmailMutation = useMutation({
     mutationFn: async (targetEmail: string) => {
       const res = await fetch("/api/admin/test-email", {
@@ -276,6 +296,43 @@ export default function AdminDashboardPage() {
                 <p className="text-xs text-muted-foreground">
                   Triggers an immediate email send attempt using current server configuration.
                 </p>
+              </div>
+
+              <div className="pt-4 border-t border-indigo-100">
+                <Label>Database Maintenance</Label>
+                <div className="mt-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start gap-2 bg-white border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                        <RefreshCw className="h-4 w-4" />
+                        Migrate Task Statuses (TODO & BACKLOG → PLANNED)
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Confirm Data Migration</DialogTitle>
+                        <DialogDescription>
+                          This will permanently update all tasks with status <span className="font-bold">TODO</span> or <span className="font-bold">BACKLOG</span> to the new <span className="font-bold">PLANNED</span> status across the entire system.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button 
+                          onClick={() => migrateTasksMutation.mutate()}
+                          disabled={migrateTasksMutation.isPending}
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          {migrateTasksMutation.isPending ? "Migrating..." : "Confirm Migration"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                  <p className="text-[10px] text-muted-foreground mt-2 italic">
+                    Use this after deployment to sync existing production data with the new status system.
+                  </p>
+                </div>
               </div>
             </div>
 

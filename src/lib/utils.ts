@@ -18,7 +18,10 @@ export function checkIsAdmin(email: string | null | undefined) {
 }
 
 export function formatStatus(status: string) {
-  if (status === "TODO") return "TO DO";
-  if (status === "IN_PROGRESS") return "IN PROGRESS";
-  return status.replace("_", " ");
+  if (status === "PLANNED") return "Planned";
+  if (status === "IN_PROGRESS") return "In Progress";
+  if (status === "DELAYED") return "Delayed";
+  if (status === "OVERDUE") return "Overdue";
+  if (status === "DONE") return "Done";
+  return status.replace("_", " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 }

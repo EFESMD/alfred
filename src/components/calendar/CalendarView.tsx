@@ -76,15 +76,15 @@ export function CalendarView({ workspaceId, projectId, isArchived = false }: Cal
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
   const getStatusColor = (status: TaskStatus) => {
-    switch (status) {
-      case "BACKLOG": return "bg-slate-500";
-      case "TODO": return "bg-blue-600";
-      case "IN_PROGRESS": return "bg-amber-500";
-      case "DONE": return "bg-emerald-600";
-      default: return "bg-slate-500";
-    }
+   switch (status) {
+     case "PLANNED": return "bg-blue-600";
+     case "IN_PROGRESS": return "bg-amber-500";
+     case "DELAYED": return "bg-orange-500";
+     case "OVERDUE": return "bg-red-600";
+     case "DONE": return "bg-emerald-600";
+     default: return "bg-slate-500";
+   }
   };
-
   if (isLoading || projectLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading calendar...</div>;
 
   return (

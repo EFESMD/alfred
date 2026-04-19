@@ -51,7 +51,7 @@ export function TaskModal({
   workspaceId, 
   projectId,
   onSuccess,
-  initialStatus = "TODO",
+  initialStatus = "PLANNED",
   initialSectionId
 }: TaskModalProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -271,9 +271,10 @@ export function TaskModal({
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="BACKLOG">Backlog</SelectItem>
-                  <SelectItem value="TODO">TO DO</SelectItem>
-                  <SelectItem value="IN_PROGRESS">IN PROGRESS</SelectItem>
+                  <SelectItem value="PLANNED">Planned</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="DELAYED">Delayed</SelectItem>
+                  <SelectItem value="OVERDUE">Overdue</SelectItem>
                   <SelectItem value="DONE">Done</SelectItem>
                 </SelectContent>
               </Select>

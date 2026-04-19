@@ -62,8 +62,7 @@ export function KanbanCard({ task, onClick, onStatusChange, isArchived }: Kanban
               >
                 <Checkbox 
                   checked={task.status === "DONE"}
-                  onCheckedChange={(checked) => onStatusChange(checked ? "DONE" : "TODO")}
-                  className="h-4 w-4"
+                  onCheckedChange={(checked) => onStatusChange(checked ? "DONE" : "PLANNED")}                  className="h-4 w-4"
                 />
               </div>
             )}

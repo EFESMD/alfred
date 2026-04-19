@@ -117,9 +117,10 @@ export function GlobalMyTasksView() {
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case "BACKLOG": return "bg-slate-500";
-      case "TODO": return "bg-blue-600";
+      case "PLANNED": return "bg-blue-600";
       case "IN_PROGRESS": return "bg-amber-500";
+      case "DELAYED": return "bg-orange-500";
+      case "OVERDUE": return "bg-red-600";
       case "DONE": return "bg-emerald-600";
       default: return "bg-slate-500";
     }

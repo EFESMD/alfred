@@ -123,7 +123,7 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
           <Checkbox 
             checked={task.status === "DONE"}
             onCheckedChange={(checked) => {
-              onStatusChange?.(checked ? "DONE" : "TODO");
+              onStatusChange?.(checked ? "DONE" : "PLANNED");
             }}
             disabled={disabled}
             className="h-4 w-4"
@@ -503,7 +503,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
         body: JSON.stringify({ 
           title, 
           sectionId: sectionId === "uncategorized" ? null : sectionId,
-          status: "TODO",
+          status: "PLANNED",
           priority: "MEDIUM",
           assigneeId: project?.projectLeaderId
         }),
@@ -742,9 +742,10 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case "BACKLOG": return "bg-slate-500";
-      case "TODO": return "bg-blue-600";
+      case "PLANNED": return "bg-blue-600";
       case "IN_PROGRESS": return "bg-amber-500";
+      case "DELAYED": return "bg-orange-500";
+      case "OVERDUE": return "bg-red-600";
       case "DONE": return "bg-emerald-600";
       default: return "bg-slate-500";
     }

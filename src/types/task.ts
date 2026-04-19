@@ -1,6 +1,6 @@
 import { Task } from "@prisma/client";
 
-export type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE";
+export type TaskStatus = "PLANNED" | "IN_PROGRESS" | "DELAYED" | "OVERDUE" | "DONE";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
 export type TaskWithAssignee = Task & {

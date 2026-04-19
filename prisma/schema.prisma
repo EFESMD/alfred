@@ -144,7 +144,7 @@ model Task {
   id                      String       @id @default(cuid())
   title                   String
   description             String?
-  status                  String       @default("TODO")
+  status                  String       @default("PLANNED")
   priority                String       @default("MEDIUM")
   startDate               DateTime?
   dueDate                 DateTime?

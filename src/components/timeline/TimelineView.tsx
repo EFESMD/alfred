@@ -357,8 +357,10 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
                         <div className={cn(
                           "w-2 h-2 rounded-full flex-shrink-0",
                           task.status === "DONE" ? "bg-green-500" : 
-                          task.status === "IN_PROGRESS" ? "bg-blue-500" : 
-                          task.status === "TODO" ? "bg-yellow-500" : "bg-gray-400"
+                          task.status === "IN_PROGRESS" ? "bg-amber-500" : 
+                          task.status === "DELAYED" ? "bg-orange-500" :
+                          task.status === "OVERDUE" ? "bg-red-500" :
+                          task.status === "PLANNED" ? "bg-blue-500" : "bg-gray-400"
                         )} />
                         <span className="text-sm truncate font-medium">{task.title}</span>
                       </div>
@@ -383,8 +385,10 @@ export function TimelineView({ workspaceId, projectId, isArchived = false }: Tim
                               task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
                                 ? "bg-red-500 border-2 border-red-600 animate-pulse-subtle" 
                                 : task.status === "DONE" ? "bg-green-500" : 
-                                  task.status === "IN_PROGRESS" ? "bg-blue-600" : 
-                                  task.status === "TODO" ? "bg-yellow-600" : "bg-gray-500"
+                                  task.status === "IN_PROGRESS" ? "bg-amber-600" : 
+                                  task.status === "DELAYED" ? "bg-orange-600" :
+                                  task.status === "OVERDUE" ? "bg-red-600" :
+                                  task.status === "PLANNED" ? "bg-blue-600" : "bg-gray-500"
                             )}
                             style={getTaskStyle(task) || {}}
                             onClick={() => setSelectedTaskId(task.id)}

@@ -102,7 +102,7 @@ function SubtaskItem({
       <button
         disabled={isArchived}
         onClick={() => onUpdate(subtask.id, { 
-          status: subtask.status === "DONE" ? "TODO" : "DONE" 
+          status: subtask.status === "DONE" ? "PLANNED" : "DONE" 
         })}
         className={cn(
           "h-4 w-4 rounded border flex items-center justify-center transition-colors scale-90 shrink-0",
@@ -314,7 +314,7 @@ export function TaskDetailSheet({
         body: JSON.stringify({ 
           title, 
           parentId: taskId,
-          status: "TODO",
+          status: "PLANNED",
           priority: "MEDIUM" 
         }),
       });
@@ -413,7 +413,7 @@ export function TaskDetailSheet({
 
   if (!taskId) return null;
 
-  const STATUS_OPTIONS: TaskStatus[] = ["BACKLOG", "TODO", "IN_PROGRESS", "DONE"];
+  const STATUS_OPTIONS: TaskStatus[] = ["PLANNED", "IN_PROGRESS", "DELAYED", "OVERDUE", "DONE"];
   const PRIORITY_OPTIONS: TaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
 
   return (

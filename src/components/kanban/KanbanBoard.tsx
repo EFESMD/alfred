@@ -32,9 +32,10 @@ interface KanbanBoardProps {
 }
 
 const COLUMNS: { id: TaskStatus; title: string }[] = [
-  { id: "BACKLOG", title: "Backlog" },
-  { id: "TODO", title: "TO DO" },
-  { id: "IN_PROGRESS", title: "IN PROGRESS" },
+  { id: "PLANNED", title: "Planned" },
+  { id: "IN_PROGRESS", title: "In Progress" },
+  { id: "DELAYED", title: "Delayed" },
+  { id: "OVERDUE", title: "Overdue" },
   { id: "DONE", title: "Done" },
 ];
 
@@ -45,7 +46,7 @@ export function KanbanBoard({ workspaceId, projectId, isArchived = false }: Kanb
   const [activeTask, setActiveTask] = useState<TaskWithAssignee | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [initialStatus, setInitialStatus] = useState<TaskStatus>("TODO");
+  const [initialStatus, setInitialStatus] = useState<TaskStatus>("PLANNED");
   
   // Local state to manage tasks for immediate UI feedback
   const [localTasks, setLocalTasks] = useState<TaskWithAssignee[]>([]);
