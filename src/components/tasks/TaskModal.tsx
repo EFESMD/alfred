@@ -130,16 +130,15 @@ export function TaskModal({
       onSuccess();
       onClose();
       setFormData({
-        title: "",
-        description: "",
-        status: "TODO",
-        priority: "MEDIUM",
-        assigneeId: project?.projectLeaderId || undefined,
-        startDate: undefined,
-        dueDate: undefined,
-        sectionId: undefined,
-      });
-    } catch (error: any) {
+       title: "",
+       description: "",
+       status: initialStatus,
+       priority: "MEDIUM",
+       assigneeId: project?.projectLeaderId || undefined,
+       startDate: undefined,
+       dueDate: undefined,
+       sectionId: undefined,
+      });    } catch (error: any) {
       toast.error(error.message);
     } finally {
       setIsLoading(false);
