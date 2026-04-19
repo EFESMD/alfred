@@ -55,7 +55,35 @@ export default function AdminDashboardPage() {
   const queryClient = useQueryClient();
   const [userToDelete, setUserToDelete] = useState<{ id: string, name: string } | null>(null);
   const [testEmailTarget, setTestEmailTarget] = useState("noreply@efes.md");
+  const [maintenanceDuration, setMaintenanceDuration] = useState("20");
 
+  const { data: maintenanceSettings, refetch: refetchMaintenance } = useQuery({
+    queryKey: ["admin-maintenance"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/maintenance");
+      if (!res.ok) throw new Error("Failed to fetch maintenance status");
+      return res.json();
+    },
+  });
+
+  const maintenanceMutation = useMutation({
+    mutationFn: async ({ action, durationMinutes }: { action: string, durationMinutes?: number }) => {
+      const res = await fetch("/api/admin/maintenance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, durationMinutes }),
+      });
+      if (!res.ok) throw new Error("Failed to update maintenance status");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Maintenance status updated");
+      refetchMaintenance();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-stats"],
@@ -272,6 +300,90 @@ export default function AdminDashboardPage() {
               <div className="bg-slate-950 text-slate-50 p-3 rounded-md font-mono text-xs h-[150px] overflow-y-auto whitespace-pre-wrap shadow-inner">
                 {emailLogs || "No logs available."}
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Maintenance Control Card */}
+      <Card className="shadow-sm border-amber-100 bg-amber-50/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            Maintenance System Control
+          </CardTitle>
+          <CardDescription>Broadcast warnings, countdown to lockdown, or manage site access.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <div className="p-4 bg-white rounded-lg border border-amber-100 flex flex-col items-center justify-center text-center space-y-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Status</span>
+                <div className="flex items-center gap-2">
+                  <div className={`h-2.5 w-2.5 rounded-full ${
+                    maintenanceSettings?.maintenanceStatus === "INACTIVE" ? "bg-green-500" :
+                    maintenanceSettings?.maintenanceStatus === "WARNING" ? "bg-amber-500 animate-pulse" :
+                    "bg-red-500"
+                  }`} />
+                  <span className="text-lg font-bold">
+                    {maintenanceSettings?.maintenanceStatus || "INACTIVE"}
+                  </span>
+                </div>
+                {maintenanceSettings?.maintenanceStartsAt && (
+                  <div className="text-xs text-muted-foreground">
+                    Starts at: {format(new Date(maintenanceSettings.maintenanceStartsAt), "HH:mm:ss")}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number"
+                    value={maintenanceDuration}
+                    onChange={(e) => setMaintenanceDuration(e.target.value)}
+                    className="w-20 bg-white"
+                  />
+                  <span className="text-sm text-muted-foreground font-medium">min</span>
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  className="bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+                  onClick={() => maintenanceMutation.mutate({ 
+                    action: "START_WARNING", 
+                    durationMinutes: parseInt(maintenanceDuration) 
+                  })}
+                  disabled={maintenanceMutation.isPending || maintenanceSettings?.maintenanceStatus === "WARNING"}
+                >
+                  Start Countdown
+                </Button>
+
+                <Button 
+                  variant="destructive"
+                  onClick={() => {
+                    if (confirm("Immediate Lockdown will kick out all non-admin users instantly. Continue?")) {
+                      maintenanceMutation.mutate({ action: "LOCKDOWN" });
+                    }
+                  }}
+                  disabled={maintenanceMutation.isPending || maintenanceSettings?.maintenanceStatus === "LOCKDOWN"}
+                >
+                  Immediate Lockdown
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  onClick={() => maintenanceMutation.mutate({ action: "INACTIVE" })}
+                  disabled={maintenanceMutation.isPending || maintenanceSettings?.maintenanceStatus === "INACTIVE"}
+                >
+                  End Maintenance
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground max-w-xl">
+                Warning mode triggers Pusher events for real-time banners. Lockdown mode redirects all non-admin traffic to the maintenance page via middleware.
+              </p>
             </div>
           </div>
         </CardContent>

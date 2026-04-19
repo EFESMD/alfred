@@ -214,3 +214,11 @@ model Notification {
 
   @@index([userId])
 }
+
+model GlobalSettings {
+  id                  String    @id @default("system")
+  maintenanceStatus   String    @default("INACTIVE") // INACTIVE, WARNING, LOCKDOWN
+  maintenanceStartsAt DateTime?
+  maintenanceEndsAt   DateTime?
+  updatedAt           DateTime  @updatedAt
+}
