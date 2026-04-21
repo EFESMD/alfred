@@ -109,6 +109,12 @@ model Project {
   icon            String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  
+  // AI Pulse Cache
+  lastAiPulse     DateTime?
+  aiPulseContent  String?
+  aiPulseStats    String?   // JSON string of last stats used
+
   projectLeader   User?     @relation("ProjectLeader", fields: [projectLeaderId], references: [id])
   members         ProjectMember[]
   workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)

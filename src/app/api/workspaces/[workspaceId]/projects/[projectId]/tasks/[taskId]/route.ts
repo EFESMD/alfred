@@ -177,7 +177,6 @@ export async function PATCH(
         userId: session.user.id,
       });
     }
-    // ... (rest of activities)
     if (predecessorIds) {
       activities.push({
         type: "DEPENDENCIES_CHANGED",

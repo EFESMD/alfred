@@ -26,7 +26,8 @@ import {
   ListTodo,
   Plus,
   GanttChart,
-  Pencil
+  Pencil,
+  Sparkles
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -51,6 +52,12 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { TaskStatus, TaskPriority } from "@/types/task";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { 
   Dialog,
@@ -61,13 +68,111 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
 interface TaskDetailSheetProps {
   taskId: string | null;
   workspaceId: string;
   projectId: string;
   onClose: () => void;
   isArchived?: boolean;
+}
+
+function RefineButton({ 
+  text, 
+  onRefine, 
+  onApply, 
+  isLoading,
+  label,
+  tooltip = "✨ Refine your draft for better tone, clarity, and professionalism."
+}: { 
+  text: string; 
+  onRefine: () => void; 
+  onApply: (refined: string) => void;
+  isLoading: boolean;
+  label?: string;
+  tooltip?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [refinedText, setRefinedText] = useState<string | null>(null);
+
+  const handleRefine = async () => {
+    if (!text.trim()) return;
+    try {
+      const res = await fetch("/api/ai/refine-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("Failed to refine");
+      const data = await res.json();
+      setRefinedText(data.refinedText);
+      setIsOpen(true);
+    } catch (error) {
+      toast.error("AI refinement failed");
+    }
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={cn(
+                  "h-7 px-2 text-[10px] gap-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold uppercase tracking-wider",
+                  isLoading && "animate-pulse"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleRefine();
+                }}
+                disabled={isLoading || !text.trim()}
+              >
+                {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                {label}
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {tooltip}
+          </TooltipContent>
+          <PopoverContent className="w-80 p-4 z-[110]" align="end">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-indigo-600">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">AI Suggestion</span>
+              </div>
+              <div className="text-sm bg-slate-50 p-3 rounded-md border border-indigo-100 italic text-slate-700 leading-relaxed">
+                "{refinedText}"
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 text-xs"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Dismiss
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => {
+                    if (refinedText) onApply(refinedText);
+                    setIsOpen(false);
+                  }}
+                >
+                  Replace
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 function SubtaskItem({ 
@@ -189,6 +294,11 @@ export function TaskDetailSheet({
   const [isUploading, setIsUploading] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [suggestedSubtasks, setSuggestedSubtasks] = useState<string[]>([]);
+  const [descriptionSummary, setDescriptionSummary] = useState<string | null>(null);
+  const [activitySummary, setActivitySummary] = useState<string | null>(null);
+  const [refinedComment, setRefinedComment] = useState<string | null>(null);
+  const [refinedDescription, setRefinedDescription] = useState<string | null>(null);
 
   const [isStartDateOpen, setIsStartDatePopoverOpen] = useState(false);
   const [isDueDateOpen, setIsDueDatePopoverOpen] = useState(false);
@@ -341,6 +451,104 @@ export function TaskDetailSheet({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["task", taskId] });
     },
+  });
+
+  const aiSuggestMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/ai/generate-subtasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          title: task.title, 
+          description: task.description,
+          projectName: task.project?.name 
+        }),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "AI Generation failed");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setSuggestedSubtasks(data);
+      toast.success("AI suggestions ready!");
+    },
+    onError: (error: any) => {
+      toast.error(`AI failed: ${error.message}`);
+    }
+  });
+
+  const addAllSubtasksMutation = useMutation({
+    mutationFn: async (titles: string[]) => {
+      const promises = titles.map(title => 
+        fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            title, 
+            parentId: taskId,
+            status: "PLANNED",
+            priority: "MEDIUM" 
+          }),
+        })
+      );
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      setSuggestedSubtasks([]);
+      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+      toast.success("All subtasks added");
+    },
+  });
+
+  const summarizeDescriptionMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/ai/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          type: "description", 
+          content: task.description 
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to summarize");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setDescriptionSummary(data.summary);
+      toast.success("Description summary generated");
+    },
+    onError: (error: any) => {
+      toast.error(`Summarization failed: ${error.message}`);
+    }
+  });
+
+  const summarizeActivityMutation = useMutation({
+    mutationFn: async () => {
+      const feed = [
+        ...task.comments.map((c: any) => `[${c.user.name}]: ${c.content}`),
+        ...task.activities.map((a: any) => `[SYSTEM]: ${a.description}`)
+      ].join("\n");
+
+      const res = await fetch("/api/ai/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          type: "activity", 
+          content: feed 
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to summarize");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setActivitySummary(data.summary);
+      toast.success("Activity summary generated");
+    },
+    onError: (error: any) => {
+      toast.error(`Summarization failed: ${error.message}`);
+    }
   });
 
   const uploadAttachmentMutation = useMutation({
@@ -661,19 +869,80 @@ export function TaskDetailSheet({
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Description</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold">Description</h4>
+                    {task.description && !isArchived && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={cn(
+                                "h-7 px-2 text-[10px] gap-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold uppercase tracking-wider",
+                                summarizeDescriptionMutation.isPending && "animate-pulse"
+                              )}
+                              onClick={() => summarizeDescriptionMutation.mutate()}
+                              disabled={summarizeDescriptionMutation.isPending}
+                            >
+                              <Sparkles className={cn("h-3 w-3", summarizeDescriptionMutation.isPending && "animate-spin")} />
+                              Summarize
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            ✨ Generate a concise summary of the task details.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+
+                  {descriptionSummary && (
+                    <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 text-xs text-indigo-900 leading-relaxed relative animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-1">
+                          <Sparkles className="h-2.5 w-2.5" />
+                          AI Summary
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 text-indigo-400 hover:text-indigo-600"
+                          onClick={() => setDescriptionSummary(null)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                      {descriptionSummary}
+                    </div>
+                  )}
+
                   {isEditingDescription && !isArchived ? (
-                    <Textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      onBlur={() => {
-                        setIsEditingDescription(false);
-                        if (description !== (task.description || "")) updateTaskMutation.mutate({ description });
-                      }}
-                      autoFocus
-                      className="min-h-[100px] text-sm resize-none"
-                      placeholder="Add a description..."
-                    />
+                    <div className="space-y-2">
+                      <Textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        onBlur={() => {
+                          setIsEditingDescription(false);
+                          if (description !== (task.description || "")) updateTaskMutation.mutate({ description });
+                        }}
+                        autoFocus
+                        className="min-h-[100px] text-sm resize-none"
+                        placeholder="Add a description..."
+                      />
+                      <div className="flex justify-end">
+                        <RefineButton 
+                          label="Refine"
+                          text={description}
+                          isLoading={false}
+                          onRefine={() => {}} // Handled inside RefineButton
+                          onApply={(refined) => {
+                            setDescription(refined);
+                            updateTaskMutation.mutate({ description: refined });
+                          }}
+                        />
+                      </div>
+                    </div>
                   ) : (
                     <div 
                       className={cn(
@@ -694,6 +963,30 @@ export function TaskDetailSheet({
                       <ListTodo className="h-4 w-4" />
                       Subtasks
                     </h4>
+                    {!isArchived && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={cn(
+                                "h-8 px-2 text-[10px] gap-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold uppercase tracking-wider",
+                                aiSuggestMutation.isPending && "animate-pulse"
+                              )}
+                              onClick={() => aiSuggestMutation.mutate()}
+                              disabled={aiSuggestMutation.isPending}
+                            >
+                              <Sparkles className={cn("h-4 w-4", aiSuggestMutation.isPending && "animate-spin")} />
+                              Suggest
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            ✨ Suggest actionable subtasks based on task title and project context.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -706,6 +999,45 @@ export function TaskDetailSheet({
                         onDelete={(id) => deleteTaskMutation.mutate(id)}
                       />
                     ))}
+
+                    {/* AI Suggestions Display */}
+                    {suggestedSubtasks.length > 0 && (
+                      <div className="mt-4 p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" />
+                            AI Suggestions
+                          </span>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 text-[10px] text-muted-foreground hover:text-foreground"
+                              onClick={() => setSuggestedSubtasks([])}
+                            >
+                              Dismiss
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100"
+                              onClick={() => addAllSubtasksMutation.mutate(suggestedSubtasks)}
+                              disabled={addAllSubtasksMutation.isPending}
+                            >
+                              {addAllSubtasksMutation.isPending ? "Adding..." : "Add All"}
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          {suggestedSubtasks.map((title, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-xs text-slate-600 bg-white/50 p-1.5 rounded border border-indigo-50">
+                              <div className="h-1.5 w-1.5 rounded-full bg-indigo-400 shrink-0" />
+                              {title}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {!isArchived && (
                       <div className="flex items-center gap-2 p-1 pl-0">
@@ -805,10 +1137,58 @@ export function TaskDetailSheet({
                 <Separator />
 
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-2 py-3 bg-slate-50 -mx-6 px-6 border-y">
-                    <MessageSquare className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold">Activity & Comments</span>
+                  <div className="flex items-center justify-between py-3 bg-slate-50 -mx-6 px-6 border-y">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold">Activity & Comments</span>
+                    </div>
+                    {(task.comments?.length > 0 || task.activities?.length > 0) && !isArchived && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={cn(
+                                "h-7 px-2 text-[10px] gap-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold uppercase tracking-wider",
+                                summarizeActivityMutation.isPending && "animate-pulse"
+                              )}
+                              onClick={() => summarizeActivityMutation.mutate()}
+                              disabled={summarizeActivityMutation.isPending}
+                            >
+                              <Sparkles className={cn("h-3 w-3", summarizeActivityMutation.isPending && "animate-spin")} />
+                              Digest
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            ✨ Generate a concise summary of the task details and recent activity.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
+
+                  {activitySummary && (
+                    <div className="mt-4 p-4 bg-indigo-50/50 rounded-lg border border-indigo-100 text-xs text-indigo-900 leading-relaxed animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-indigo-100">
+                        <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-1">
+                          <Sparkles className="h-2.5 w-2.5" />
+                          Activity Digest
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-4 w-4 p-0 text-indigo-400 hover:text-indigo-600"
+                          onClick={() => setActivitySummary(null)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                      <div className="whitespace-pre-wrap">
+                        {activitySummary}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-6 pt-6 pb-6">
                     {(() => {
@@ -910,7 +1290,14 @@ export function TaskDetailSheet({
                     onChange={(e) => setComment(e.target.value)}
                   />
                 </div>
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-end items-center mt-2 gap-2">
+                  <RefineButton 
+                    label="Refine"
+                    text={comment}
+                    isLoading={false}
+                    onRefine={() => {}}
+                    onApply={(refined) => setComment(refined)}
+                  />
                   <Button 
                     size="sm" 
                     disabled={!comment.trim() || addCommentMutation.isPending}

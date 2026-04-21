@@ -23,9 +23,9 @@ import {
 import { toast } from "sonner";
 import { TaskStatus, TaskPriority } from "@/types/task";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Sparkles, Wand2, Loader2 } from "lucide-react";
 import { 
   Popover, 
   PopoverContent, 
@@ -34,6 +34,12 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -65,6 +71,50 @@ export function TaskModal({
     dueDate: undefined as Date | undefined,
     sectionId: initialSectionId,
   });
+
+  const [parsedPreview, setParsedPreview] = useState<any | null>(null);
+
+  const aiParseMutation = useMutation({
+    mutationFn: async (prompt: string) => {
+      const res = await fetch("/api/ai/parse-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, currentDate: new Date().toISOString() }),
+      });
+      if (!res.ok) throw new Error("Parsing failed");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setParsedPreview(data);
+    },
+  });
+
+  const handleApplyAI = () => {
+    if (!parsedPreview) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      title: parsedPreview.title || prev.title,
+      description: parsedPreview.description || prev.description,
+      status: (parsedPreview.status as TaskStatus) || prev.status,
+      priority: (parsedPreview.priority as TaskPriority) || prev.priority,
+      startDate: parsedPreview.startDate ? new Date(parsedPreview.startDate) : prev.startDate,
+      dueDate: parsedPreview.dueDate ? new Date(parsedPreview.dueDate) : prev.dueDate,
+    }));
+    
+    // If an assignee name was detected, try to find a matching member
+    if (parsedPreview.assigneeName && members) {
+      const match = members.find((m: any) => 
+        m.user.name?.toLowerCase().includes(parsedPreview.assigneeName.toLowerCase())
+      );
+      if (match) {
+        setFormData(prev => ({ ...prev, assigneeId: match.user.id }));
+      }
+    }
+    
+    setParsedPreview(null);
+    toast.success("AI suggestions applied! Review and click Create Task.");
+  };
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -156,15 +206,63 @@ export function TaskModal({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="title">Title</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 gap-1 text-[10px] font-bold uppercase tracking-wider"
+                      onClick={() => aiParseMutation.mutate(formData.title)}
+                      disabled={!formData.title.trim() || aiParseMutation.isPending}
+                    >
+                      {aiParseMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Magic Parse
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    ✨ Type naturally (e.g., "Meet Victor tomorrow at 2pm") and click to automatically set dates and details.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input
               id="title"
-              placeholder="Task title"
+              placeholder="E.g., Call Victor tomorrow at 10am"
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className={cn(aiParseMutation.isPending && "animate-pulse border-indigo-200")}
             />
           </div>
+
+          {parsedPreview && (
+            <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 flex items-center justify-between group animate-in zoom-in-95 duration-200">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-1">
+                  <Wand2 className="h-3 w-3" />
+                  AI Preview
+                </p>
+                <div className="text-xs text-indigo-900 font-medium">
+                  {parsedPreview.title} 
+                  {parsedPreview.startDate && <span className="text-indigo-500 ml-1">• {format(new Date(parsedPreview.startDate), "MMM d, HH:mm")}</span>}
+                  {parsedPreview.priority && <span className="text-indigo-400 ml-1">• {parsedPreview.priority}</span>}
+                </div>
+              </div>
+              <Button 
+                type="button"
+                size="sm" 
+                className="h-7 bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 text-xs px-3"
+                onClick={handleApplyAI}
+              >
+                Apply
+              </Button>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
