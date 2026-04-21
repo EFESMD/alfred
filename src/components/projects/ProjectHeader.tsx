@@ -58,9 +58,8 @@ export function ProjectHeader({
 
   const { data: healthData, isLoading: isHealthLoading, isFetching: isHealthFetching, refetch: refetchHealth } = useQuery({
     queryKey: ["project-health", projectId],
-    queryFn: async ({ queryKey }) => {
-      const isManualRefresh = queryKey[2] === true;
-      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/ai-health${isManualRefresh ? "?refresh=true" : ""}`);
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/ai-health`);
       if (!res.ok) throw new Error("Failed to fetch health pulse");
       return res.json();
     },
