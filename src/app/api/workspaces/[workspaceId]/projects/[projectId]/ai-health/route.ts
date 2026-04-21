@@ -18,13 +18,14 @@ export async function GET(
     if (!session) return new NextResponse("Unauthorized", { status: 401 });
 
     const { projectId } = await params;
+    const { searchParams } = new URL(req.url);
+    const forceRefresh = searchParams.get("refresh") === "true";
 
-    // 1. Gather Project Data (Always needed for fresh stats)
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
         tasks: {
-          where: { parentId: null }, // Only top-level tasks for health
+          where: { parentId: null },
         }
       }
     });
@@ -41,12 +42,11 @@ export async function GET(
       highPriority: tasks.filter(t => t.priority === "HIGH" && t.status !== "DONE").length,
     };
 
-    // 2. Check Cache (1 hour expiry)
     const oneHourAgo = subHours(new Date(), 1);
     const hasValidCache = project.lastAiPulse && project.lastAiPulse > oneHourAgo;
 
-    if (hasValidCache && project.aiPulseContent) {
-      console.log(`[AI_HEALTH] Serving cached pulse for project: ${project.name}`);
+    // Use cache if valid AND not a forced refresh
+    if (!forceRefresh && hasValidCache && project.aiPulseContent) {
       return NextResponse.json({ 
         pulse: project.aiPulseContent, 
         stats, 
@@ -54,36 +54,38 @@ export async function GET(
       });
     }
 
-    // 3. Cache expired or missing -> Ask AI for Pulse
-    console.log(`[AI_HEALTH] Cache missing or expired. Fetching fresh pulse from OpenAI...`);
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4-mini",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are a project management consultant. 
-          Analyze the project statistics and provide a 2-sentence executive "Pulse" report.
+          content: `You are a professional project management consultant. 
+          Analyze the project stats and provide EXACTLY a 2-sentence executive report.
           
-          Guidelines:
-          1. Be objective but professional.
-          2. Highlight the biggest risk (e.g., overdue tasks or high priority backlog).
-          3. Mention positive momentum if progress is good.
-          4. ALWAYS respond in the same language as the project name.
-          
-          Example: "Momentum is strong with 60% of tasks completed. However, 3 high-priority tasks are overdue and require immediate attention to stay on track."`
+          STRICT RULES:
+          1. DO NOT include any introductory text, greeting, or "Here is the report".
+          2. DO NOT repeat the stats or project name in a list format.
+          3. ONLY output the 2-sentence insight as PLAIN TEXT.
+          4. DO NOT use any markdown formatting (no bolding, no headers, no bullet points, no code blocks, etc).
+          5. DO NOT use any internal thinking tags or other markup tags.
+          6. Respond in the same language as the project name.`
         },
         {
           role: "user",
-          content: `Project: ${project.name}
-          Stats: ${JSON.stringify(stats)}`
+          content: `Project: ${project.name}\nStats: ${JSON.stringify(stats)}`
         }
       ],
-      temperature: 0.7,
+      temperature: 0.1,
     });
 
-    const pulse = response.choices[0].message.content;
+    let pulse = response.choices[0].message.content?.trim() || "";
+    
+    // Safety check: strip any markdown-like or thinking tags if they somehow leaked through
+    pulse = pulse.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+    pulse = pulse.replace(/\*\*|__|#|`|>/g, "").trim();
+    pulse = pulse.replace(/\n+/g, " "); // Ensure it stays on one line/compact
 
-    // 4. Update Cache in DB
+
     await prisma.project.update({
       where: { id: projectId },
       data: {
@@ -96,6 +98,6 @@ export async function GET(
     return NextResponse.json({ pulse, stats, cachedAt: new Date() });
   } catch (error: any) {
     console.error("[AI_PROJECT_HEALTH_ERROR]", error);
-    return new NextResponse(error.message || "Internal Error", { status: 500 });
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

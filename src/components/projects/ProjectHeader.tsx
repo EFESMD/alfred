@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye, Star, ChevronDown } from "lucide-react";
+import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye, Star, ChevronDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -56,15 +56,30 @@ export function ProjectHeader({
   const [currentStatus, setCurrentStatus] = useState(status);
   const [isExtractionModalOpen, setIsExtractionModalOpen] = useState(false);
 
-  const { data: healthData, isLoading: isHealthLoading } = useQuery({
+  const { data: healthData, isLoading: isHealthLoading, isFetching: isHealthFetching, refetch: refetchHealth } = useQuery({
     queryKey: ["project-health", projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/ai-health`);
+    queryFn: async ({ queryKey }) => {
+      const isManualRefresh = queryKey[2] === true;
+      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/ai-health${isManualRefresh ? "?refresh=true" : ""}`);
       if (!res.ok) throw new Error("Failed to fetch health pulse");
       return res.json();
     },
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
+
+  const handleRefreshPulse = () => {
+    queryClient.fetchQuery({
+      queryKey: ["project-health", projectId, true],
+      queryFn: async () => {
+        const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/ai-health?refresh=true`);
+        if (!res.ok) throw new Error("Failed to fetch health pulse");
+        const data = await res.json();
+        // Update the main query cache
+        queryClient.setQueryData(["project-health", projectId], data);
+        return data;
+      }
+    });
+  };
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
@@ -225,6 +240,18 @@ export function ProjectHeader({
                       {Math.round((healthData.stats.done / healthData.stats.total) * 100) || 0}% Done
                     </span>
                   )}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-4 w-4 ml-1 text-indigo-400 hover:text-indigo-600 hover:bg-transparent"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRefreshPulse();
+                    }}
+                    disabled={isHealthFetching}
+                  >
+                    <RefreshCw className={cn("h-3 w-3", isHealthFetching && "animate-spin")} />
+                  </Button>
                 </span>
               </div>
             </div>

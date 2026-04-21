@@ -1262,7 +1262,7 @@ export function TaskDetailSheet({
                               "{task.title}" and remove its data from our servers.
                             </DialogDescription>
                           </DialogHeader>
-                          <DialogFooter className="gap-2 sm:gap-0">
+                          <DialogFooter className="gap-2">
                             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
                             <Button 
                               variant="destructive" 

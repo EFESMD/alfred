@@ -18,7 +18,6 @@ export async function GET(
     }
 
     const { taskId } = await params;
-    console.log(`[API] Fetching task details for taskId: ${taskId}`);
 
     const task = await prisma.task.findUnique({
       where: {
@@ -95,15 +94,13 @@ export async function GET(
     });
 
     if (!task) {
-      console.log(`[API] Task not found: ${taskId}`);
       return new NextResponse("Task not found", { status: 404 });
     }
 
-    console.log(`[API] Successfully fetched task: ${task.title}`);
     return NextResponse.json(task);
   } catch (error: any) {
-    console.error("[TASK_GET] Error details:", error.message, error.stack);
-    return new NextResponse(`Internal Error: ${error.message}`, { status: 500 });
+    console.error("[TASK_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
 
@@ -122,7 +119,6 @@ export async function PATCH(
     const body = await req.json();
     const { status, priority, title, description, assigneeId, startDate, dueDate, predecessorIds, sectionId } = body;
 
-    // Fetch the current task state to compare changes
     const currentTask = await prisma.task.findUnique({
       where: { id: taskId },
       include: { assignee: true, predecessors: true, section: true }
@@ -152,7 +148,6 @@ export async function PATCH(
       },
     });
 
-    // Generate activity logs for changes
     const activities = [];
     
     if (sectionId !== undefined && sectionId !== currentTask.sectionId) {
@@ -230,7 +225,6 @@ export async function PATCH(
         userId: session.user.id,
       });
 
-      // Send notification to new assignee
       if (assigneeId && assigneeId !== session.user.id) {
         const { createNotification } = await import("@/lib/notifications");
         const { workspaceId } = await params;
@@ -250,7 +244,6 @@ export async function PATCH(
       });
     }
 
-    // Trigger real-time update
     if (pusherServer) {
       await pusherServer.trigger(`project-${projectId}`, "task-updated", task);
     }
@@ -275,22 +268,48 @@ export async function DELETE(
 
     const { taskId, projectId } = await params;
 
-    // Delete physical attachments before removing from database
-    await deletePhysicalTaskAttachments(taskId);
-
-    await prisma.task.delete({
-      where: {
-        id: taskId,
-      },
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
     });
 
-    // Trigger real-time update
+    if (!task) {
+      return new NextResponse("Task not found", { status: 404 });
+    }
+
+    try {
+      await deletePhysicalTaskAttachments(taskId);
+    } catch (storageError) {
+      console.error("[TASK_DELETE] Storage deletion warning:", storageError);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.task.update({
+        where: { id: taskId },
+        data: {
+          predecessors: { set: [] },
+          successors: { set: [] }
+        }
+      });
+
+      await tx.task.deleteMany({
+        where: { parentId: taskId }
+      });
+
+      await tx.comment.deleteMany({ where: { taskId } });
+      await tx.activity.deleteMany({ where: { taskId } });
+      await tx.attachment.deleteMany({ where: { taskId } });
+
+      await tx.task.delete({
+        where: { id: taskId }
+      });
+    });
+
     if (pusherServer) {
       await pusherServer.trigger(`project-${projectId}`, "task-deleted", { id: taskId });
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[TASK_DELETE]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
