@@ -321,6 +321,20 @@ export function TaskDetailSheet({
     enabled: !!taskId,
   });
 
+  useEffect(() => {
+    // Reset ephemeral states when taskId changes to prevent leak between tasks
+    setComment("");
+    setSubtaskTitle("");
+    setSuggestedSubtasks([]);
+    setDescriptionSummary(null);
+    setActivitySummary(null);
+    setRefinedComment(null);
+    setRefinedDescription(null);
+    setIsEditingTitle(false);
+    setIsEditingDescription(false);
+    setIsDeleteDialogOpen(false);
+  }, [taskId]);
+
   const deleteTaskMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
@@ -932,6 +946,7 @@ export function TaskDetailSheet({
                       />
                       <div className="flex justify-end">
                         <RefineButton 
+                          key={taskId}
                           label="Refine"
                           text={description}
                           isLoading={false}
@@ -1292,6 +1307,7 @@ export function TaskDetailSheet({
                 </div>
                 <div className="flex justify-end items-center mt-2 gap-2">
                   <RefineButton 
+                    key={taskId}
                     label="Refine"
                     text={comment}
                     isLoading={false}

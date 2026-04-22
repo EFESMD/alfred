@@ -102,8 +102,8 @@ export function TaskExtractionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2">
+      <DialogContent className="sm:max-w-[700px] h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-indigo-600" />
             Extract Tasks from Notes
@@ -113,27 +113,19 @@ export function TaskExtractionModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col p-6 pt-2 space-y-4">
+        <div className="flex-1 overflow-hidden flex flex-col p-6 pt-2 min-h-0">
           {extractedTasks.length === 0 ? (
-            <div className="space-y-4 flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-h-0">
               <Textarea
                 placeholder="Paste notes here... (e.g., 'In today's meeting we decided that Victor will update the API by Friday...')"
-                className="flex-1 min-h-[300px] resize-none border-indigo-100 focus-visible:ring-indigo-500"
+                className="flex-1 resize-none border-indigo-100 focus-visible:ring-indigo-500 mb-4"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
               />
-              <Button 
-                onClick={() => extractMutation.mutate(content)}
-                disabled={!content.trim() || extractMutation.isPending}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-11"
-              >
-                {extractMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                Analyze and Extract Tasks
-              </Button>
             </div>
           ) : (
-            <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground bg-indigo-50/50 p-2 rounded-md border border-indigo-100">
+            <div className="flex-1 flex flex-col min-h-0 space-y-4">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground bg-indigo-50/50 p-2 rounded-md border border-indigo-100 shrink-0">
                 <span className="flex items-center gap-1.5 text-indigo-700">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Select tasks to import
@@ -141,7 +133,7 @@ export function TaskExtractionModal({
                 <span>{selectedIndices.length} of {extractedTasks.length} selected</span>
               </div>
               
-              <ScrollArea className="flex-1 border rounded-md p-4">
+              <ScrollArea className="flex-1 border rounded-md p-4 min-h-0">
                 <div className="space-y-4">
                   {extractedTasks.map((task, idx) => (
                     <div 
@@ -180,27 +172,40 @@ export function TaskExtractionModal({
                   ))}
                 </div>
               </ScrollArea>
-
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => setExtractedTasks([])}
-                >
-                  Back to Editor
-                </Button>
-                <Button 
-                  className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
-                  disabled={selectedIndices.length === 0 || importMutation.isPending}
-                  onClick={() => importMutation.mutate(extractedTasks.filter((_, i) => selectedIndices.includes(i)))}
-                >
-                  {importMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Import {selectedIndices.length} {selectedIndices.length === 1 ? "Task" : "Tasks"}
-                </Button>
-              </div>
             </div>
           )}
         </div>
+
+        <DialogFooter className="p-6 pt-0 shrink-0">
+          {extractedTasks.length === 0 ? (
+            <Button 
+              onClick={() => extractMutation.mutate(content)}
+              disabled={!content.trim() || extractMutation.isPending}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-11"
+            >
+              {extractMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              Analyze and Extract Tasks
+            </Button>
+          ) : (
+            <div className="flex gap-2 w-full">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setExtractedTasks([])}
+              >
+                Back to Editor
+              </Button>
+              <Button 
+                className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
+                disabled={selectedIndices.length === 0 || importMutation.isPending}
+                onClick={() => importMutation.mutate(extractedTasks.filter((_, i) => selectedIndices.includes(i)))}
+              >
+                {importMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                Import {selectedIndices.length} {selectedIndices.length === 1 ? "Task" : "Tasks"}
+              </Button>
+            </div>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
