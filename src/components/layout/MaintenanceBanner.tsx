@@ -44,7 +44,14 @@ export function MaintenanceBanner() {
   useEffect(() => {
     if (!settings || session?.user?.isAdmin) return;
 
-    if (settings.maintenanceStatus === "LOCKDOWN" && pathname !== "/maintenance") {
+    const isAuthPath = 
+      pathname === "/login" || 
+      pathname === "/register" || 
+      pathname === "/verify" || 
+      pathname.startsWith("/forgot-password") || 
+      pathname.startsWith("/reset-password");
+
+    if (settings.maintenanceStatus === "LOCKDOWN" && pathname !== "/maintenance" && !isAuthPath) {
       router.replace("/maintenance");
     }
   }, [settings, session, pathname, router]);

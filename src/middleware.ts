@@ -16,25 +16,21 @@ export default withAuth(
     }
 
     // 2. Check for Maintenance Mode via Environment Variable or DB
-    // To avoid DB overhead in middleware, we check the ENV variable first.
-    // If you want pure DB control, we'd need to fetch from Prisma here.
-    // For now, let's implement the logic assuming we'll check the DB status.
     try {
-      // In Next.js Middleware, we can't use the standard Prisma client easily if it's not Edge-compatible.
-      // So we will use a lightweight fetch to our own internal API if needed, or rely on a simple ENV for now.
-      // But wait, we can just fetch the status from our own API route!
       const isMaintenance = process.env.MAINTENANCE_MODE === "true";
       
-      // If we want it to be dynamic via DB, we can use an internal API call:
-      // const res = await fetch(`${req.nextUrl.origin}/api/admin/maintenance`);
-      // const settings = await res.json();
-      
-      // Let's use a hybrid: ENV variable takes precedence for hard-shutdown, 
-      // but we'll also allow DB-driven lockdown.
-      
-      // For the most robust middleware, we should avoid async fetches if possible.
-      // Let's implement Phase 2: Check for a Maintenance Mode via the environment variable first.
-      if (isMaintenance) {
+      // EXEMPT AUTH PATHS: Even in maintenance, we must allow login
+      const isAuthPath = 
+        pathname === "/login" || 
+        pathname === "/register" || 
+        pathname === "/verify" || 
+        pathname.startsWith("/forgot-password") || 
+        pathname.startsWith("/reset-password") ||
+        pathname.startsWith("/api/auth") ||
+        pathname.startsWith("/api/register") ||
+        pathname.startsWith("/api/verify");
+
+      if (isMaintenance && !isAuthPath) {
         const isAdmin = req.nextauth.token?.isAdmin;
         if (!isAdmin) {
           if (pathname.startsWith("/api/")) {
