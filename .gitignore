@@ -43,8 +43,12 @@ next-env.d.ts
 /src/generated/prisma
 
 # database & storage
-prisma/*.db
-prisma/*.db-journal
+# Note: match at any depth - the Prisma SQLite URL resolves relative to the
+# schema dir, so the live DB sits at prisma/prisma/dev.db
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
 public/uploads/*
 !public/uploads/.gitkeep
 
