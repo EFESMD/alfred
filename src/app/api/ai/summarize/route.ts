@@ -1,11 +1,7 @@
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { AI_MODEL, openai } from "@/lib/ai";
 
 export async function POST(req: Request) {
   try {
@@ -35,7 +31,7 @@ export async function POST(req: Request) {
          ALWAYS respond in the same language as the majority of the input text.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4-mini",
+      model: AI_MODEL,
       messages: [
         {
           role: "system",

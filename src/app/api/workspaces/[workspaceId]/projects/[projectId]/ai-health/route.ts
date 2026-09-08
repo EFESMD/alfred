@@ -2,12 +2,8 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { AI_MODEL, openai } from "@/lib/ai";
 import { isBefore, startOfDay, subHours } from "date-fns";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function GET(
   req: Request,
@@ -55,7 +51,7 @@ export async function GET(
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: AI_MODEL,
       messages: [
         {
           role: "system",
