@@ -56,3 +56,8 @@ public/uploads/*
 plans/
 *.txt
 *.md
+# runtime logs - logger.ts recreates logs/ on demand and tolerates a missing file
+logs/
+
+# macOS screenshots dropped into the repo root
+Screenshot*.png
