@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye, Star, ChevronDown, RefreshCw } from "lucide-react";
+import { List, LayoutGrid, Calendar as CalendarIcon, GanttChart, User, Settings, Archive, Eye, Star, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { ProjectFilter } from "./ProjectFilter";
+import { ProjectPulsePopover } from "./ProjectPulsePopover";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -55,30 +55,6 @@ export function ProjectHeader({
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [currentStatus, setCurrentStatus] = useState(status);
   const [isExtractionModalOpen, setIsExtractionModalOpen] = useState(false);
-
-  const { data: healthData, isLoading: isHealthLoading, isFetching: isHealthFetching, refetch: refetchHealth } = useQuery({
-    queryKey: ["project-health", projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/ai-health`);
-      if (!res.ok) throw new Error("Failed to fetch health pulse");
-      return res.json();
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
-  });
-
-  const handleRefreshPulse = () => {
-    queryClient.fetchQuery({
-      queryKey: ["project-health", projectId, true],
-      queryFn: async () => {
-        const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/ai-health?refresh=true`);
-        if (!res.ok) throw new Error("Failed to fetch health pulse");
-        const data = await res.json();
-        // Update the main query cache
-        queryClient.setQueryData(["project-health", projectId], data);
-        return data;
-      }
-    });
-  };
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
@@ -203,95 +179,26 @@ export function ProjectHeader({
             )}
           </div>
         </div>
-        {projectLeader && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Project Lead:</span>
-            <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border border-border">
-              <Avatar className="h-6 w-6">
-                {projectLeader.image && <AvatarImage src={projectLeader.image} />}
-                <AvatarFallback>
-                  {projectLeader.name?.[0] || <User className="h-3 w-3" />}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium">{projectLeader.name || "Unknown"}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* AI Project Pulse Card */}
-      {!isSettings && (
-        <div className="px-6 pb-4">
-          <div className={cn(
-            "p-3 px-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center gap-4 transition-all duration-500",
-            isHealthLoading ? "bg-slate-50/50 border-slate-100 animate-pulse" : "bg-indigo-50/40 border-indigo-100 shadow-sm"
-          )}>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shadow-inner">
-                <Sparkles className={cn("h-4 w-4", isHealthLoading && "animate-spin")} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Project Pulse</span>
-                <span className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-                  Health Report
-                  {!isHealthLoading && healthData?.stats && (
-                    <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-bold">
-                      {Math.round((healthData.stats.done / healthData.stats.total) * 100) || 0}% Done
-                    </span>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-4 w-4 ml-1 text-indigo-400 hover:text-indigo-600 hover:bg-transparent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRefreshPulse();
-                    }}
-                    disabled={isHealthFetching}
-                  >
-                    <RefreshCw className={cn("h-3 w-3", isHealthFetching && "animate-spin")} />
-                  </Button>
-                </span>
+        <div className="flex items-center gap-3">
+          {projectLeader && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Project Lead:</span>
+              <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border border-border">
+                <Avatar className="h-6 w-6">
+                  {projectLeader.image && <AvatarImage src={projectLeader.image} />}
+                  <AvatarFallback>
+                    {projectLeader.name?.[0] || <User className="h-3 w-3" />}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium">{projectLeader.name || "Unknown"}</span>
               </div>
             </div>
-
-            <Separator orientation="vertical" className="hidden md:block h-8 bg-indigo-100" />
-
-            <div className="flex-1">
-              {isHealthLoading ? (
-                <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse" />
-              ) : (
-                <p className="text-sm text-indigo-900 leading-relaxed font-medium">
-                  {healthData?.pulse}
-                </p>
-              )}
-            </div>
-
-            {!isHealthLoading && healthData?.stats && (
-              <div className="flex items-center gap-4 shrink-0 border-t md:border-t-0 md:border-l border-indigo-100 pt-3 md:pt-0 md:pl-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] text-indigo-500 uppercase font-bold">Overdue</span>
-                  <span className={cn("text-sm font-bold", healthData.stats.overdue > 0 ? "text-red-500" : "text-slate-600")}>
-                    {healthData.stats.overdue}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] text-indigo-500 uppercase font-bold">Priority</span>
-                  <span className={cn("text-sm font-bold", healthData.stats.highPriority > 0 ? "text-amber-600" : "text-slate-600")}>
-                    {healthData.stats.highPriority}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] text-indigo-500 uppercase font-bold">Blocked</span>
-                  <span className={cn("text-sm font-bold", healthData.stats.delayed > 0 ? "text-orange-500" : "text-slate-600")}>
-                    {healthData.stats.delayed}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
+          {!isSettings && (
+            <ProjectPulsePopover workspaceId={workspaceId} projectId={projectId} />
+          )}
         </div>
-      )}
+      </div>
 
       <div className="px-6 flex items-center gap-6">
         <Link
