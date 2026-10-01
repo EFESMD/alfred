@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, MoreHorizontal, Calendar, User, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Plus, MoreHorizontal, Calendar, User, ChevronDown, ChevronRight, Pencil, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isBefore, startOfDay } from "date-fns";
 import { 
@@ -64,6 +64,8 @@ interface Section {
   order: number;
 }
 
+const PRIORITY_OPTIONS: TaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
+
 interface TaskListViewProps {
   workspaceId: string;
   projectId: string;
@@ -75,6 +77,7 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
   task: TaskWithAssignee;
   onClick?: () => void;
   onStatusChange?: (status: TaskStatus) => void;
+  onPriorityChange?: (priority: TaskPriority) => void;
   getStatusColor: (s: any) => string;
   getPriorityColor: (p: any) => string;
   disabled?: boolean;
@@ -87,6 +90,7 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
   task, 
   onClick, 
   onStatusChange,
+  onPriorityChange,
   getStatusColor, 
   getPriorityColor,
   disabled = false,
@@ -166,10 +170,37 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
           <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
         </div>
       </TableCell>
-      <TableCell className="py-1">
-        <Badge variant="outline" className={cn("text-[10px] py-0 h-5", getPriorityColor(task.priority as TaskPriority))}>
-          {task.priority}
-        </Badge>
+      <TableCell className="py-1" onClick={(e) => onPriorityChange && !disabled && e.stopPropagation()}>
+        {onPriorityChange && !disabled ? (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Badge variant="outline" className={cn("text-[10px] py-0 h-5 gap-0.5 cursor-pointer", getPriorityColor(task.priority as TaskPriority))}>
+                  {task.priority}
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Badge>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {PRIORITY_OPTIONS.map((priority) => (
+                <DropdownMenuItem
+                  key={priority}
+                  className="text-xs"
+                  onClick={() => priority !== task.priority && onPriorityChange(priority)}
+                >
+                  <span className={cn("mr-2", task.priority === priority ? "opacity-100" : "opacity-0")}>
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                  {priority}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Badge variant="outline" className={cn("text-[10px] py-0 h-5", getPriorityColor(task.priority as TaskPriority))}>
+            {task.priority}
+          </Badge>
+        )}
       </TableCell>
       <TableCell className="py-1">
         <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
@@ -190,6 +221,7 @@ function SortableTaskRow(props: {
   task: TaskWithAssignee; 
   onClick: () => void;
   onStatusChange: (status: TaskStatus) => void;
+  onPriorityChange: (priority: TaskPriority) => void;
   getStatusColor: (s: any) => string;
   getPriorityColor: (p: any) => string;
   disabled?: boolean;
@@ -427,6 +459,8 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
             return t;
           });
         });
+        // Rows render from localTasks, which only re-syncs once the mutation settles
+        setLocalTasks(queryClient.getQueryData<TaskWithAssignee[]>(["tasks", projectId]) ?? []);
       }
 
       return { previousTasks };
@@ -924,6 +958,7 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                               }
                               updateTaskMutation.mutate({ id: task.id, sectionId: task.sectionId, status });
                             }}
+                            onPriorityChange={(priority) => updateTaskMutation.mutate({ id: task.id, priority })}
                             getStatusColor={getStatusColor}
                             getPriorityColor={getPriorityColor}
                             disabled={isReadOnly}
