@@ -33,6 +33,8 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 
 import { 
   DndContext, 
@@ -64,7 +66,10 @@ interface Section {
   order: number;
 }
 
+const STATUS_OPTIONS: TaskStatus[] = ["PLANNED", "IN_PROGRESS", "DELAYED", "OVERDUE", "DONE"];
 const PRIORITY_OPTIONS: TaskPriority[] = ["LOW", "MEDIUM", "HIGH"];
+
+type MemberUser = { id: string; name: string | null; image: string | null };
 
 interface TaskListViewProps {
   workspaceId: string;
@@ -78,6 +83,9 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
   onClick?: () => void;
   onStatusChange?: (status: TaskStatus) => void;
   onPriorityChange?: (priority: TaskPriority) => void;
+  onAssigneeChange?: (assigneeId: string | null) => void;
+  onDueDateChange?: (dueDate: Date) => void;
+  members?: MemberUser[];
   getStatusColor: (s: any) => string;
   getPriorityColor: (p: any) => string;
   disabled?: boolean;
@@ -91,6 +99,9 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
   onClick, 
   onStatusChange,
   onPriorityChange,
+  onAssigneeChange,
+  onDueDateChange,
+  members = [],
   getStatusColor, 
   getPriorityColor,
   disabled = false,
@@ -100,8 +111,15 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
   listeners,
   style
 }, ref) => {
+  const [isDueDateOpen, setIsDueDateOpen] = useState(false);
+
+  // Inline editors live inside the clickable row; keep their clicks from opening the task sheet
+  const stopIfEditable = (onChange?: unknown) => (e: React.MouseEvent) => {
+    if (onChange && !disabled) e.stopPropagation();
+  };
+
   return (
-    <TableRow 
+    <TableRow
       ref={ref}
       style={style}
       {...attributes}
@@ -144,33 +162,104 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
           )}
         </div>
       </TableCell>
-      <TableCell className="py-1">
-        <div className="flex items-center gap-2 scale-90 origin-left">
-          <Avatar className="h-5 w-5">
-            {task.assignee?.image && <AvatarImage src={task.assignee.image} />}
-            <AvatarFallback className="text-[9px]">
-              {task.assignee?.name?.[0] || <User className="h-2.5 w-2.5" />}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-xs truncate max-w-[100px]">
-            {task.assignee?.name || "Unassigned"}
-          </span>
-        </div>
+      <TableCell className="py-1" onClick={stopIfEditable(onAssigneeChange)}>
+        {(() => {
+          const assigneeDisplay = (
+            <div className="flex items-center gap-2 scale-90 origin-left">
+              <Avatar className="h-5 w-5">
+                {task.assignee?.image && <AvatarImage src={task.assignee.image} />}
+                <AvatarFallback className="text-[9px]">
+                  {task.assignee?.name?.[0] || <User className="h-2.5 w-2.5" />}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs truncate max-w-[100px]">
+                {task.assignee?.name || "Unassigned"}
+              </span>
+              {onAssigneeChange && !disabled && <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />}
+            </div>
+          );
+
+          if (!onAssigneeChange || disabled) return assigneeDisplay;
+
+          return (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="rounded-md hover:bg-muted/60 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  {assigneeDisplay}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[200px] max-h-72 overflow-y-auto">
+                <DropdownMenuItem
+                  className="text-xs"
+                  onClick={() => task.assigneeId && onAssigneeChange(null)}
+                >
+                  <span className={cn("mr-2", !task.assigneeId ? "opacity-100" : "opacity-0")}>
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                  Unassigned
+                </DropdownMenuItem>
+                {members.map((member) => (
+                  <DropdownMenuItem
+                    key={member.id}
+                    className="text-xs"
+                    onClick={() => member.id !== task.assigneeId && onAssigneeChange(member.id)}
+                  >
+                    <span className={cn("mr-2", task.assigneeId === member.id ? "opacity-100" : "opacity-0")}>
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
+                    <Avatar className="h-5 w-5 mr-2">
+                      {member.image && <AvatarImage src={member.image} />}
+                      <AvatarFallback className="text-[9px]">{member.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate">{member.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        })()}
       </TableCell>
-      <TableCell className="py-1">
-        <div className={cn(
-          "flex items-center gap-1.5 text-xs",
-          task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
-            ? "text-red-500 font-medium"
-            : task.dueDate 
-              ? "text-foreground" 
-              : "text-muted-foreground"
-        )}>
-          <Calendar className="h-3.5 w-3.5" />
-          <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
-        </div>
+      <TableCell className="py-1" onClick={stopIfEditable(onDueDateChange)}>
+        {(() => {
+          const dueDateDisplay = (
+            <div className={cn(
+              "flex items-center gap-1.5 text-xs",
+              task.dueDate && isBefore(startOfDay(new Date(task.dueDate)), startOfDay(new Date())) && task.status !== "DONE"
+                ? "text-red-500 font-medium"
+                : task.dueDate
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+            )}>
+              <Calendar className="h-3.5 w-3.5" />
+              <span>{task.dueDate ? format(new Date(task.dueDate), "MMM d") : "No date"}</span>
+            </div>
+          );
+
+          if (!onDueDateChange || disabled) return dueDateDisplay;
+
+          return (
+            <Popover open={isDueDateOpen} onOpenChange={setIsDueDateOpen} modal={false}>
+              <PopoverTrigger asChild>
+                <button type="button" className="rounded-md hover:bg-muted/60 px-1 -mx-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  {dueDateDisplay}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarPicker
+                  mode="single"
+                  selected={task.dueDate ? new Date(task.dueDate) : undefined}
+                  defaultMonth={task.dueDate ? new Date(task.dueDate) : undefined}
+                  onSelect={(date) => {
+                    if (date) onDueDateChange(date);
+                    setIsDueDateOpen(false);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          );
+        })()}
       </TableCell>
-      <TableCell className="py-1" onClick={(e) => onPriorityChange && !disabled && e.stopPropagation()}>
+      <TableCell className="py-1" onClick={stopIfEditable(onPriorityChange)}>
         {onPriorityChange && !disabled ? (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
@@ -202,10 +291,37 @@ const TaskRowUI = React.forwardRef<HTMLTableRowElement, {
           </Badge>
         )}
       </TableCell>
-      <TableCell className="py-1">
-        <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
-          {formatStatus(task.status)}
-        </Badge>
+      <TableCell className="py-1" onClick={stopIfEditable(onStatusChange)}>
+        {onStatusChange && !disabled ? (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Badge className={cn("text-[10px] py-0 h-5 gap-0.5 cursor-pointer", getStatusColor(task.status as TaskStatus))}>
+                  {formatStatus(task.status)}
+                  <ChevronDown className="h-3 w-3 opacity-70" />
+                </Badge>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {STATUS_OPTIONS.map((status) => (
+                <DropdownMenuItem
+                  key={status}
+                  className="text-xs"
+                  onClick={() => status !== task.status && onStatusChange(status)}
+                >
+                  <span className={cn("mr-2", task.status === status ? "opacity-100" : "opacity-0")}>
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                  {formatStatus(status)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Badge className={cn("text-[10px] py-0 h-5", getStatusColor(task.status as TaskStatus))}>
+            {formatStatus(task.status)}
+          </Badge>
+        )}
       </TableCell>
       <TableCell className="text-right py-1">
         <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 h-7 w-7">
@@ -222,6 +338,9 @@ function SortableTaskRow(props: {
   onClick: () => void;
   onStatusChange: (status: TaskStatus) => void;
   onPriorityChange: (priority: TaskPriority) => void;
+  onAssigneeChange: (assigneeId: string | null) => void;
+  onDueDateChange: (dueDate: Date) => void;
+  members: MemberUser[];
   getStatusColor: (s: any) => string;
   getPriorityColor: (p: any) => string;
   disabled?: boolean;
@@ -425,8 +544,20 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     },
   });
 
+  // Same query as the task sheet's assignee picker, so the cache is shared
+  const { data: workspaceMembers } = useQuery<{ user: MemberUser }[]>({
+    queryKey: ["members", workspaceId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspaces/${workspaceId}/members`);
+      if (!res.ok) throw new Error("Failed to fetch members");
+      return res.json();
+    },
+    enabled: !isReadOnly,
+  });
+  const members = useMemo(() => workspaceMembers?.map(m => m.user) ?? [], [workspaceMembers]);
+
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ id, ...changes }: { id: string; sectionId?: string | null; status?: TaskStatus; priority?: TaskPriority; prevTaskId?: string | null; nextTaskId?: string | null }) => {
+    mutationFn: async ({ id, ...changes }: { id: string; sectionId?: string | null; status?: TaskStatus; priority?: TaskPriority; assigneeId?: string | null; dueDate?: Date; prevTaskId?: string | null; nextTaskId?: string | null }) => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -453,7 +584,12 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                 ...t,
                 sectionId: variables.sectionId === "uncategorized" ? null : (variables.sectionId ?? t.sectionId),
                 status: variables.status ?? t.status,
-                priority: variables.priority ?? t.priority
+                priority: variables.priority ?? t.priority,
+                dueDate: variables.dueDate ?? t.dueDate,
+                ...(variables.assigneeId !== undefined && {
+                  assigneeId: variables.assigneeId,
+                  assignee: members.find(m => m.id === variables.assigneeId) ?? null,
+                }),
               };
             }
             return t;
@@ -959,6 +1095,9 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
                               updateTaskMutation.mutate({ id: task.id, sectionId: task.sectionId, status });
                             }}
                             onPriorityChange={(priority) => updateTaskMutation.mutate({ id: task.id, priority })}
+                            onAssigneeChange={(assigneeId) => updateTaskMutation.mutate({ id: task.id, assigneeId })}
+                            onDueDateChange={(dueDate) => updateTaskMutation.mutate({ id: task.id, dueDate })}
+                            members={members}
                             getStatusColor={getStatusColor}
                             getPriorityColor={getPriorityColor}
                             disabled={isReadOnly}
