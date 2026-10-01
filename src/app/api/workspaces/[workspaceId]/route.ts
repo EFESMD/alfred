@@ -16,7 +16,6 @@ export async function GET(
     }
 
     const { workspaceId } = await params;
-    console.log("API: Fetching workspace", workspaceId, "for user", session.user.id);
 
     const workspace = await prisma.workspace.findFirst({
       where: {
@@ -33,15 +32,11 @@ export async function GET(
     });
 
     if (!workspace) {
-      console.log("API: Workspace not found or user is not a member");
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    console.log("API: Workspace found", workspace.name);
-
     // Ensure invite code exists (for old records)
     if (!workspace.inviteCode) {
-      console.log("API: Generating missing invite code");
       const updatedWorkspace = await prisma.workspace.update({
         where: { id: workspaceId },
         data: { inviteCode: `inv_${Math.random().toString(36).substring(2, 9)}` },

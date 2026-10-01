@@ -15,7 +15,6 @@ export async function GET(
     }
 
     const { workspaceId } = await params;
-    console.log("API: Fetching members for workspace", workspaceId);
 
     const members = await prisma.workspaceMember.findMany({
       where: {
@@ -33,7 +32,6 @@ export async function GET(
       },
     });
 
-    console.log(`API: Found ${members.length} members`);
     return NextResponse.json(members);
   } catch (error: any) {
     console.error("[MEMBERS_GET] Error details:", error.message, error.stack);

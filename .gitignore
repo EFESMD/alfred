@@ -61,3 +61,6 @@ logs/
 
 # macOS screenshots dropped into the repo root
 Screenshot*.png
+
+# dev server output
+*.log

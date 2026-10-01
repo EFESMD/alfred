@@ -59,7 +59,6 @@ export async function POST(
 
     const { projectId } = await params;
 
-    console.log("[TASKS_POST] Creating task with data:", { title, projectId, sectionId });
 
     const task = await prisma.task.create({
       data: {
@@ -87,7 +86,6 @@ export async function POST(
       },
     });
 
-    console.log("[TASKS_POST] Task created successfully:", task.id);
 
     // Send notification to assignee
     if (task.assigneeId && task.assigneeId !== session.user.id) {
@@ -105,9 +103,7 @@ export async function POST(
     // Trigger real-time update
     if (pusherServer) {
       try {
-        console.log("[TASKS_POST] Triggering Pusher update...");
         await pusherServer.trigger(`project-${projectId}`, "task-created", task);
-        console.log("[TASKS_POST] Pusher triggered successfully");
       } catch (pusherError) {
         console.error("[TASKS_POST] Pusher error (Non-fatal):", pusherError);
         // We don't fail the whole request if Pusher fails
