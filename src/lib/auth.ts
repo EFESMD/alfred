@@ -5,8 +5,6 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { checkIsAdmin } from "./utils";
 
-console.log("NEXTAUTH_SECRET status:", !!process.env.NEXTAUTH_SECRET);
-
 const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://");
 const cookiePrefix = useSecureCookies ? "__Secure-" : "";
 
@@ -33,7 +31,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/login", // Redirect errors back to login
   },
-  debug: true,
+  debug: process.env.NODE_ENV === "development",
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -42,10 +40,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log("Authorize attempt for:", credentials?.email);
-        
         if (!credentials?.email || !credentials?.password) {
-          console.log("Missing email or password");
           return null;
         }
 
@@ -54,7 +49,6 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.password) {
-          console.log("User not found or no password");
           return null;
         }
 
@@ -64,17 +58,14 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordCorrect) {
-          console.log("Invalid password");
           return null;
         }
 
         // Check for email verification
         if (!user.emailVerified) {
-          console.log("Email not verified for:", user.email);
           throw new Error("Te rugăm să îți confirmi adresa de email înainte de a te autentifica. Verifică-ți inbox-ul.");
         }
 
-        console.log("Authorize successful for:", user.email);
         return {
           id: user.id,
           name: user.name,
@@ -88,7 +79,6 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async session({ token, session }) {
-      console.log("Session callback triggered");
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.firstName = token.firstName as string | null;
@@ -99,7 +89,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async jwt({ token, user, trigger, session }) {
-      console.log("JWT callback triggered", trigger);
       if (user) {
         token.id = user.id;
         token.firstName = user.firstName;
