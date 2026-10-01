@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { format } from "date-fns";
 import { deletePhysicalTaskAttachments } from "@/lib/storage";
+import { getEndPosition, getMovePosition } from "@/lib/task-position";
 
 export async function GET(
   req: Request,
@@ -128,6 +129,28 @@ export async function PATCH(
       return new NextResponse("Task not found", { status: 404 });
     }
 
+    // Manual ordering: a drag sends the task's new neighbours; a plain
+    // section change (e.g. from the detail sheet) moves it to the end.
+    const targetSectionId = sectionId === undefined
+      ? currentTask.sectionId
+      : sectionId === "uncategorized" ? null : sectionId;
+    const isReorder = "prevTaskId" in body || "nextTaskId" in body;
+    let position: number | undefined;
+
+    if (!currentTask.parentId) {
+      if (isReorder) {
+        position = await getMovePosition({
+          projectId,
+          sectionId: targetSectionId,
+          taskId,
+          prevTaskId: body.prevTaskId ?? null,
+          nextTaskId: body.nextTaskId ?? null,
+        });
+      } else if (targetSectionId !== currentTask.sectionId) {
+        position = await getEndPosition({ projectId, sectionId: targetSectionId });
+      }
+    }
+
     const task = await prisma.task.update({
       where: {
         id: taskId,
@@ -142,6 +165,7 @@ export async function PATCH(
         startDate: startDate ? new Date(startDate) : undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         sectionId: sectionId === "uncategorized" ? null : sectionId,
+        position,
         predecessors: predecessorIds ? {
           set: predecessorIds.map((id: string) => ({ id }))
         } : undefined,

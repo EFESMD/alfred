@@ -394,12 +394,13 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ id, sectionId, status, priority }: { id: string; sectionId?: string | null; status?: TaskStatus; priority?: TaskPriority }) => {
+    mutationFn: async ({ id, ...changes }: { id: string; sectionId?: string | null; status?: TaskStatus; priority?: TaskPriority; prevTaskId?: string | null; nextTaskId?: string | null }) => {
       const res = await fetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sectionId, status, priority }),
+        body: JSON.stringify(changes),
       });
+      if (!res.ok) throw new Error("Failed to update task");
       return res.json();
     },
     onMutate: async (variables) => {
@@ -729,11 +730,31 @@ export function TaskListView({ workspaceId, projectId, isArchived = false }: Tas
     const draggedTask = localTasks.find(t => t.id === taskId);
     const serverTask = tasks?.find(t => t.id === taskId);
 
-    if (draggedTask && serverTask && draggedTask.sectionId !== serverTask.sectionId) {
-      updateTaskMutation.mutate({ 
-        id: taskId, 
-        sectionId: draggedTask.sectionId || "uncategorized" 
-      });
+    if (draggedTask && serverTask) {
+      // Neighbours within the section, before (server) and after (local) the drag
+      const neighboursOf = (list: TaskWithAssignee[], sectionId: string | null) => {
+        const sectionTasks = list.filter(t => t.sectionId === sectionId);
+        const index = sectionTasks.findIndex(t => t.id === taskId);
+        return {
+          prevTaskId: sectionTasks[index - 1]?.id ?? null,
+          nextTaskId: sectionTasks[index + 1]?.id ?? null,
+        };
+      };
+
+      const before = neighboursOf(tasks || [], serverTask.sectionId);
+      const after = neighboursOf(localTasks, draggedTask.sectionId);
+
+      if (
+        draggedTask.sectionId !== serverTask.sectionId ||
+        before.prevTaskId !== after.prevTaskId ||
+        before.nextTaskId !== after.nextTaskId
+      ) {
+        updateTaskMutation.mutate({
+          id: taskId,
+          sectionId: draggedTask.sectionId || "uncategorized",
+          ...after,
+        });
+      }
     }
     
     // Set to null after triggering mutation so useEffect doesn't sync too early

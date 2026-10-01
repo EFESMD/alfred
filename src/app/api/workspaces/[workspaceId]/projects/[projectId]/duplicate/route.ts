@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { TASK_ORDER } from "@/lib/task-position";
 
 export async function POST(
   req: Request,
@@ -36,7 +37,7 @@ export async function POST(
       where: { id: projectId },
       include: {
         tasks: {
-          orderBy: { createdAt: "asc" },
+          orderBy: TASK_ORDER,
         },
         sections: {
           orderBy: { order: "asc" },
@@ -94,6 +95,7 @@ export async function POST(
           projectId: newProject.id,
           sectionId: task.sectionId ? sectionIdMap[task.sectionId] : null,
           assigneeId: null, // Keep it clean for new projects
+          position: task.position,
         },
       });
       taskIdMap[task.id] = clonedTask.id;
@@ -113,6 +115,7 @@ export async function POST(
             projectId: newProject.id,
             sectionId: task.sectionId ? sectionIdMap[task.sectionId] : null,
             parentId: taskIdMap[task.parentId],
+            position: task.position,
             assigneeId: null,
           },
         });

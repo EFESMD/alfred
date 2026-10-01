@@ -1,6 +1,7 @@
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
+import { getEndPosition, TASK_ORDER } from "@/lib/task-position";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -27,9 +28,7 @@ export async function GET(
         predecessors: true,
         successors: true,
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: TASK_ORDER,
     });
 
     return NextResponse.json(tasks);
@@ -59,6 +58,8 @@ export async function POST(
 
     const { projectId } = await params;
 
+    const targetSectionId = (sectionId === "uncategorized" || !sectionId) ? null : sectionId;
+    const position = parentId ? 0 : await getEndPosition({ projectId, sectionId: targetSectionId });
 
     const task = await prisma.task.create({
       data: {
@@ -72,7 +73,8 @@ export async function POST(
         assigneeId: assigneeId || null,
         creatorId: session.user.id,
         parentId: parentId || null,
-        sectionId: (sectionId === "uncategorized" || !sectionId) ? null : sectionId,
+        sectionId: targetSectionId,
+        position,
       },
     });
 

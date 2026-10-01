@@ -159,6 +159,7 @@ model Task {
   assigneeId              String?
   creatorId               String?
   parentId                String?
+  position                Float        @default(0)
   createdAt               DateTime     @default(now())
   updatedAt               DateTime     @updatedAt
   activities              Activity[]
@@ -174,6 +175,7 @@ model Task {
   successors              Task[]       @relation("TaskDependencies")
 
   @@index([projectId, parentId])
+  @@index([projectId, sectionId, position])
   @@index([assigneeId])
 }
 
